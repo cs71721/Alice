@@ -12,26 +12,33 @@ Alice (or any user) lands on the service and has a natural conversation with an 
 - **Collects preferences** (therapy style, scheduling, language, cost)
 - **Identifies goals** for treatment
 - **Detects crises** automatically and provides immediate resources
+- **Generates comprehensive reports** with PHQ-9/GAD-7 scores and clinical recommendations
+- **Exports data** in multiple formats (HTML, Text, CSV)
 
-**The key difference:** Instead of filling out forms, users have a genuine conversation. The chatbot knows its stuff but speaks like a human being.
+**The key difference:** Instead of filling out forms, users have a genuine conversation. The chatbot knows its stuff but speaks like a human being. Plus, all data is now captured, scored, and formatted into professional reports for therapists.
 
 ## 🏗️ Architecture
 
 ```
 mental-health-intake-chatbot/
 ├── server/
-│   └── index.js              # Express API server with Claude integration
+│   ├── index.js              # Express API server with Claude integration
+│   ├── database.js           # SQLite database setup and operations
+│   ├── scoring.js            # PHQ-9/GAD-7 scoring algorithms
+│   ├── reportGenerator.js    # Report generation (HTML/Text/CSV)
+│   └── intake_sessions.db    # SQLite database (created on first run)
 ├── client/
 │   ├── public/
 │   │   └── index.html        # HTML entry point
 │   └── src/
-│       ├── App.js            # Main chat interface
-│       ├── App.css           # Styling
+│       ├── App.js            # Main chat interface with report viewing
+│       ├── App.css           # Styling (includes report modal)
 │       ├── index.js          # React entry point
 │       └── index.css         # Global styles
 ├── package.json              # Root dependencies
 ├── .env.example              # Environment variable template
-└── README.md                 # This file
+├── README.md                 # This file
+└── REPORTING.md              # Detailed reporting system documentation
 ```
 
 ## 🚀 Quick Start
@@ -115,6 +122,13 @@ If the AI detects high-risk indicators:
 When all information is gathered:
 - "✓ Intake Complete" badge appears
 - AI provides warm summary and next steps
+- **Report buttons appear** allowing therapists to:
+  - View summary report (modal with key findings)
+  - View full HTML report (printable, detailed)
+  - Download text report (.txt file)
+  - Download CSV data (for analytics)
+- All assessment scores are automatically calculated
+- Clinical recommendations are generated based on severity
 
 ## 🔧 Configuration
 
@@ -146,24 +160,46 @@ Edit `/client/src/App.css` to customize:
 - Crisis banner appearance
 - Animations and transitions
 
-## 📊 Data Collected
+## 📊 Data Collected & Stored
 
-The chatbot systematically gathers:
+The chatbot systematically gathers and **stores in a SQLite database**:
 
-| Category | Information |
-|----------|-------------|
-| **Demographics** | Name, age, pronouns, location |
-| **Clinical** | PHQ-9 score, GAD-7 score |
-| **Risk** | Suicidal ideation, self-harm, substance use |
-| **Preferences** | Therapy approach, availability, language, cost |
-| **Goals** | Treatment objectives |
+| Category | Information | Stored In |
+|----------|-------------|-----------|
+| **Demographics** | Name, age, pronouns, location | intake_sessions table |
+| **Clinical** | PHQ-9 score (0-27), GAD-7 score (0-21) | Calculated and stored with severity levels |
+| **Assessment Details** | Individual responses to all PHQ-9 and GAD-7 questions | phq9_responses & gad7_responses tables |
+| **Risk** | Suicidal ideation, self-harm, substance use, safety concerns | Risk assessment fields with HIGH/MODERATE/LOW rating |
+| **Preferences** | Therapy approach, availability, language, cost | Therapy preferences fields |
+| **Goals** | Treatment objectives | Treatment goals field |
+| **Conversation** | Complete message history | messages table |
+
+**Reports Generated:**
+- Comprehensive therapist summary with all scores
+- Clinical recommendations based on severity
+- Risk assessment with safety protocols
+- Exportable in HTML, Text, and CSV formats
+
+See [REPORTING.md](REPORTING.md) for detailed documentation on the reporting system.
 
 ## 🛡️ Security & Privacy
 
 - **API keys** are stored server-side only (never exposed to client)
 - **CORS** is configured to only allow your frontend
-- **No data storage** - conversations are not saved (you'll need to add a database if you want persistence)
+- **Data storage** - All intake data is stored in a local SQLite database
 - **Environment variables** protect sensitive configuration
+
+**⚠️ IMPORTANT FOR PRODUCTION:**
+The current implementation stores data locally without encryption. For production use with real patient data:
+1. Implement database encryption at rest
+2. Use HTTPS/TLS for all communications
+3. Add user authentication and role-based access control
+4. Implement HIPAA-compliant audit logging
+5. Set up regular automated backups
+6. Add data retention and deletion policies
+7. Conduct security audits
+
+See [REPORTING.md](REPORTING.md) for more security considerations.
 
 ## 🐛 Troubleshooting
 
@@ -193,18 +229,24 @@ The AI must explicitly say "CRISIS_DETECTED" in its response. Test by mentioning
 
 ## 🔮 Next Steps / Enhancements
 
+**✅ Recently Added:**
+- ✅ **Database Integration** - SQLite storage for all intake data
+- ✅ **Report Generation** - Comprehensive therapist reports with PHQ-9/GAD-7 scores
+- ✅ **Data Export** - HTML, Text, and CSV export formats
+- ✅ **Clinical Scoring** - Automated calculation of assessment scores with severity levels
+
 **To make this production-ready, consider adding:**
 
-1. **Database Integration** - Store intake data (PostgreSQL, MongoDB)
-2. **Authentication** - User accounts and sessions
-3. **HIPAA Compliance** - Encryption, audit logs, BAA with hosting provider
-4. **Analytics Dashboard** - Track completion rates, common concerns
-5. **Multi-language Support** - i18n for Spanish, Mandarin, etc.
-6. **SMS/Email Notifications** - Send intake summary to clinicians
-7. **Video Chat Integration** - Seamless transition to live sessions
-8. **Progress Saving** - Allow users to pause and resume intake
-9. **Accessibility** - Screen reader support, keyboard navigation
-10. **Load Testing** - Ensure it scales for production traffic
+1. **Authentication** - User accounts and sessions tied to providers/patients
+2. **HIPAA Compliance** - Encryption, audit logs, BAA with hosting provider
+3. **Provider Dashboard** - View all patient intakes, track completion rates
+4. **Multi-language Support** - i18n for Spanish, Mandarin, etc.
+5. **SMS/Email Notifications** - Send intake summary to clinicians
+6. **Video Chat Integration** - Seamless transition to live sessions
+7. **Progress Saving** - Allow users to pause and resume intake
+8. **Accessibility** - Screen reader support, keyboard navigation
+9. **Load Testing** - Ensure it scales for production traffic
+10. **Follow-up Tracking** - Compare scores over time across multiple sessions
 
 ## 📝 License
 

@@ -12,6 +12,10 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [showCrisis, setShowCrisis] = useState(false);
   const [isComplete, setIsComplete] = useState(false);
+  const [sessionId, setSessionId] = useState(null);
+  const [showReport, setShowReport] = useState(false);
+  const [report, setReport] = useState(null);
+  const [loadingReport, setLoadingReport] = useState(false);
   const messagesEndRef = useRef(null);
 
   const scrollToBottom = () => {
@@ -22,9 +26,33 @@ function App() {
     scrollToBottom();
   }, [messages]);
 
+  // Create session on mount
+  useEffect(() => {
+    const createSession = async () => {
+      try {
+        const response = await fetch('/api/session/create', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        });
+
+        if (response.ok) {
+          const data = await response.json();
+          setSessionId(data.sessionId);
+          console.log('Session created:', data.sessionId);
+        }
+      } catch (error) {
+        console.error('Error creating session:', error);
+      }
+    };
+
+    createSession();
+  }, []);
+
   const sendMessage = async (e) => {
     e.preventDefault();
-    if (!input.trim() || isLoading) return;
+    if (!input.trim() || isLoading || !sessionId) return;
 
     const userMessage = { role: 'user', content: input };
     const newMessages = [...messages, userMessage];
@@ -39,7 +67,8 @@ function App() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          messages: newMessages
+          messages: newMessages,
+          sessionId: sessionId
         }),
       });
 
@@ -79,6 +108,52 @@ function App() {
     }
   };
 
+  const loadReport = async () => {
+    if (!sessionId) return;
+
+    setLoadingReport(true);
+    try {
+      const response = await fetch(`/api/report/${sessionId}`);
+      if (response.ok) {
+        const reportData = await response.json();
+        setReport(reportData);
+        setShowReport(true);
+      }
+    } catch (error) {
+      console.error('Error loading report:', error);
+      alert('Failed to load report. Please try again.');
+    } finally {
+      setLoadingReport(false);
+    }
+  };
+
+  const downloadReport = async (format) => {
+    if (!sessionId) return;
+
+    try {
+      const response = await fetch(`/api/report/${sessionId}/${format}`);
+      if (response.ok) {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `intake-report-${sessionId}.${format === 'html' ? 'html' : format}`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+      }
+    } catch (error) {
+      console.error('Error downloading report:', error);
+      alert('Failed to download report. Please try again.');
+    }
+  };
+
+  const viewHTMLReport = () => {
+    if (!sessionId) return;
+    window.open(`/api/report/${sessionId}/html`, '_blank');
+  };
+
   return (
     <div className="App">
       {showCrisis && (
@@ -111,8 +186,37 @@ function App() {
           <h1>Mental Health Intake</h1>
           <p className="subtitle">A safe space to share your story</p>
           {isComplete && (
-            <div className="completion-badge">
-              ✓ Intake Complete
+            <div className="completion-section">
+              <div className="completion-badge">
+                ✓ Intake Complete
+              </div>
+              <div className="report-actions">
+                <button
+                  onClick={loadReport}
+                  disabled={loadingReport}
+                  className="action-button primary"
+                >
+                  {loadingReport ? 'Loading...' : 'View Summary Report'}
+                </button>
+                <button
+                  onClick={viewHTMLReport}
+                  className="action-button"
+                >
+                  View Full Report
+                </button>
+                <button
+                  onClick={() => downloadReport('text')}
+                  className="action-button"
+                >
+                  Download (TXT)
+                </button>
+                <button
+                  onClick={() => downloadReport('csv')}
+                  className="action-button"
+                >
+                  Download (CSV)
+                </button>
+              </div>
             </div>
           )}
         </div>
@@ -151,6 +255,93 @@ function App() {
           </button>
         </form>
       </div>
+
+      {showReport && report && (
+        <div className="report-modal">
+          <div className="report-content">
+            <div className="report-header">
+              <h2>Intake Assessment Summary</h2>
+              <button onClick={() => setShowReport(false)} className="close-button">×</button>
+            </div>
+
+            <div className="report-body">
+              <section className="report-section">
+                <h3>Patient Information</h3>
+                <p><strong>Name:</strong> {report.patientInfo.name}</p>
+                <p><strong>Age:</strong> {report.patientInfo.age}</p>
+                <p><strong>Pronouns:</strong> {report.patientInfo.pronouns}</p>
+              </section>
+
+              <section className="report-section">
+                <h3>Presenting Concern</h3>
+                <p>{report.presentingConcern}</p>
+              </section>
+
+              {report.assessmentScores.phq9 && (
+                <section className="report-section score-section">
+                  <h3>PHQ-9 Depression Screening</h3>
+                  <div className="score-display">
+                    <div className="score-number">{report.assessmentScores.phq9.totalScore}/27</div>
+                    <div className={`severity severity-${report.assessmentScores.phq9.severity.toLowerCase().replace(' ', '-')}`}>
+                      {report.assessmentScores.phq9.severity}
+                    </div>
+                  </div>
+                  <p className="interpretation">{report.assessmentScores.phq9.interpretation}</p>
+                </section>
+              )}
+
+              {report.assessmentScores.gad7 && (
+                <section className="report-section score-section">
+                  <h3>GAD-7 Anxiety Screening</h3>
+                  <div className="score-display">
+                    <div className="score-number">{report.assessmentScores.gad7.totalScore}/21</div>
+                    <div className={`severity severity-${report.assessmentScores.gad7.severity.toLowerCase()}`}>
+                      {report.assessmentScores.gad7.severity}
+                    </div>
+                  </div>
+                  <p className="interpretation">{report.assessmentScores.gad7.interpretation}</p>
+                </section>
+              )}
+
+              <section className="report-section risk-section">
+                <h3>Risk Assessment</h3>
+                <div className={`risk-level risk-${report.riskAssessment.riskLevel.toLowerCase()}`}>
+                  Risk Level: {report.riskAssessment.riskLevel}
+                </div>
+                <div className="risk-details">
+                  <p><strong>Suicidal Ideation:</strong> {report.riskAssessment.suicidalIdeation}</p>
+                  <p><strong>Suicidal Plan:</strong> {report.riskAssessment.suicidalPlan}</p>
+                  <p><strong>Self-Harm:</strong> {report.riskAssessment.selfHarm}</p>
+                  <p><strong>Substance Use:</strong> {report.riskAssessment.substanceUse}</p>
+                </div>
+              </section>
+
+              <section className="report-section">
+                <h3>Treatment Goals</h3>
+                <p>{report.treatmentGoals}</p>
+              </section>
+
+              <section className="report-section">
+                <h3>Clinical Recommendations</h3>
+                <ul>
+                  {report.clinicalRecommendations.map((rec, idx) => (
+                    <li key={idx}>{rec}</li>
+                  ))}
+                </ul>
+              </section>
+            </div>
+
+            <div className="report-footer">
+              <button onClick={() => setShowReport(false)} className="action-button">
+                Close
+              </button>
+              <button onClick={viewHTMLReport} className="action-button primary">
+                View Full Report
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
