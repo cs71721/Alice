@@ -1,264 +1,256 @@
-# Mental Health Intake Chatbot
+# Alice - Emotional Support Companion
 
-A conversational AI-powered mental health intake system that feels human, not mechanical. Built with Claude AI, React, and Node.js.
+A compassionate AI-powered emotional support chatbot that provides warm, human-like conversation for people seeking someone to talk to. Built with Claude Sonnet 4.5 by Anthropic.
 
 ## 🎯 What This Does
 
-Alice (or any user) lands on the service and has a natural conversation with an empathetic AI assistant that:
+Alice is an empathetic conversational companion that:
 
-- **Gathers comprehensive intake information** naturally through conversation
-- **Conducts clinical assessments** (PHQ-9 for depression, GAD-7 for anxiety)
-- **Screens for risk** (suicidal ideation, self-harm, substance use)
-- **Collects preferences** (therapy style, scheduling, language, cost)
-- **Identifies goals** for treatment
-- **Detects crises** automatically and provides immediate resources
-- **Generates comprehensive reports** with PHQ-9/GAD-7 scores and clinical recommendations
-- **Exports data** in multiple formats (HTML, Text, CSV)
+- 💬 **Provides genuine emotional support** through natural, human-like conversation
+- 🌍 **Automatically detects your location** (via IP) and provides country-appropriate crisis resources
+- 🎨 **Beautiful, calming interface** with gradient design and smooth animations
+- 📝 **Formats responses properly** with markdown support (bold text, etc.)
+- 💾 **Lets you save conversations** as downloadable text files
+- 🔄 **Easy to restart** with a single click for new conversations
+- 🔒 **Privacy-focused** - Your API key stays in your browser, conversations aren't stored server-side
+- ⚡ **Zero setup complexity** - Just open in browser, add API key, and start chatting
 
-**The key difference:** Instead of filling out forms, users have a genuine conversation. The chatbot knows its stuff but speaks like a human being. Plus, all data is now captured, scored, and formatted into professional reports for therapists.
-
-## 🏗️ Architecture
-
-```
-mental-health-intake-chatbot/
-├── server/
-│   ├── index.js              # Express API server with Claude integration
-│   ├── database.js           # SQLite database setup and operations
-│   ├── scoring.js            # PHQ-9/GAD-7 scoring algorithms
-│   ├── reportGenerator.js    # Report generation (HTML/Text/CSV)
-│   └── intake_sessions.db    # SQLite database (created on first run)
-├── client/
-│   ├── public/
-│   │   └── index.html        # HTML entry point
-│   └── src/
-│       ├── App.js            # Main chat interface with report viewing
-│       ├── App.css           # Styling (includes report modal)
-│       ├── index.js          # React entry point
-│       └── index.css         # Global styles
-├── package.json              # Root dependencies
-├── .env.example              # Environment variable template
-├── README.md                 # This file
-└── REPORTING.md              # Detailed reporting system documentation
-```
+**The key difference:** This isn't a questionnaire or form. It's a genuine conversation with an AI that listens, validates emotions, and provides appropriate support and resources.
 
 ## 🚀 Quick Start
 
-### Prerequisites
-
-- Node.js 16+ and npm
+**Prerequisites:**
+- Node.js 16+ (for the proxy server)
 - Anthropic API key ([get one here](https://console.anthropic.com/))
 
-### Installation
+**Run in 3 steps:**
 
-1. **Clone and navigate to the project:**
+1. **Start the proxy server:**
    ```bash
-   cd /path/to/mental-health-intake-chatbot
+   cd /path/to/Alice
+   node proxy-server.js
    ```
 
-2. **Install all dependencies:**
-   ```bash
-   npm run install-all
-   ```
+2. **Open in browser:**
+   - Navigate to `http://localhost:8080/`
 
-3. **Set up environment variables:**
-   ```bash
-   cp .env.example .env
-   ```
+3. **Add your API key:**
+   - Paste your Anthropic API key when prompted
+   - Click "Save Key"
+   - Start chatting!
 
-4. **Edit `.env` and add your API key:**
-   ```
-   ANTHROPIC_API_KEY=sk-ant-your-actual-api-key-here
-   PORT=3001
-   CLIENT_URL=http://localhost:3000
-   ```
+**That's it!** No complex setup, no database configuration, no environment variables to manage.
 
-### Running the Application
+## 📁 What's In This Folder
 
-**Option 1: Run both server and client together (recommended):**
-```bash
-npm run dev
+```
+Alice/
+├── emotional-support-chatbot.html    # Main chatbot (single HTML file)
+├── proxy-server.js                   # Simple CORS proxy server
+├── README.md                         # This file
+├── ROADMAP.md                        # Product vision and future plans
+├── .gitignore                        # Git ignore rules
+└── archive/                          # Old intake system (archived)
 ```
 
-**Option 2: Run separately:**
+**That's it!** Just two files for the chatbot - couldn't be simpler.
 
-Terminal 1 (Backend):
-```bash
-npm run server
-```
+## 🌍 Location-Aware Crisis Resources
 
-Terminal 2 (Frontend):
-```bash
-npm run client
-```
+Alice automatically detects which country you're in and provides appropriate crisis helplines:
 
-### Access the Application
+| Country | Crisis Helplines |
+|---------|------------------|
+| 🇬🇧 **United Kingdom** | Samaritans: 116 123 (24/7, free)<br>Text SHOUT to 85258<br>NHS 111 for mental health crisis |
+| 🇺🇸 **United States** | 988 Suicide & Crisis Lifeline (call or text)<br>Crisis Text Line: Text HOME to 741741 |
+| 🇨🇦 **Canada** | Talk Suicide Canada: 1-833-456-4566<br>Crisis Text Line: Text HOME to 686868 |
+| 🇦🇺 **Australia** | Lifeline: 13 11 14<br>Beyond Blue: 1300 22 4636 |
+| 🇮🇪 **Ireland** | Samaritans: 116 123<br>Pieta House: 1800 247 247 |
+| 🌍 **Other Countries** | Befrienders Worldwide: befrienders.org |
 
-Open your browser and go to: **http://localhost:3000**
+## 💡 How It Works
 
-The chatbot will greet you and start the intake conversation naturally!
+### The Conversation
 
-## 💬 How It Works
+Alice uses a carefully crafted system prompt that makes it:
 
-### Conversation Flow
+- **Genuinely empathetic** - Validates emotions before problem-solving
+- **Non-judgmental** - Honors that all feelings are valid
+- **Safety-aware** - Subtly assesses for crisis indicators
+- **Human-like** - Uses your words and metaphors, avoids clinical jargon
+- **Appropriately boundaried** - Knows when to recommend professional help
 
-1. **Greeting & Name** - Warm introduction, asks for name
-2. **Presenting Concerns** - "What brings you here today?"
-3. **Demographics** - Age, pronouns, location (woven naturally)
-4. **PHQ-9 Assessment** - Depression screening (9 questions over past 2 weeks)
-5. **GAD-7 Assessment** - Anxiety screening (7 questions)
-6. **Risk Screening** - Suicidal ideation, self-harm, substance use
-7. **Preferences** - Therapy style, scheduling, language, cost
-8. **Goals** - What they hope to achieve
+### Technical Architecture
 
-### Crisis Detection
+**Frontend (emotional-support-chatbot.html):**
+- Single-page application with vanilla JavaScript
+- Stores API key in browser localStorage
+- Detects country via IP geolocation (ipapi.co API)
+- Markdown parser for formatting bot responses
+- Responsive design that works on mobile and desktop
 
-If the AI detects high-risk indicators:
-- Red crisis banner appears at the top
-- Shows immediate resources (988 Lifeline, Crisis Text Line, Emergency Services)
-- Conversation continues but with appropriate urgency
+**Backend (proxy-server.js):**
+- Simple Node.js HTTP server
+- Proxies requests to Anthropic API (bypasses CORS)
+- Serves the HTML file
+- No data persistence - completely stateless
 
-### Completion
+## 🛠️ Customization
 
-When all information is gathered:
-- "✓ Intake Complete" badge appears
-- AI provides warm summary and next steps
-- **Report buttons appear** allowing therapists to:
-  - View summary report (modal with key findings)
-  - View full HTML report (printable, detailed)
-  - Download text report (.txt file)
-  - Download CSV data (for analytics)
-- All assessment scores are automatically calculated
-- Clinical recommendations are generated based on severity
+### Change the Conversation Style
 
-## 🔧 Configuration
+Edit `emotional-support-chatbot.html` around **line 486** to modify the system prompt:
 
-### Adjusting the System Prompt
-
-Edit `/server/index.js` around line 30 to modify:
-- Conversation tone/style
-- Question order and phrasing
-- Clinical frameworks
-- What information to prioritize
-
-### Changing the Model
-
-In `/server/index.js`, line 119:
 ```javascript
-model: 'claude-3-5-sonnet-20241022',  // Change this
+const SYSTEM_PROMPT = `You are a compassionate emotional support companion...`
 ```
 
-Available models:
-- `claude-3-5-sonnet-20241022` (recommended - balanced quality & speed)
-- `claude-3-opus-20240229` (highest quality, slower)
-- `claude-3-haiku-20240307` (fastest, lower cost)
+You can adjust:
+- Tone and warmth level
+- Response length
+- How directive vs. reflective the bot is
+- Crisis detection sensitivity
 
-### Adjusting UI/Styling
+### Update the AI Model
 
-Edit `/client/src/App.css` to customize:
-- Colors and gradients
-- Message bubble styles
-- Crisis banner appearance
-- Animations and transitions
+Around **line 718**, change the model:
 
-## 📊 Data Collected & Stored
+```javascript
+model: 'claude-sonnet-4-5-20250929',  // Current model
+```
 
-The chatbot systematically gathers and **stores in a SQLite database**:
+Available Claude models:
+- `claude-sonnet-4-5-20250929` (recommended - best balance)
+- `claude-opus-4-20250514` (highest quality, slower, more expensive)
+- `claude-3-5-haiku-20241022` (fastest, cheapest, lighter responses)
 
-| Category | Information | Stored In |
-|----------|-------------|-----------|
-| **Demographics** | Name, age, pronouns, location | intake_sessions table |
-| **Clinical** | PHQ-9 score (0-27), GAD-7 score (0-21) | Calculated and stored with severity levels |
-| **Assessment Details** | Individual responses to all PHQ-9 and GAD-7 questions | phq9_responses & gad7_responses tables |
-| **Risk** | Suicidal ideation, self-harm, substance use, safety concerns | Risk assessment fields with HIGH/MODERATE/LOW rating |
-| **Preferences** | Therapy approach, availability, language, cost | Therapy preferences fields |
-| **Goals** | Treatment objectives | Treatment goals field |
-| **Conversation** | Complete message history | messages table |
+### Customize the Design
 
-**Reports Generated:**
-- Comprehensive therapist summary with all scores
-- Clinical recommendations based on severity
-- Risk assessment with safety protocols
-- Exportable in HTML, Text, and CSV formats
+Edit the `<style>` section (lines 7-400) to change:
+- **Colors:** Gradients, backgrounds, text colors
+- **Message bubbles:** Border radius, padding, shadows
+- **Animations:** Fade-in effects, typing indicator
+- **Layout:** Spacing, button styles, header design
 
-See [REPORTING.md](REPORTING.md) for detailed documentation on the reporting system.
+The design uses CSS custom properties, so you can easily theme it!
 
-## 🛡️ Security & Privacy
+## 🔒 Security & Privacy
 
-- **API keys** are stored server-side only (never exposed to client)
-- **CORS** is configured to only allow your frontend
-- **Data storage** - All intake data is stored in a local SQLite database
-- **Environment variables** protect sensitive configuration
+**What's Stored:**
+- ✅ API key in browser localStorage (never sent to any server except Anthropic)
+- ✅ Current conversation in browser memory (lost on page refresh)
+- ❌ No server-side conversation storage
+- ❌ No user accounts or authentication
+- ❌ No analytics or tracking
 
-**⚠️ IMPORTANT FOR PRODUCTION:**
-The current implementation stores data locally without encryption. For production use with real patient data:
-1. Implement database encryption at rest
-2. Use HTTPS/TLS for all communications
-3. Add user authentication and role-based access control
-4. Implement HIPAA-compliant audit logging
-5. Set up regular automated backups
-6. Add data retention and deletion policies
-7. Conduct security audits
+**Geolocation:**
+- Only detects your country (not city/address)
+- Uses free ipapi.co service
+- If it fails, bot still works but provides all countries' resources
 
-See [REPORTING.md](REPORTING.md) for more security considerations.
+**API Security:**
+- Proxy server prevents direct API key exposure to browser
+- CORS headers protect against cross-origin attacks
+- API key never logged or stored server-side
+
+**⚠️ For Production Use:**
+- Run behind HTTPS/TLS (not HTTP)
+- Implement rate limiting on proxy server
+- Add authentication if storing conversations
+- Consider HIPAA compliance requirements for health data
 
 ## 🐛 Troubleshooting
 
-### "Cannot connect to server"
-- Check that backend is running on port 3001
-- Verify `.env` file has correct `ANTHROPIC_API_KEY`
-- Check console for errors: `npm run server`
+### "Load failed" or Connection Errors
 
-### "API key invalid"
-- Ensure you copied the full API key from Anthropic Console
-- Key should start with `sk-ant-`
-- No extra spaces or quotes in `.env` file
+**Problem:** Can't connect to Claude API
 
-### Port already in use
-Change ports in `.env`:
-```
-PORT=3002  # Backend port
-```
+**Solutions:**
+- Ensure proxy server is running: `node proxy-server.js`
+- Check you're accessing `http://localhost:8080` (not `file://`)
+- Verify API key is correct (starts with `sk-ant-`)
+- Check Node.js console for error messages
 
-And update proxy in `client/package.json`:
-```json
-"proxy": "http://localhost:3002"
-```
+### Country Not Detected
 
-### Crisis banner won't appear
-The AI must explicitly say "CRISIS_DETECTED" in its response. Test by mentioning serious self-harm or suicidal thoughts.
+**Problem:** "Unknown" location shown in console
 
-## 🔮 Next Steps / Enhancements
+**Solutions:**
+- Check browser console for errors
+- ipapi.co may be blocked by firewall/VPN
+- Turn off VPN temporarily
+- It's okay - bot will still work and list all countries' resources
 
-**✅ Recently Added:**
-- ✅ **Database Integration** - SQLite storage for all intake data
-- ✅ **Report Generation** - Comprehensive therapist reports with PHQ-9/GAD-7 scores
-- ✅ **Data Export** - HTML, Text, and CSV export formats
-- ✅ **Clinical Scoring** - Automated calculation of assessment scores with severity levels
+### Text Truncated or Formatting Issues
 
-**To make this production-ready, consider adding:**
+**Problem:** Message bubbles cut off or formatting broken
 
-1. **Authentication** - User accounts and sessions tied to providers/patients
-2. **HIPAA Compliance** - Encryption, audit logs, BAA with hosting provider
-3. **Provider Dashboard** - View all patient intakes, track completion rates
-4. **Multi-language Support** - i18n for Spanish, Mandarin, etc.
-5. **SMS/Email Notifications** - Send intake summary to clinicians
-6. **Video Chat Integration** - Seamless transition to live sessions
-7. **Progress Saving** - Allow users to pause and resume intake
-8. **Accessibility** - Screen reader support, keyboard navigation
-9. **Load Testing** - Ensure it scales for production traffic
-10. **Follow-up Tracking** - Compare scores over time across multiple sessions
+**Solutions:**
+- Hard refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
+- Clear localStorage: Open browser console and run `localStorage.clear()`
+- Check if browser is up to date
+- Try a different browser (Chrome, Firefox, Safari all supported)
+
+### API Key Not Saving
+
+**Problem:** Have to re-enter API key every time
+
+**Solutions:**
+- Check if browser blocks localStorage (privacy settings)
+- Try a different browser
+- Ensure cookies/site data are allowed for localhost
+- Check browser console for errors
+
+## 🔮 Future Enhancements
+
+See [ROADMAP.md](ROADMAP.md) for the complete product vision.
+
+**Short-term ideas:**
+- **Voice input** - Speak instead of type
+- **Session persistence** - Save conversations across page refreshes
+- **Themes** - Dark mode, high contrast, colorblind-friendly
+- **More languages** - Multi-language support beyond English
+- **Mobile app** - Native iOS/Android versions
+
+**Long-term vision:**
+- **Therapist matching** - Connect users with human therapists
+- **Outcome tracking** - Follow-up assessments over time
+- **Blended care** - Coordinate AI + human therapy
+- **Group support** - Facilitated peer support groups
 
 ## 📝 License
 
-MIT - feel free to use and modify for your needs.
+MIT - Feel free to use and modify for your needs.
 
-## 🤝 Support
+## 🤝 Contributing
 
-For issues or questions:
-1. Check the Troubleshooting section above
-2. Review Anthropic API docs: https://docs.anthropic.com
-3. Check React documentation: https://react.dev
+This is a personal project, but ideas and feedback are welcome!
+
+- **Report bugs:** Open an issue on GitHub
+- **Suggest features:** Describe your use case
+- **Submit improvements:** Pull requests accepted
+
+## 💬 About
+
+**Why Alice?**
+
+Mental health support should be accessible, immediate, and human. Alice provides a safe space for people to express themselves without judgment, while intelligently routing to professional help when needed.
+
+**Built with:**
+- Claude Sonnet 4.5 (Anthropic's latest AI model)
+- Vanilla JavaScript (no frameworks = simple and fast)
+- Node.js proxy (minimal backend)
+- Love and care for mental health ❤️
 
 ---
 
-**Built with ❤️ for better mental health access**
+**Questions?**
+- Anthropic API docs: https://docs.anthropic.com
+- Claude model info: https://www.anthropic.com/claude
+
+**Emergency?**
+If you're in crisis, please use the resources above or call emergency services (999 in UK, 911 in US).
+
+---
+
+*Built with ❤️ for better mental health access*
