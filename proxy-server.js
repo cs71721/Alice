@@ -4,6 +4,7 @@ const fs = require('fs');
 const path = require('path');
 
 const PORT = 8080;
+const HOST = '0.0.0.0'; // Listen on all network interfaces
 
 const server = http.createServer((req, res) => {
     // Set CORS headers
@@ -102,8 +103,9 @@ const server = http.createServer((req, res) => {
     });
 });
 
-server.listen(PORT, () => {
+server.listen(PORT, HOST, () => {
     console.log(`🚀 Proxy server running at http://localhost:${PORT}/`);
+    console.log(`🌐 Also accessible at http://192.168.1.43:${PORT}/ (local network)`);
     console.log(`📁 Serving files from: ${__dirname}`);
     console.log(`🔄 Proxying API requests to Anthropic API`);
 });
