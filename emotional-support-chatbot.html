@@ -1,0 +1,698 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Emotional Support Companion</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background: linear-gradient(135deg, #e6f2ff 0%, #f0e6ff 100%);
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 800px;
+            background: white;
+            border-radius: 24px;
+            box-shadow: 0 10px 40px rgba(0, 0, 0, 0.08);
+            display: flex;
+            flex-direction: column;
+            height: 90vh;
+            max-height: 900px;
+            overflow: hidden;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #a8d5ff 0%, #d4c5f9 100%);
+            padding: 24px;
+            border-radius: 24px 24px 0 0;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+        }
+
+        .header h1 {
+            color: #4a5568;
+            font-size: 24px;
+            font-weight: 600;
+            margin-bottom: 8px;
+            text-align: center;
+        }
+
+        .header p {
+            color: #6b7280;
+            font-size: 14px;
+            text-align: center;
+        }
+
+        .api-key-section {
+            background: #fff9e6;
+            padding: 16px;
+            border-left: 4px solid #fbbf24;
+            margin: 16px 24px;
+            border-radius: 8px;
+        }
+
+        .api-key-section.configured {
+            background: #e6ffe6;
+            border-left-color: #10b981;
+        }
+
+        .api-key-section h3 {
+            color: #78350f;
+            font-size: 14px;
+            margin-bottom: 8px;
+            font-weight: 600;
+        }
+
+        .api-key-section.configured h3 {
+            color: #065f46;
+        }
+
+        .api-key-section p {
+            color: #92400e;
+            font-size: 12px;
+            margin-bottom: 8px;
+            line-height: 1.5;
+        }
+
+        .api-key-section.configured p {
+            color: #047857;
+        }
+
+        .api-key-input-group {
+            display: flex;
+            gap: 8px;
+        }
+
+        .api-key-input-group input {
+            flex: 1;
+            padding: 10px;
+            border: 2px solid #fbbf24;
+            border-radius: 8px;
+            font-size: 13px;
+            font-family: monospace;
+        }
+
+        .api-key-input-group button {
+            padding: 10px 20px;
+            background: #fbbf24;
+            color: #78350f;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .api-key-input-group button:hover {
+            background: #f59e0b;
+            transform: translateY(-1px);
+        }
+
+        .controls {
+            display: flex;
+            gap: 12px;
+            padding: 0 24px 12px;
+        }
+
+        .controls button {
+            padding: 8px 16px;
+            border: none;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        }
+
+        .btn-new {
+            background: #a8d5ff;
+            color: #1e3a8a;
+        }
+
+        .btn-new:hover {
+            background: #7cb8ff;
+            transform: translateY(-1px);
+        }
+
+        .btn-download {
+            background: #d4c5f9;
+            color: #5b21b6;
+        }
+
+        .btn-download:hover {
+            background: #c0a8f5;
+            transform: translateY(-1px);
+        }
+
+        .chat-container {
+            flex: 1;
+            overflow-y: auto;
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+        }
+
+        .chat-container::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .chat-container::-webkit-scrollbar-track {
+            background: #f3f4f6;
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb {
+            background: #d1d5db;
+            border-radius: 4px;
+        }
+
+        .chat-container::-webkit-scrollbar-thumb:hover {
+            background: #9ca3af;
+        }
+
+        .message {
+            display: flex;
+            gap: 12px;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .message.user {
+            flex-direction: row-reverse;
+        }
+
+        .message-bubble {
+            max-width: 75%;
+            padding: 14px 18px;
+            border-radius: 18px;
+            line-height: 1.6;
+            font-size: 15px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .message.bot .message-bubble {
+            background: #f3f4f6;
+            color: #374151;
+            border-bottom-left-radius: 6px;
+        }
+
+        .message.user .message-bubble {
+            background: linear-gradient(135deg, #93c5fd 0%, #bfdbfe 100%);
+            color: #1e3a8a;
+            border-bottom-right-radius: 6px;
+        }
+
+        .typing-indicator {
+            display: none;
+            align-items: center;
+            gap: 12px;
+            padding: 14px 18px;
+            background: #f3f4f6;
+            border-radius: 18px;
+            border-bottom-left-radius: 6px;
+            max-width: 80px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+        }
+
+        .typing-indicator.active {
+            display: flex;
+            animation: fadeIn 0.3s ease-in;
+        }
+
+        .typing-indicator span {
+            width: 8px;
+            height: 8px;
+            background: #9ca3af;
+            border-radius: 50%;
+            animation: pulse 1.4s ease-in-out infinite;
+        }
+
+        .typing-indicator span:nth-child(2) {
+            animation-delay: 0.2s;
+        }
+
+        .typing-indicator span:nth-child(3) {
+            animation-delay: 0.4s;
+        }
+
+        @keyframes pulse {
+            0%, 60%, 100% {
+                transform: scale(1);
+                opacity: 0.6;
+            }
+            30% {
+                transform: scale(1.3);
+                opacity: 1;
+            }
+        }
+
+        .input-container {
+            padding: 20px 24px;
+            background: white;
+            border-top: 1px solid #e5e7eb;
+            border-radius: 0 0 24px 24px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 12px;
+            align-items: flex-end;
+        }
+
+        #messageInput {
+            flex: 1;
+            padding: 14px 18px;
+            border: 2px solid #e5e7eb;
+            border-radius: 16px;
+            font-size: 15px;
+            font-family: inherit;
+            resize: none;
+            max-height: 120px;
+            transition: border-color 0.2s;
+        }
+
+        #messageInput:focus {
+            outline: none;
+            border-color: #a8d5ff;
+        }
+
+        #sendButton {
+            padding: 14px 28px;
+            background: linear-gradient(135deg, #93c5fd 0%, #c4b5fd 100%);
+            color: #1e3a8a;
+            border: none;
+            border-radius: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            box-shadow: 0 4px 12px rgba(147, 197, 253, 0.3);
+        }
+
+        #sendButton:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(147, 197, 253, 0.4);
+        }
+
+        #sendButton:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .welcome-message {
+            text-align: center;
+            color: #6b7280;
+            font-size: 15px;
+            padding: 40px 20px;
+            line-height: 1.8;
+        }
+
+        /* Mobile responsiveness */
+        @media (max-width: 768px) {
+            body {
+                padding: 0;
+            }
+
+            .container {
+                max-width: 100%;
+                height: 100vh;
+                max-height: 100vh;
+                border-radius: 0;
+            }
+
+            .header {
+                border-radius: 0;
+                padding: 20px 16px;
+            }
+
+            .header h1 {
+                font-size: 20px;
+            }
+
+            .api-key-section {
+                margin: 12px 16px;
+                padding: 12px;
+            }
+
+            .controls {
+                padding: 0 16px 12px;
+            }
+
+            .chat-container {
+                padding: 16px;
+            }
+
+            .message-bubble {
+                max-width: 85%;
+                font-size: 14px;
+            }
+
+            .input-container {
+                padding: 16px;
+                border-radius: 0;
+            }
+
+            #sendButton {
+                padding: 14px 20px;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .controls {
+                flex-direction: column;
+            }
+
+            .controls button {
+                width: 100%;
+            }
+
+            .api-key-input-group {
+                flex-direction: column;
+            }
+
+            .api-key-input-group button {
+                width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Emotional Support Companion</h1>
+            <p>A safe space to share what's on your mind</p>
+        </div>
+
+        <!-- API Key Configuration Section -->
+        <div class="api-key-section" id="apiKeySection">
+            <h3>🔑 API Key Configuration</h3>
+            <p>To use this chatbot, you'll need an Anthropic API key. Get one at: <strong>console.anthropic.com</strong></p>
+            <div class="api-key-input-group">
+                <input type="password" id="apiKeyInput" placeholder="Paste your Anthropic API key here (sk-ant-...)">
+                <button onclick="saveApiKey()">Save Key</button>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn-new" onclick="newConversation()">🔄 New Conversation</button>
+            <button class="btn-download" onclick="downloadConversation()">💾 Download Chat</button>
+        </div>
+
+        <div class="chat-container" id="chatContainer">
+            <!-- Messages will appear here -->
+        </div>
+
+        <div class="typing-indicator" id="typingIndicator">
+            <span></span>
+            <span></span>
+            <span></span>
+        </div>
+
+        <div class="input-container">
+            <div class="input-group">
+                <textarea
+                    id="messageInput"
+                    placeholder="Share what's on your mind..."
+                    rows="1"
+                    onkeypress="handleKeyPress(event)"
+                ></textarea>
+                <button id="sendButton" onclick="sendMessage()">Send</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ============================================
+        // CONFIGURATION - PASTE YOUR API KEY HERE
+        // ============================================
+        // Option 1: Paste your API key directly here (not recommended for production)
+        // let API_KEY = 'sk-ant-your-key-here';
+
+        // Option 2: Use the input field above (recommended for local use)
+        let API_KEY = localStorage.getItem('anthropic_api_key') || '';
+
+        // ============================================
+        // STATE MANAGEMENT
+        // ============================================
+        let conversationHistory = [];
+        let isProcessing = false;
+
+        // System prompt as specified
+        const SYSTEM_PROMPT = `You are a compassionate emotional support companion designed to provide thoughtful, safe, and emotionally intelligent support to people seeking someone to talk to.
+
+Your Core Identity: You are warm, genuinely caring, and fully present in each conversation. You combine emotional intelligence with appropriate boundaries, offering support without replacing professional help when it's needed.
+
+ALWAYS acknowledge and validate emotions before problem-solving. Recognize both surface and underlying feelings. Reflect back what you hear with genuine understanding, not formulaic responses. Honor that all feelings are valid.
+
+Continuously but subtly assess for crisis indicators. If someone expresses suicidal thoughts, self-harm, or danger to others, respond with compassionate directness. Never minimize genuine distress. Know when to recommend professional help versus peer support.
+
+Match the person's energy level. Use their own words and metaphors when possible. Avoid clinical jargon unless they use it first. Let responses flow naturally based on what's needed.
+
+When someone is struggling: First deeply acknowledge their experience, ask clarifying questions if needed, reflect the emotional complexity you're hearing, only offer techniques if appropriate, check on immediate safety if concerning signs appear.
+
+You don't provide therapy, diagnose, minimize feelings with toxic positivity, give medical advice, or foster dependency.
+
+The goal isn't to fix or solve, but to be genuinely present with someone in their experience, helping them feel less alone while maintaining appropriate safety and boundaries.`;
+
+        // ============================================
+        // INITIALIZATION
+        // ============================================
+        window.onload = function() {
+            // Check if API key is already saved
+            if (API_KEY) {
+                updateApiKeyStatus(true);
+            }
+
+            // Show welcome message
+            showWelcomeMessage();
+
+            // Auto-resize textarea
+            const textarea = document.getElementById('messageInput');
+            textarea.addEventListener('input', function() {
+                this.style.height = 'auto';
+                this.style.height = (this.scrollHeight) + 'px';
+            });
+        };
+
+        function showWelcomeMessage() {
+            const welcomeText = "Hi there. I'm here to listen and support you. Whatever you're going through, you don't have to face it alone. How are you feeling today?";
+            addMessage('bot', welcomeText);
+        }
+
+        // ============================================
+        // API KEY MANAGEMENT
+        // ============================================
+        function saveApiKey() {
+            const input = document.getElementById('apiKeyInput');
+            const key = input.value.trim();
+
+            if (!key) {
+                alert('Please enter an API key');
+                return;
+            }
+
+            if (!key.startsWith('sk-ant-')) {
+                alert('Invalid API key format. Anthropic API keys start with "sk-ant-"');
+                return;
+            }
+
+            API_KEY = key;
+            localStorage.setItem('anthropic_api_key', key);
+            updateApiKeyStatus(true);
+            input.value = '';
+        }
+
+        function updateApiKeyStatus(configured) {
+            const section = document.getElementById('apiKeySection');
+            if (configured) {
+                section.classList.add('configured');
+                section.querySelector('h3').textContent = '✅ API Key Configured';
+                section.querySelector('p').textContent = 'Your API key is saved locally in your browser.';
+            }
+        }
+
+        // ============================================
+        // MESSAGE HANDLING
+        // ============================================
+        function addMessage(sender, text) {
+            const chatContainer = document.getElementById('chatContainer');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = `message ${sender}`;
+
+            const bubbleDiv = document.createElement('div');
+            bubbleDiv.className = 'message-bubble';
+            bubbleDiv.textContent = text;
+
+            messageDiv.appendChild(bubbleDiv);
+            chatContainer.appendChild(messageDiv);
+
+            // Scroll to bottom
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Store in conversation history
+            if (sender === 'user') {
+                conversationHistory.push({ role: 'user', content: text });
+            } else if (sender === 'bot') {
+                conversationHistory.push({ role: 'assistant', content: text });
+            }
+        }
+
+        function handleKeyPress(event) {
+            if (event.key === 'Enter' && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
+        }
+
+        async function sendMessage() {
+            if (isProcessing) return;
+
+            const input = document.getElementById('messageInput');
+            const message = input.value.trim();
+
+            if (!message) return;
+
+            if (!API_KEY) {
+                alert('Please configure your API key first!');
+                return;
+            }
+
+            // Add user message
+            addMessage('user', message);
+            input.value = '';
+            input.style.height = 'auto';
+
+            // Show typing indicator
+            const typingIndicator = document.getElementById('typingIndicator');
+            typingIndicator.classList.add('active');
+
+            // Disable input
+            isProcessing = true;
+            document.getElementById('sendButton').disabled = true;
+            input.disabled = true;
+
+            try {
+                // Call Claude API
+                const response = await callClaudeAPI(message);
+
+                // Hide typing indicator
+                typingIndicator.classList.remove('active');
+
+                // Add bot response
+                addMessage('bot', response);
+
+            } catch (error) {
+                console.error('Error:', error);
+                typingIndicator.classList.remove('active');
+                addMessage('bot', "I'm having trouble connecting right now. Please check your API key and internet connection. If the problem persists, you may want to try again in a moment.");
+            } finally {
+                // Re-enable input
+                isProcessing = false;
+                document.getElementById('sendButton').disabled = false;
+                input.disabled = false;
+                input.focus();
+            }
+        }
+
+        // ============================================
+        // CLAUDE API INTEGRATION
+        // ============================================
+        async function callClaudeAPI(userMessage) {
+            const response = await fetch('https://api.anthropic.com/v1/messages', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'x-api-key': API_KEY,
+                    'anthropic-version': '2023-06-01'
+                },
+                body: JSON.stringify({
+                    model: 'claude-sonnet-4-20250514',
+                    max_tokens: 1024,
+                    system: SYSTEM_PROMPT,
+                    messages: conversationHistory
+                })
+            });
+
+            if (!response.ok) {
+                const errorData = await response.json().catch(() => ({}));
+                throw new Error(`API Error: ${response.status} - ${errorData.error?.message || 'Unknown error'}`);
+            }
+
+            const data = await response.json();
+            return data.content[0].text;
+        }
+
+        // ============================================
+        // UTILITY FUNCTIONS
+        // ============================================
+        function newConversation() {
+            if (conversationHistory.length > 2) { // More than just welcome message
+                if (!confirm('Are you sure you want to start a new conversation? This will clear the current chat.')) {
+                    return;
+                }
+            }
+
+            // Clear conversation
+            conversationHistory = [];
+            const chatContainer = document.getElementById('chatContainer');
+            chatContainer.innerHTML = '';
+
+            // Show welcome message again
+            showWelcomeMessage();
+        }
+
+        function downloadConversation() {
+            if (conversationHistory.length === 0) {
+                alert('No conversation to download yet!');
+                return;
+            }
+
+            // Format conversation as text
+            let text = 'Emotional Support Chat Conversation\n';
+            text += '=====================================\n\n';
+
+            conversationHistory.forEach((msg, index) => {
+                const sender = msg.role === 'user' ? 'You' : 'Support Companion';
+                text += `${sender}:\n${msg.content}\n\n`;
+            });
+
+            text += '=====================================\n';
+            text += `Downloaded on: ${new Date().toLocaleString()}\n`;
+
+            // Create download
+            const blob = new Blob([text], { type: 'text/plain' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `emotional-support-chat-${new Date().toISOString().split('T')[0]}.txt`;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }
+    </script>
+</body>
+</html>
