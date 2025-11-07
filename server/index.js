@@ -227,7 +227,7 @@ Remember: You're a skilled clinician having a genuine conversation, not administ
 
     // Call Claude API
     const response = await anthropic.messages.create({
-      model: 'claude-sonnet-4-20250514',
+      model: 'claude-sonnet-4-5-20250929',
       max_tokens: 4000,
       system: systemPrompt,
       messages: messages
