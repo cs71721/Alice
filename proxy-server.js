@@ -63,7 +63,8 @@ const server = http.createServer((req, res) => {
     // Serve static files
     let filePath = '.' + req.url;
     if (filePath === './') {
-        filePath = './emotional-support-chatbot.html';
+        // Serve private version with embedded API key for family use
+        filePath = './emotional-support-chatbot.private.html';
     }
 
     const extname = String(path.extname(filePath)).toLowerCase();

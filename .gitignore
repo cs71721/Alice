@@ -5,6 +5,9 @@ client/node_modules/
 # Environment variables
 .env
 
+# Private version with embedded API key (DO NOT COMMIT)
+emotional-support-chatbot.private.html
+
 # Build outputs
 client/build/
 dist/
