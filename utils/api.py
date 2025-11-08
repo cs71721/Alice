@@ -37,12 +37,24 @@ class APIClient:
 
         if not self.api_key:
             logging.warning(f"API Key for model_type '{self.model_type}' not found in environment variables.")
-        self.headers = {
-            "Content-Type": "application/json",
-            "Authorization": f"Bearer {self.api_key}"
-        }
 
-        logging.debug(f"Initialized {self.model_type} API client with URL: {self.base_url}")
+        # Detect if this is Anthropic API
+        self.is_anthropic = "api.anthropic.com" in self.base_url
+
+        # Set appropriate headers based on API type
+        if self.is_anthropic:
+            self.headers = {
+                "Content-Type": "application/json",
+                "x-api-key": self.api_key,
+                "anthropic-version": "2023-06-01"
+            }
+        else:
+            self.headers = {
+                "Content-Type": "application/json",
+                "Authorization": f"Bearer {self.api_key}"
+            }
+
+        logging.debug(f"Initialized {self.model_type} API client with URL: {self.base_url} (Anthropic: {self.is_anthropic})")
 
     def generate(self, model: str, messages: List[Dict[str, str]], temperature: float = 0.7, max_tokens: int = 4000, min_p: Optional[float] = 0.1) -> str:
         """
@@ -56,22 +68,57 @@ class APIClient:
         for attempt in range(self.max_retries):
             response = None # Initialize response to None for error checking
             try:
-                
-                        
-                payload = {
-                    "model": model,
-                    "messages": messages,
-                    "temperature": temperature,
-                    "max_tokens": max_tokens
-                }
-                # Apply min_p only for the test model if provided
-                if self.model_type == "test" and min_p is not None:
+                # Handle Anthropic API format differently
+                if self.is_anthropic:
+                    # Anthropic API uses different format
+                    # Extract system message if present
+                    system_content = None
+                    anthropic_messages = []
+
+                    for msg in messages:
+                        if msg["role"] == "system":
+                            system_content = msg["content"]
+                        else:
+                            anthropic_messages.append(msg)
+
+                    # Load Alice's custom system prompt if testing Alice
+                    if self.model_type == "test" and os.path.exists("alice_system_prompt.txt"):
+                        with open("alice_system_prompt.txt", "r") as f:
+                            alice_prompt = f.read().strip()
+                        # Prepend Alice's prompt to any existing system content
+                        if system_content:
+                            system_content = alice_prompt + "\n\n" + system_content
+                        else:
+                            system_content = alice_prompt
+                        logging.info("Injected Alice's custom system prompt for test model")
+
+                    payload = {
+                        "model": model,
+                        "messages": anthropic_messages,
+                        "temperature": temperature,
+                        "max_tokens": max_tokens
+                    }
+
+                    if system_content:
+                        payload["system"] = system_content
+                else:
+                    # OpenAI-compatible API format
+                    payload = {
+                        "model": model,
+                        "messages": messages,
+                        "temperature": temperature,
+                        "max_tokens": max_tokens
+                    }
+                # Apply min_p only for the test model if provided (but not for Anthropic API)
+                if self.model_type == "test" and min_p is not None and not self.is_anthropic:
                     payload['min_p'] = min_p
                     logging.debug(f"Applying min_p={min_p} for test model call.")
                 elif self.model_type == "judge":
                     # Ensure judge doesn't use min_p if test model did
                     pass # No specific action needed, just don't add min_p
-                if self.base_url == 'https://api.openai.com/v1/chat/completions':
+
+                # Remove min_p for APIs that don't support it
+                if self.base_url == 'https://api.openai.com/v1/chat/completions' or self.is_anthropic:
                     if 'min_p' in payload:
                         del payload['min_p']                
                     if model == 'o3':
@@ -130,11 +177,22 @@ class APIClient:
                 response.raise_for_status() # Raises HTTPError for bad responses (4xx or 5xx)
                 data = response.json()
 
-                if not data.get("choices") or not data["choices"][0].get("message") or "content" not in data["choices"][0]["message"]:
-                     logging.warning(f"Unexpected API response structure on attempt {attempt+1}: {data}")
-                     raise ValueError("Invalid response structure received from API")
+                # Parse response based on API type
+                if self.is_anthropic:
+                    # Anthropic API response format
+                    if not data.get("content") or len(data["content"]) == 0:
+                        logging.warning(f"Unexpected Anthropic API response structure on attempt {attempt+1}: {data}")
+                        raise ValueError("Invalid response structure received from Anthropic API")
 
-                content = data["choices"][0]["message"]["content"]
+                    # Anthropic returns content as an array of content blocks
+                    content = data["content"][0]["text"]
+                else:
+                    # OpenAI-compatible API response format
+                    if not data.get("choices") or not data["choices"][0].get("message") or "content" not in data["choices"][0]["message"]:
+                         logging.warning(f"Unexpected API response structure on attempt {attempt+1}: {data}")
+                         raise ValueError("Invalid response structure received from API")
+
+                    content = data["choices"][0]["message"]["content"]
 
                 # Optional: Strip <think> blocks if models tend to add them
                 if '<think>' in content and "</think>" in content:
