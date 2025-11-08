@@ -98,7 +98,14 @@ const server = http.createServer((req, res) => {
                 res.end('Sorry, check with the site admin for error: ' + error.code + ' ..\n');
             }
         } else {
-            res.writeHead(200, { 'Content-Type': contentType });
+            // Add cache-control headers for HTML files to ensure fresh loads
+            const headers = { 'Content-Type': contentType };
+            if (extname === '.html') {
+                headers['Cache-Control'] = 'no-cache, no-store, must-revalidate';
+                headers['Pragma'] = 'no-cache';
+                headers['Expires'] = '0';
+            }
+            res.writeHead(200, headers);
             res.end(content, 'utf-8');
         }
     });
