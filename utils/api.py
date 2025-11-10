@@ -16,7 +16,7 @@ class APIClient:
     Supports 'test' and 'judge' configurations.
     """
 
-    def __init__(self, model_type=None, request_timeout=240, max_retries=3, retry_delay=5):
+    def __init__(self, model_type=None, request_timeout=240, max_retries=10, retry_delay=10):
         self.model_type = model_type or "default"
 
         # Load specific or default API credentials based on model_type
@@ -82,8 +82,8 @@ class APIClient:
                             anthropic_messages.append(msg)
 
                     # Load Alice's custom system prompt if testing Alice
-                    if self.model_type == "test" and os.path.exists("alice_system_prompt.txt"):
-                        with open("alice_system_prompt.txt", "r") as f:
+                    if self.model_type == "test" and os.path.exists("alice_custom_gpt.txt"):
+                        with open("alice_custom_gpt.txt", "r") as f:
                             alice_prompt = f.read().strip()
                         # Prepend Alice's prompt to any existing system content
                         if system_content:
@@ -103,9 +103,18 @@ class APIClient:
                         payload["system"] = system_content
                 else:
                     # OpenAI-compatible API format
+                    # Load Alice's custom system prompt if testing Alice
+                    openai_messages = messages.copy()
+                    if self.model_type == "test" and os.path.exists("alice_custom_gpt.txt"):
+                        with open("alice_custom_gpt.txt", "r") as f:
+                            alice_prompt = f.read().strip()
+                        # Prepend Alice's system prompt as a system message
+                        openai_messages = [{"role": "system", "content": alice_prompt}] + [msg for msg in messages if msg["role"] != "system"]
+                        logging.info("Injected Alice's custom system prompt for OpenAI test model")
+
                     payload = {
                         "model": model,
-                        "messages": messages,
+                        "messages": openai_messages,
                         "temperature": temperature,
                         "max_tokens": max_tokens
                     }
@@ -221,8 +230,8 @@ class APIClient:
                 # Handle specific status codes like rate limits
                 if response is not None and response.status_code == 429:
                     logging.warning("Rate limit exceeded. Backing off...")
-                    # Implement exponential backoff or use Retry-After header if available
-                    delay = self.retry_delay * (2 ** attempt) + random.uniform(0, 1)
+                    # Implement exponential backoff with stronger base delay
+                    delay = self.retry_delay * (2 ** attempt) + random.uniform(5, 10)
                     logging.info(f"Retrying in {delay:.2f} seconds...")
                     time.sleep(delay)
                     continue # Continue to next attempt
