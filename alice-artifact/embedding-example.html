@@ -1,0 +1,282 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Alice - Reflective Chatbot</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+      background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    header {
+      text-align: center;
+      margin-bottom: 2rem;
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+    }
+
+    h1 {
+      font-size: 2.5rem;
+      color: #111827;
+      margin-bottom: 0.5rem;
+      font-weight: 600;
+    }
+
+    .subtitle {
+      font-size: 1.125rem;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    .description {
+      max-width: 700px;
+      margin: 0 auto;
+      line-height: 1.6;
+      color: #374151;
+    }
+
+    .chatbot-container {
+      background: white;
+      border-radius: 12px;
+      box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    .chatbot-header {
+      background: #FFFEF7;
+      padding: 1rem 1.5rem;
+      border-bottom: 1px solid #e5e7eb;
+    }
+
+    .chatbot-header h2 {
+      font-size: 1.25rem;
+      color: #111827;
+      font-weight: 600;
+    }
+
+    iframe {
+      display: block;
+      width: 100%;
+      height: 700px;
+      border: none;
+    }
+
+    .info-section {
+      background: white;
+      padding: 2rem;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      margin-bottom: 2rem;
+    }
+
+    .info-section h2 {
+      font-size: 1.5rem;
+      color: #111827;
+      margin-bottom: 1rem;
+    }
+
+    .info-section p {
+      color: #374151;
+      line-height: 1.6;
+      margin-bottom: 0.75rem;
+    }
+
+    .info-section ul {
+      color: #374151;
+      line-height: 1.8;
+      margin-left: 1.5rem;
+      margin-top: 0.5rem;
+    }
+
+    .info-section ul li {
+      margin-bottom: 0.5rem;
+    }
+
+    .warning-box {
+      background: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 1rem 1.5rem;
+      margin: 1.5rem 0;
+      border-radius: 4px;
+    }
+
+    .warning-box p {
+      color: #92400e;
+      font-size: 0.95rem;
+      margin: 0;
+    }
+
+    footer {
+      text-align: center;
+      color: #6b7280;
+      padding: 2rem 1rem;
+      font-size: 0.9rem;
+    }
+
+    footer a {
+      color: #374151;
+      text-decoration: none;
+      border-bottom: 1px solid #d1d5db;
+    }
+
+    footer a:hover {
+      color: #111827;
+      border-bottom-color: #111827;
+    }
+
+    /* Responsive Design */
+    @media (max-width: 768px) {
+      body {
+        padding: 1rem 0.5rem;
+      }
+
+      h1 {
+        font-size: 2rem;
+      }
+
+      header, .info-section, .chatbot-container {
+        margin-bottom: 1rem;
+      }
+
+      iframe {
+        height: 600px;
+      }
+    }
+
+    /* Loading state */
+    .loading-overlay {
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: rgba(255, 255, 255, 0.9);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1.125rem;
+      color: #6b7280;
+    }
+
+    .chatbot-wrapper {
+      position: relative;
+    }
+
+    .chatbot-wrapper iframe {
+      opacity: 1;
+      transition: opacity 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container">
+
+    <!-- Header Section -->
+    <header>
+      <h1>Alice - Reflective Chatbot</h1>
+      <p class="subtitle">A warm, emotionally intelligent space for thoughtful conversations</p>
+      <p class="description">
+        Alice is designed for conversations about feelings, relationships, and everyday challenges.
+        She blends deep empathy with psychological awareness, offering a calm space to reflect
+        and understand yourself better.
+      </p>
+    </header>
+
+    <!-- Information Section -->
+    <div class="info-section">
+      <h2>About Alice</h2>
+      <p>
+        Alice prioritises reflective listening and gentle inquiry. She's not a therapist or counsellor,
+        and never provides diagnosis, treatment, or personalised health advice.
+      </p>
+
+      <p><strong>Alice offers:</strong></p>
+      <ul>
+        <li>A safety-first approach that prioritises emotional wellbeing</li>
+        <li>Reflective conversations without directive advice</li>
+        <li>Recognition of patterns within your conversation</li>
+        <li>Gentle, one-question-at-a-time pacing</li>
+        <li>Respect for identity and individual experience</li>
+      </ul>
+
+      <div class="warning-box">
+        <p>
+          <strong>Important:</strong> Alice is not a substitute for professional mental health support.
+          If you're in crisis or need medical advice, please contact emergency services or a qualified professional.
+          Crisis resources are available in the chatbot footer.
+        </p>
+      </div>
+    </div>
+
+    <!-- Chatbot Embed -->
+    <div class="chatbot-container">
+      <div class="chatbot-header">
+        <h2>Start a conversation with Alice</h2>
+      </div>
+      <div class="chatbot-wrapper">
+        <!--
+          REPLACE [your-artifact-id] with your actual Claude artifact ID
+          Example: https://claude.site/artifacts/abc123xyz
+        -->
+        <iframe
+          src="https://claude.site/artifacts/[your-artifact-id]"
+          title="Alice Reflective Chatbot"
+          loading="lazy"
+        ></iframe>
+      </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="info-section">
+      <h2>Privacy & Boundaries</h2>
+      <p>
+        <strong>Session-Only Memory:</strong> Alice remembers context within a single conversation
+        to provide coherent support, but conversations are not saved between sessions.
+      </p>
+      <p>
+        <strong>No Storage:</strong> No conversation data is stored or tracked. Each session is private and temporary.
+      </p>
+      <p>
+        <strong>For Adults:</strong> Alice is designed for adult users. If you're under 18,
+        please speak with a trusted adult or contact appropriate youth services.
+      </p>
+      <p>
+        <strong>UK English:</strong> Alice uses UK English by default and includes UK crisis resources.
+      </p>
+    </div>
+
+    <!-- Footer -->
+    <footer>
+      <p>
+        Built with React and Claude API |
+        <a href="https://github.com/cs71721/Alice" target="_blank" rel="noopener noreferrer">View on GitHub</a>
+      </p>
+      <p style="margin-top: 0.5rem; font-size: 0.85rem;">
+        For immediate crisis support, please contact emergency services or visit
+        <a href="https://findahelpline.com" target="_blank" rel="noopener noreferrer">findahelpline.com</a>
+      </p>
+    </footer>
+
+  </div>
+
+</body>
+</html>
