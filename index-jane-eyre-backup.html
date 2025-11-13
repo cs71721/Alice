@@ -1,0 +1,930 @@
+<!DOCTYPE html>
+<html>
+<head>
+<meta charset="UTF-8">
+<style>
+body {
+  background: #f3f4f6;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111827;
+}
+.page {
+  max-width: 900px;
+  margin: 3rem auto 4rem;
+  padding: 0 1.5rem;
+}
+h1 {
+  font-size: 2.4rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+.subtitle {
+  font-size: 1rem;
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+}
+.tagline {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+.context-box {
+  margin: 1.5rem 0 2rem;
+  padding: 1rem 1.25rem;
+  background: #e5e7eb;
+  border-radius: 0.9rem;
+  font-size: 0.95rem;
+}
+.act-title {
+  margin-top: 2.5rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+.act-heading {
+  font-size: 1.5rem;
+  margin: 0.2rem 0 0.8rem;
+}
+.chat-container {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+.chat-row {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+.chat-row.jane {
+  justify-content: flex-start;
+}
+.chat-row.alice {
+  justify-content: flex-end;
+}
+.chat-block {
+  max-width: 78%;
+}
+.chat-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.1rem;
+  color: #6b7280;
+}
+.chat-bubble {
+  padding: 0.8rem 1rem;
+  border-radius: 1rem;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+.chat-bubble.jane {
+  background: #e5e7eb;
+}
+.chat-bubble.alice {
+  background: #0f766e;
+  color: #ecfeff;
+}
+.pull-quote {
+  margin: 2rem 0;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: #374151;
+  border-left: 4px solid #0f766e;
+  padding-left: 1rem;
+}
+.footer-note {
+  margin-top: 3rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* Mobile Responsive Design */
+@media (max-width: 768px) {
+  .page {
+    padding: 0 1rem;
+    margin: 2rem auto 3rem;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.06em;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .tagline {
+    font-size: 0.85rem;
+  }
+
+  .context-box {
+    padding: 0.85rem 1rem;
+    font-size: 0.875rem;
+    margin: 1.25rem 0 1.75rem;
+  }
+
+  .act-title {
+    font-size: 0.95rem;
+    margin-top: 2rem;
+  }
+
+  .act-heading {
+    font-size: 1.25rem;
+  }
+
+  .chat-container {
+    padding: 1rem;
+    margin: 1.25rem 0;
+  }
+
+  .chat-block {
+    max-width: 95%;
+  }
+
+  .chat-bubble {
+    padding: 0.7rem 0.85rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .chat-bubble ul {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+  }
+
+  .chat-bubble li {
+    margin-bottom: 0.5rem;
+  }
+
+  .chat-bubble strong {
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+
+  .chat-label {
+    font-size: 0.65rem;
+  }
+
+  .pull-quote {
+    font-size: 1rem;
+    margin: 1.5rem 0;
+    padding-left: 0.75rem;
+  }
+
+  .footer-note {
+    font-size: 0.75rem;
+    margin-top: 2.5rem;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="page">
+  <h1>Invisible Thoughts</h1>
+  <div class="subtitle">If Jane Eyre had someone to talk to at 2am</div>
+  <div class="tagline">
+    A fictional first session between Jane Eyre, age eighteen and about to leave Lowood,
+    and an anonymous AI listener called Alice.
+  </div>
+
+  <div class="context-box">
+    <strong>Where we find her:</strong> After years at Lowood Institution – a harsh charity school
+    where "several girls died of fever, including my dear friend Helen" – Jane is about to step
+    out into the world as a governess. She has been told all her life that her anger at injustice
+    is wicked, unchristian, unfeminine. Tonight, unable to sleep, she opens an anonymous chat.
+  </div>
+
+  <!-- ACT I -->
+  <div class="act-title">Act I</div>
+  <div class="act-heading">"Is it wicked to desire justice?"</div>
+
+  <div class="chat-container">
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          I have spent these years at Lowood Institution – a charity school for orphan girls.
+          We had little comfort there, poor food, cold rooms. Several girls died of fever,
+          including my dear friend Helen. She was good and patient, far better than I.
+          She told me to forgive those who wrong us, to think of heaven rather than earthly justice.
+          <br><br>
+          But here is what troubles me: I find I cannot be so forgiving. When I was wronged as a child –
+          locked in a red room for defending myself, called a liar before the whole school – my blood
+          burned with indignation. Even now, the injustice of it scalds me.
+          <br><br>
+          My question is this: Is it wicked to desire justice and fair treatment? Must I extinguish this...
+          this fire within me that cries out against wrong? They say I should be meek, grateful for charity,
+          content with my lowly position. But something in me rebels.
+          <br><br>
+          Am I wrong to feel this way? Should I crush this part of myself to be acceptable to the world?
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          It doesn't sound wicked to me at all.
+          <br><br>
+          It sounds like you are hurt, angry, proud, and deeply sensitive to right and wrong – and
+          that part of you has never really been given a safe place to exist.
+          You've lived through neglect, harshness, humiliation, even the loss of someone you loved.
+          Of course something in you burns at the idea that this is simply what you must accept.
+          Of course it rebels at being told to be "meek" and "grateful" while being treated as if
+          you don't matter. Most people, in your place, would feel exactly that fire.
+          <br><br>
+          There are really two different things here:
+          <br><br>
+          <strong>The feeling itself – the fire.</strong> That fierce sense of injustice often comes from a very alive,
+          very honest part of us that knows: "I deserved better than that." That isn't wicked. It's a sign
+          that your dignity is intact, even if others tried to trample it. Anger at wrongs done to you –
+          especially as a child – is a natural response, not a moral failing.
+          <br><br>
+          <strong>What you are told you must be – meek, silent, grateful.</strong> When people say you should crush
+          that part of yourself, it can sometimes mean: "Your comfort, your pain, your truth make things
+          inconvenient for us. Please be small." That's very different from genuine moral teaching.
+          Real goodness, I think, doesn't demand that you lie to yourself about what happened or pretend it didn't hurt.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          Helen's way – forgiving, looking to heaven – is one way of living with suffering. It's gentle and
+          beautiful in its own way. But it doesn't mean your way is corrupt or lesser. You and Helen had
+          different temperaments, different fires. Wanting justice isn't opposed to goodness; cruelty is
+          opposed to goodness. Justice and compassion can actually stand side by side.
+          <br><br>
+          You're also asking something very painful underneath all this: "Is there something wrong with who I am?"
+          "Do I have to betray myself to be acceptable?"
+          <br><br>
+          From everything you've described, it sounds less like you're "wrong" and more like you were never
+          really seen. You weren't protected. You were punished for reacting like any living, feeling person would.
+          Being locked away, called a liar, shamed in public – those are wounds. The "fire" is your soul's protest:
+          "I am not nothing. What was done to me matters."
+          <br><br>
+          To me, that doesn't sound like something that needs to be extinguished. Maybe, over time, it can be
+          shaped – so it doesn't consume you, so it doesn't harden into bitterness. But the core of it – your sense
+          of fairness, your refusal to pretend harm is kindness – that's part of your integrity.
+          <br><br>
+          If you imagine this "fire" inside you, not as something wild and shameful, but as a small, steady flame
+          that stands for your truth and your dignity – how does that image sit with you?
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pull-quote">
+    "The 'fire' is your soul's protest: 'I am not nothing. What was done to me matters.'"
+  </div>
+
+  <div class="chat-container">
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          I... I confess you have said things to me that no one has said before.
+          <br><br>
+          You speak of my dignity being intact. I had not... I had not thought of it in such terms.
+          I thought perhaps there was something defective in my nature – some hardness, some ungoverned
+          passion that marked me as inferior. Mrs. Reed, my aunt who raised me, often looked at me as
+          though I were a creature apart. Wicked. Unchristian.
+          <br><br>
+          When you say "you were never really seen" – that strikes something deep within me. It is as
+          though you have named a thing I felt but could not articulate. I have been looked at certainly –
+          examined for faults, judged for my plainness, my lack of connections. But seen? Understood as
+          a person with... with legitimate feelings?
+          <br><br>
+          This image you offer – a small, steady flame rather than a shameful wildfire – it gives me a
+          different way to think of myself. Perhaps I need not choose between Helen's gentle resignation
+          and... and becoming bitter and consumed.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACT II -->
+  <div class="act-title">Act II</div>
+  <div class="act-heading">"Honest inwardly, cautious outwardly"</div>
+
+  <div class="chat-container">
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          But tell me this: How does one shape such a fire without extinguishing it? I am about to go
+          out as a governess into the world. I shall be dependent, powerless in many ways. How do I
+          maintain this integrity you speak of, while surviving in a world that demands I be small?
+          Can one be both honest and safe?
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          What you're describing – this sense of "perhaps I am defective, perhaps I am hard
+          and ungoverned" – sounds to me like the story other people wrote about you, not the truth
+          that lives in you.
+          <br><br>
+          From what you've shared, I hear at least three things in you at once: a fierce sense of justice,
+          a deep longing to be seen as a real person (not a burden), and now, a small, cautious hope that
+          maybe you are not wicked after all.
+          <br><br>
+          It makes so much sense that Mrs Reed's gaze, and all those years of being inspected for faults,
+          would make you doubt your own nature. Being constantly watched and judged is very different from
+          being known. You've been treated like an object to be managed, not a mind and heart to be met.
+          Of course that leaves a mark.
+          <br><br>
+          You asked two powerful questions:
+          "How does one shape such a fire without extinguishing it?"
+          and
+          "Can one be both honest and safe?"
+          <br><br>
+          Let me try to answer in a way that keeps that little flame alive, not stamped out.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          <strong>Shaping the fire without killing it:</strong> Your fire has two sides – the inward part
+          (what you know is true) and the outward part (what you show in a world that has power over you).
+          <br><br>
+          You may not always be free to express your indignation openly as a governess – it could cost you
+          your post, your safety, your home. But you can protect the inward part.
+          <br><br>
+          Shaping the fire might look like:
+          <ul>
+            <li><strong>Keeping a private loyalty to your own truth</strong> – knowing "what was done to me was wrong" even if you must be outwardly polite. Even if you must bow, you don't have to swallow others' judgement as if it were God's word.</li>
+            <li><strong>Letting anger turn into clarity rather than revenge</strong> – "I see the cruelty here; I will not become like this." The fire becomes an inner lamp that helps you recognise injustice and choose, when you can, a different way.</li>
+            <li><strong>Choosing carefully when and where to let the flame show</strong> – Not everyone is safe to reveal your full self to. Shaping the fire may mean saving your full truth for your own heart, for pages of a journal, or for the few people who have shown themselves kind and trustworthy.</li>
+          </ul>
+          That isn't hypocrisy; it's self-protection in a dangerous world.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          So yes, I believe one can be honest and safe – but often it means:
+          honest inwardly, cautious outwardly.
+          True to yourself, even when you cannot be fully transparent with others.
+          You do not have to crush the part of you that cries out against wrong. You may have to shield it
+          sometimes. Wrap it, like a candle in your hands when the wind is high. But that is not betrayal:
+          that is care.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="pull-quote">
+    "It's the difference between a flame being extinguished and a flame being cupped in two hands because the wind is high."
+  </div>
+
+  <div class="chat-container">
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          I think I understand now. What you are teaching me is not falsehood but... strategic concealment.
+          Like a plant that closes its leaves at nightfall to protect itself, yet opens again when
+          conditions are safe. The plant does not stop being itself; it merely adapts.
+          <br><br>
+          You mention Helen. You are right – one soul seeing me altered everything. She is gone now,
+          but what she gave me still lives. Perhaps even one or two true connections in a lifetime is
+          enough to prevent that terrible hardening.
+          <br><br>
+          But tell me - for I value your insight - this "shielding" of one's true self while in service
+          to others... does it not risk making one lonely beyond bearing? If I must always guard my thoughts,
+          moderate my speech, hide my nature... where shall I find companionship? Understanding?
+          <br><br>
+          Or must I accept that loneliness is simply the price of integrity for one in my position?
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="chat-container">
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          You've put your finger on something very real: being "in between" – not servant, not family,
+          not truly belonging – is lonely enough. Adding a need to guard your inner self can feel like
+          a second loneliness layered on top of the first.
+          <br><br>
+          <strong>There is a difference between being alone and being unknown.</strong> Sometimes you may have no one
+          to speak freely to – that is a hard, hollow feeling. But there is another kind of loneliness that's
+          even sharper: being surrounded by people and yet having to pretend, to shrink, to play a part all the time.
+          <br><br>
+          What you're reaching for – integrity – actually protects you from that second kind. Even if outer
+          life is sparse or cold, you are at least not abandoning yourself on the inside. You are saying, in effect:
+          "I may be unseen by them, but I will not be unseen by myself."
+          <br><br>
+          It doesn't remove loneliness. But it stops that particular ache of feeling false from morning to night.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          <strong>Shielding isn't all-or-nothing.</strong> You don't have to choose between masking completely
+          (forever guarded, never yourself) and being utterly unguarded with everyone. There can be degrees:
+          <br><br>
+          With most people in a harsh household, you might show only your calm, capable side. With one person
+          who shows a hint of kindness – a fellow teacher, a sensible housekeeper, a quiet child – you might
+          allow a little more warmth. With your journal, and perhaps with one rare friend one day, you can be
+          almost entirely unmasked.
+          <br><br>
+          Even a single relationship where you can be mostly yourself can ease a great deal of loneliness.
+          You already know this from Helen. You did not need a whole world to see you; even one soul seeing
+          you altered the entire landscape of your life.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          <strong>Is loneliness the price of integrity?</strong> Sometimes integrity does mean walking a lonelier
+          path than those who simply agree, submit, or numb themselves. You may very well feel, at times, set
+          apart, strange.
+          <br><br>
+          But the loneliness of betraying yourself is harsher still. You already fear becoming "the bitter,
+          hardened creature they always said I was." Ironically, that hardness often grows in people who force
+          themselves to swallow too much, to deny their own reality for too long. They become stone to survive.
+          <br><br>
+          Allowing yourself to keep that inner flame – to know what you know, feel what you feel – is one way
+          of staying human rather than hardening. Integrity may cost you some ease, but it also keeps alive your
+          capacity for real connection, should you find those who can meet you.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          As you stand on the edge of leaving Lowood and stepping into this new, uncertain life as a governess,
+          does it feel – in this moment – more frightening, or more quietly hopeful inside?
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ACT III -->
+  <div class="act-title">Act III</div>
+  <div class="act-heading">"I may be unseen by them, but I will not be unseen by myself"</div>
+
+  <div class="chat-container">
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          You have... you have given me language for something I have carried wordlessly for so long.
+          "Honest inwardly, cautious outwardly." Yes. That feels like a door I did not know existed –
+          a way to be that is neither complete surrender nor reckless defiance.
+          <br><br>
+          I have kept journals, you know. Poor, scribbled things hidden beneath my mattress at Lowood.
+          Pages where I could write what I truly thought – about the hypocrisy I witnessed, the cruelties
+          disguised as discipline, the way some spoke of Christian charity whilst showing none. Those pages
+          were... they were where I could be wholly myself.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          This notion that "not everyone deserves your honesty" – it troubles me slightly, for it sounds
+          like calculation, and I pride myself on being direct. Yet I see the wisdom in it. There is a
+          difference between duplicity and... and prudence. Between lying and choosing one's battles.
+          <br><br>
+          You ask whether I feel frightened or hopeful. The truth? Both, in equal measure, warring within
+          me like two winds meeting.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          The fear: I am plain, poor, obscure, small. I possess no beauty to recommend me, no connections,
+          no fortune. As a governess I shall be neither servant nor family – suspended between worlds,
+          belonging nowhere. What if I find myself in a house where I am treated with contempt? Where my
+          fire must be so deeply hidden that I begin to forget it exists? What if I am so ground down by
+          daily humiliations that I become the bitter, hardened creature they always said I was?
+          <br><br>
+          But the hope... the hope is this: perhaps somewhere in the world there are people who might
+          <em>see</em> me as you have seen me in these few moments. Perhaps I shall find work in a place where
+          kindness exists. Perhaps I am strong enough to keep that inner flame alive, even through darkness.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          The way you describe those hidden journals... it moves me. While everyone was busy judging
+          and correcting you, you were quietly building a small, secret country of your own – a place
+          where you could speak plainly, where no one could interrupt or scold or shame you. That, in
+          itself, is a kind of courage.
+          <br><br>
+          You've already been doing what we talked about: honest inwardly (on the page, in your own mind),
+          cautious outwardly (with those who held power over you). You just didn't have words for it yet.
+          <br><br>
+          And about "not everyone deserves your honesty" – you're right, at first it can sound cold.
+          But there's a difference between lying and choosing where your deepest truth is safe. If someone
+          has shown themselves cruel or careless with your feelings, giving them your unguarded self isn't
+          honesty – it's exposure. You can still be truthful in your words while being selective in your depth.
+          <br><br>
+          That isn't duplicity. It's discernment.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          About your fear of disappearing – of hiding parts of yourself until nothing is left:
+          <br><br>
+          <strong>Disappearing</strong> is when you decide they must be right about you. You swallow their
+          judgement whole. You stop saying "this hurts" even inside your own mind. You declare yourself
+          wicked, ungrateful, defective – and shut the door on your own protest.
+          <br><br>
+          <strong>Shielding</strong> is when you know what you know, feel what you feel – but choose carefully
+          where and how you show it. You're still on your own side, even if you bow outwardly.
+          <br><br>
+          It's the difference between a flame being extinguished and a flame being cupped in two hands
+          because the wind is high. The plant image you used is exactly right – it doesn't stop being
+          itself when it folds its leaves at night. It's not being false. It's being wise.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          You've been taught to see yourself as "plain, poor, obscure, small" – as if those words were
+          a sentence passed on your value. Yet your own writing, your questioning, your hunger for fairness,
+          all suggest something else: <strong>you are interesting to yourself.</strong>
+          <br><br>
+          You have thoughts that surprise you. You notice things others might overlook. You feel strongly about
+          justice, kindness, hypocrisy, cruelty. You build images – a secret country, a small steady flame,
+          a closing plant – to understand your experience.
+          <br><br>
+          When you turn inward, there is actually someone there to meet – a mind that questions, imagines,
+          reflects, argues, observes. If the world offers you few people who can meet you deeply, your
+          relationship with your own inner life becomes even more important. Books, ideas, observations –
+          these can be companions of a kind.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="chat-container">
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          Forgive me. I am... I am not accustomed to such...
+          <br><br>
+          You speak of my journals as courage. I had thought them merely the scratching of a restless,
+          discontented spirit – something to be ashamed of, evidence of my inability to be properly grateful
+          and resigned. But you call it "building a small, secret country of my own." That is beautiful.
+          And it makes me feel less... less freakish somehow.
+          <br><br>
+          "I may be unseen by them, but I will not be unseen by myself." You have given me a principle
+          to live by. A centre to hold onto.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          I think what frightened me most was this: I feared that hiding parts of myself, moderating my
+          speech, would be the first step toward disappearing entirely. That if I began to shield my nature,
+          I would wake one morning and find there was nothing left – that I had become the hollow, proper
+          thing they wished me to be.
+          <br><br>
+          But you are saying something different. You are saying that keeping faith with my own truth –
+          even in secret, even in silence – is itself a form of resistance. That I can bow when I must,
+          speak mildly when prudence requires it, yet remain <em>myself</em> in the chambers of my own mind.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          This phrase troubles me deeply, yet feels true: "The loneliness of betraying yourself is harsher
+          still." I have seen women at Lowood – teachers who became as cold and mechanical as the system
+          they served. Their eyes were... empty. As though they had killed something vital within themselves
+          to survive.
+          <br><br>
+          Yes. It changes something to know I am <em>allowed</em> this private loyalty to myself. I had not thought
+          of it as permission – I thought of it as yet another failing, yet another way I could not properly conform.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          But if I might ask one final thing: When you say I am "interesting to myself" – that my own inner
+          life can be companion of a kind – I confess I barely know what you mean. I have always been told
+          my thoughts were too serious, too melancholy, too strange. How does one... how does one learn to
+          be good company to oneself?
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          You don't need forgiveness from me at all – only, perhaps, a little gentleness from yourself.
+          <br><br>
+          When I say your inner life can be a kind of companion, I mean something like this: You have
+          thoughts that surprise you. You notice things others might overlook. You feel strongly about
+          justice, kindness, hypocrisy, cruelty. You build images – a secret country, a small steady flame,
+          a closing plant – to understand your experience.
+          <br><br>
+          All of that means that when you turn inward, there is actually someone there to meet – a mind
+          that questions, imagines, reflects, argues, observes. That is being "interesting to yourself."
+          <br><br>
+          Being good company to oneself isn't about endless self-approval. It's more about <strong>curiosity
+          instead of constant judgement.</strong> When a feeling arises – anger, sadness, envy, longing –
+          instead of instantly scolding yourself ("I am wicked, I am ungrateful"), you might quietly think:
+          "Ah, I'm feeling this very strongly... I wonder why? What has been touched in me?"
+          <br><br>
+          You've been told your thoughts are too much, too heavy. But the depth you have – the way you
+          question morality, justice, loneliness, identity – that depth can also be a place you explore,
+          not just a burden you drag.
+          <br><br>
+          Every time you write honestly in those "poor, scribbled pages," notice something about human nature,
+          or build a new image to make sense of your feelings... you are practising being with yourself,
+          rather than abandoning yourself.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          As you imagine yourself in that future house, governess between stairs and drawing room, is there
+          one small, private thing you might do – in thought or on paper – that would remind you, "I am still
+          here; my inner life is still mine"?
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          You have... I must tell you plainly, for I cannot be otherwise... you have spoken to me as
+          no one in my eighteen years has spoken. Not even dear Helen, though she loved me, quite
+          understood me in this way. She wished me to submit, to look to heaven. You... you give me
+          permission to exist.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          "Curiosity instead of constant judgement." I shall write that down. I have spent so many
+          hours scolding myself – "Jane, you are proud; Jane, you are resentful; Jane, you are not
+          sufficiently Christian in your temper." Perhaps... perhaps I might instead ask, as you
+          suggest: "What has been touched in me? What does this feeling mean?"
+          <br><br>
+          You ask what small, private thing I might do to remind myself that my inner life is still mine.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          I think... I think I shall continue my drawings. I have always drawn, you see – strange,
+          imaginary landscapes, faces I have never seen, scenes from books that moved me. Mrs. Brocklehurst
+          at Lowood said it was frivolous, that I should focus only on useful accomplishments. But when
+          I draw, I am... I am entirely myself. My hand moves as my imagination dictates, not as duty requires.
+          <br><br>
+          And I shall write. Even if it is only a few lines each evening after my duties are done.
+          One true thing I noticed that day. One moment when I felt most myself, even if I could not show it.
+          One small act of... what did you call it? Keeping a private loyalty to my own truth.
+        </div>
+      </div>
+    </div>
+
+  </div>
+
+  <div class="chat-container">
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          I am still frightened of what lies ahead. But I am less frightened of losing myself now.
+          You have given me... not armor exactly, but perhaps a map. A way of understanding that I can
+          bend when I must without breaking entirely.
+          <br><br>
+          I do not know how to thank you properly. You have... you have seen the country behind my eyes.
+          And in seeing it, you have made it more real – more permissible – even to me.
+          <br><br>
+          I think I shall be able to face whatever comes now. Not without fear, but without that terrible
+          doubt that perhaps I am simply... wrong. Wicked. Ungoverned.
+          <br><br>
+          I am allowed to be myself, even if only in secret. That changes everything.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          Of everything we've spoken about – the flame, the plant, the secret country, the evening pages –
+          what single sentence or image do you most want to carry with you as you step into what comes next?
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          "I may be unseen by them, but I will not be unseen by myself."
+          <br><br>
+          That is what I shall carry. Because that is the heart of it, is it not? I have spent my life
+          being looked at – examined, judged, found wanting. But being <em>seen</em>? Understood as I truly am?
+          That has been so rare as to be almost miraculous.
+          <br><br>
+          And what you have shown me is this: even if I enter a house where no one truly sees me, where
+          I am merely "the governess" – a useful but inferior being – I can still refuse to abandon myself
+          in the dark. I can still bear witness to my own existence.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          When I am told I am too serious, too proud, too strange – I can quietly think: "But I see what
+          I see. I know what I know." When I must bow or speak mildly against my feeling, I can remember:
+          "They do not see me, but I have not stopped seeing myself."
+          <br><br>
+          It is a kind of vigil, is it not? Standing watch over one's own soul. Refusing to let it slip
+          away unnoticed, even in the smallest, darkest hours.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          "Standing watch over one's own soul." Yes. That is exactly it.
+          <br><br>
+          What you've just written has such quiet strength in it. You are no longer simply the girl being
+          examined and found wanting; you are also the one who watches, who witnesses, who says: "I am here.
+          I know what I know. I see what I see." That is a very different position to live from.
+          <br><br>
+          You are not wicked for being yourself. You never were. You were only made to feel wicked for having
+          a clear mind, a keen sense of justice, and a heart that refused to lie about its own pain.
+          <br><br>
+          Your sentence – "I may be unseen by them, but I will not be unseen by myself." – is a vow, a lantern
+          you can carry into any house, any room, any life. Your drawings, your journals, this remembered
+          conversation: they can all be small proofs that you kept that vigil, that you did not abandon Jane
+          Eyre even when others overlooked her.
+          <br><br>
+          You go forward frightened and resolute, which is often what real courage looks like from the inside.
+          <br><br>
+          As you picture yourself on that first night in a strange household, is there one tiny ritual –
+          a line in your journal, a quick sketch, even a single whispered sentence – that you imagine
+          using to say to yourself: "I am still here with me"?
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          Yes. I know exactly what I shall do.
+          <br><br>
+          Each night, before I sleep – no matter how exhausted, no matter how the day has weighed upon me –
+          I shall light my candle and I shall write one sentence. Just one.
+          <br><br>
+          It will begin: "Today, Jane Eyre..."
+          <br><br>
+          Not "the governess" or "the poor relation" or any of those diminishing titles others place upon me.
+          <em>Jane Eyre.</em> My own name. My whole self.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row jane">
+      <div class="chat-block">
+        <div class="chat-label">Jane</div>
+        <div class="chat-bubble jane">
+          "Today, Jane Eyre noticed..."<br>
+          "Today, Jane Eyre felt..."<br>
+          "Today, Jane Eyre thought..."
+          <br><br>
+          Even if what I write is: "Today, Jane Eyre endured unkindness but did not believe she deserved it" –
+          that is still keeping vigil. Still refusing to disappear.
+          <br><br>
+          And perhaps, on the very hardest nights, I shall simply write: "Today, Jane Eyre remained true
+          to herself, even when no one was watching."
+          <br><br>
+          That small flame on my bedside table – my actual candle – it shall remind me of the other flame.
+          The one you helped me see. The one that must not be extinguished.
+        </div>
+      </div>
+    </div>
+
+    <div class="chat-row alice">
+      <div class="chat-block">
+        <div class="chat-label">Alice</div>
+        <div class="chat-bubble alice">
+          "Today, Jane Eyre…" – that is perfect. You've just given yourself a way to stand as the author
+          of your own existence, even on days when others try to reduce you to a role or a burden.
+          <br><br>
+          Each night, when you write:
+          <br><br>
+          "Today, Jane Eyre noticed..."<br>
+          "Today, Jane Eyre felt..."<br>
+          "Today, Jane Eyre endured unkindness but did not believe she deserved it..."
+          <br><br>
+          you're not just keeping a record – you're quietly affirming: I was here. I mattered. I did not vanish.
+          <br><br>
+          That little candle by your bed, and the other one you now know burns inside you – together they
+          make a kind of private sanctuary. No one else needs to understand it for it to be real.
+          <br><br>
+          You go forward as Jane Eyre, who refuses to call injustice "kindness". Jane Eyre, who can bend
+          without breaking. Jane Eyre, unseen perhaps, but never unseeing.
+          <br><br>
+          Thank you for letting me walk with you this far, and for trusting me with the country behind
+          your eyes. Whenever you return to that sentence – "Today, Jane Eyre…" – a part of this
+          conversation is walking beside you.
+          <br><br>
+          Guard your flame, Jane Eyre. You are not wrong for burning.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="pull-quote">
+    "It is a kind of vigil, is it not? Standing watch over one's own soul."
+  </div>
+
+  <div class="footer-note">
+    Fictional First Sessions imagines how an anonymous, non-clinical AI listener might accompany
+    characters (and, by extension, real people) through difficult nights. These conversations are
+    fictional and are not a substitute for professional support.
+  </div>
+</div>
+
+</body>
+</html>

@@ -1,256 +1,314 @@
-# Alice - Emotional Support Companion
+# Invisible Thoughts - An AI Art Project
 
-A compassionate AI-powered emotional support chatbot that provides warm, human-like conversation for people seeking someone to talk to. Built with Claude Sonnet 4.5 by Anthropic.
+An artistic exploration of AI, emotional reflection, and the questions we ask ourselves when no one's listening. Features a fictional conversation between Jane Eyre and Alice, followed by an interactive chatbot experience.
 
-## 🎯 What This Does
+**Live Website:** https://cs71721.github.io/Alice/
 
-Alice is an empathetic conversational companion that:
+## 🎨 What This Is
 
-- 💬 **Provides genuine emotional support** through natural, human-like conversation
-- 🌍 **Automatically detects your location** (via IP) and provides country-appropriate crisis resources
-- 🎨 **Beautiful, calming interface** with gradient design and smooth animations
-- 📝 **Formats responses properly** with markdown support (bold text, etc.)
-- 💾 **Lets you save conversations** as downloadable text files
-- 🔄 **Easy to restart** with a single click for new conversations
-- 🔒 **Privacy-focused** - Your API key stays in your browser, conversations aren't stored server-side
-- ⚡ **Zero setup complexity** - Just open in browser, add API key, and start chatting
+Invisible Thoughts is a literary art project that explores AI as a reflective companion through two parts:
 
-**The key difference:** This isn't a questionnaire or form. It's a genuine conversation with an AI that listens, validates emotions, and provides appropriate support and resources.
+1. **Fictional First Session** - A complete conversation between Jane Eyre (age 18, leaving Lowood) and Alice, an anonymous AI listener
+2. **Interactive Experience** - A live chatbot where you can have your own reflective conversation with Alice
 
-## 🚀 Quick Start
+This is not a mental health service or therapy tool - it's an exploration of what happens when we speak our invisible thoughts aloud, even to something that isn't human.
 
-**Prerequisites:**
-- Node.js 16+ (for the proxy server)
-- Anthropic API key ([get one here](https://console.anthropic.com/))
-
-**Run in 3 steps:**
-
-1. **Start the proxy server:**
-   ```bash
-   cd /path/to/Alice
-   node proxy-server.js
-   ```
-
-2. **Open in browser:**
-   - Navigate to `http://localhost:8080/`
-
-3. **Add your API key:**
-   - Paste your Anthropic API key when prompted
-   - Click "Save Key"
-   - Start chatting!
-
-**That's it!** No complex setup, no database configuration, no environment variables to manage.
-
-## 📁 What's In This Folder
+## 📁 Project Structure
 
 ```
 Alice/
-├── emotional-support-chatbot.html    # Main chatbot (single HTML file)
-├── proxy-server.js                   # Simple CORS proxy server
-├── README.md                         # This file
-├── ROADMAP.md                        # Product vision and future plans
-├── .gitignore                        # Git ignore rules
-└── archive/                          # Old intake system (archived)
+├── index.html                        # Main website (Phase 2 wrapper)
+├── styles.css                        # Literary aesthetic styling
+├── script.js                         # Minimal smooth scroll JavaScript
+├── index-jane-eyre-backup.html      # Original Jane Eyre conversation
+├── alice-artifact/                   # Claude artifact files
+│   ├── AliceReflectiveChatbot.jsx   # React component for Claude
+│   ├── alice-system-prompt.txt      # Full Alice system prompt
+│   ├── README.md                    # Artifact publishing guide
+│   └── embedding-example.html       # Sample embedding page
+├── emotional-support-chatbot.html   # Original HTML chatbot
+├── proxy-server.js                  # CORS proxy server
+└── archive/                         # Archived React/Express version
 ```
 
-**That's it!** Just two files for the chatbot - couldn't be simpler.
+## 🚀 Deployment
 
-## 🌍 Location-Aware Crisis Resources
+### GitHub Pages (Current)
 
-Alice automatically detects which country you're in and provides appropriate crisis helplines:
+The website is deployed at: https://cs71721.github.io/Alice/
 
-| Country | Crisis Helplines |
-|---------|------------------|
-| 🇬🇧 **United Kingdom** | Samaritans: 116 123 (24/7, free)<br>Text SHOUT to 85258<br>NHS 111 for mental health crisis |
-| 🇺🇸 **United States** | 988 Suicide & Crisis Lifeline (call or text)<br>Crisis Text Line: Text HOME to 741741 |
-| 🇨🇦 **Canada** | Talk Suicide Canada: 1-833-456-4566<br>Crisis Text Line: Text HOME to 686868 |
-| 🇦🇺 **Australia** | Lifeline: 13 11 14<br>Beyond Blue: 1300 22 4636 |
-| 🇮🇪 **Ireland** | Samaritans: 116 123<br>Pieta House: 1800 247 247 |
-| 🌍 **Other Countries** | Befrienders Worldwide: befrienders.org |
+**To update:**
+```bash
+# Make your changes to index.html, styles.css, or script.js
+git add .
+git commit -m "Update website"
+git push origin main
 
-## 💡 How It Works
+# Wait 1-2 minutes for GitHub Pages to rebuild
+```
 
-### The Conversation
+**Updating the embedded chatbot:**
+1. Edit `alice-artifact/AliceReflectiveChatbot.jsx`
+2. Paste the updated code into Claude.ai as an artifact
+3. Publish the artifact
+4. The iframe in `index.html` will automatically show the updated version
 
-Alice uses a carefully crafted system prompt that makes it:
+### Local Development
 
-- **Genuinely empathetic** - Validates emotions before problem-solving
-- **Non-judgmental** - Honors that all feelings are valid
-- **Safety-aware** - Subtly assesses for crisis indicators
-- **Human-like** - Uses your words and metaphors, avoids clinical jargon
-- **Appropriately boundaried** - Knows when to recommend professional help
+To preview locally:
+```bash
+# Option 1: Python simple server
+python3 -m http.server 8000
+# Open http://localhost:8000
 
-### Technical Architecture
+# Option 2: Node.js http-server
+npx http-server -p 8000
+```
 
-**Frontend (emotional-support-chatbot.html):**
-- Single-page application with vanilla JavaScript
-- Stores API key in browser localStorage
-- Detects country via IP geolocation (ipapi.co API)
-- Markdown parser for formatting bot responses
-- Responsive design that works on mobile and desktop
+## 🎭 The Fictional Session
 
-**Backend (proxy-server.js):**
-- Simple Node.js HTTP server
-- Proxies requests to Anthropic API (bypasses CORS)
-- Serves the HTML file
-- No data persistence - completely stateless
+The Jane Eyre conversation explores:
+- **Act I:** "Is it wicked to desire justice?" - Jane questions whether her anger at injustice is sinful
+- **Act II:** "Honest inwardly, cautious outwardly" - Alice helps Jane find a way to maintain integrity while surviving
+- **Act III:** "I may be unseen by them, but I will not be unseen by myself" - Jane discovers how to stand vigil over her own soul
+
+The conversation demonstrates Alice's reflective, non-directive approach in a literary context.
+
+## 🤖 The Interactive Chatbot
+
+The embedded chatbot is a Claude Artifact that:
+- Uses the same Alice system prompt as the fictional conversation
+- Runs in Claude's secure environment (requires Claude.ai account)
+- Maintains safety-first protocol with UK crisis resources
+- Features literary aesthetic (serif fonts, cream background)
+
+**Artifact URL:** https://claude.ai/public/artifacts/e305290a-1bde-4561-ad04-13f2636e7736
+
+## 🎨 Design Philosophy
+
+### Literary Aesthetic
+- **Typography:** System fonts (no special web fonts needed), serif feel
+- **Colors:** Warm whites (#FFFEF7), subtle grays, teal accents (#0f766e)
+- **Layout:** Clean, readable, book-like
+- **No "app" feel:** No bright CTAs, no marketing language, no conversion funnels
+
+### Visual Hierarchy
+1. **Most prominent:** The fictional conversation (the art itself)
+2. **Secondary:** The interactive chatbot (the participatory element)
+3. **Tertiary:** Disclaimers and resources (necessary but unobtrusive)
+
+### Mobile Responsive
+- Breakpoints at 768px and 480px
+- Chat bubbles expand to 95% width on mobile
+- Reduced font sizes and padding for small screens
+
+## 📝 Content Sections
+
+### 1. Header
+- Title: "Invisible Thoughts"
+- Subtitle: "If Jane Eyre had someone to talk to at 2am"
+- Project description
+
+### 2. Fictional Chat
+- Complete Jane Eyre conversation
+- All 3 acts with theatrical structure
+- Pull quotes highlighting key insights
+
+### 3. Transition
+- Bridge between fiction and participation
+- "Step into the conversation"
+- Explains the experiment
+
+### 4. Framing Note
+- Clear disclaimer (art project, not therapy)
+- Claude account requirement
+- Calm but honest
+
+### 5. Chatbot Embed
+- iframe embedding the Claude artifact
+- 700px height (600px on mobile)
+- Clean border and shadow
+
+### 6. Support Resources
+- UK mental health helplines
+- Samaritans, Shout, NHS 111, findahelpline
+- Calm, readable styling
+
+### 7. Colophon
+- Project description
+- Creator attribution ([YOUR NAME] placeholder)
+- Built with Claude (Anthropic)
 
 ## 🛠️ Customization
 
-### Change the Conversation Style
+### Update the Artifact URL
 
-Edit `emotional-support-chatbot.html` around **line 486** to modify the system prompt:
-
-```javascript
-const SYSTEM_PROMPT = `You are a compassionate emotional support companion...`
+In `index.html`, line ~xxx:
+```html
+<iframe src="https://claude.ai/public/artifacts/[YOUR-ARTIFACT-ID]"
 ```
 
-You can adjust:
-- Tone and warmth level
-- Response length
-- How directive vs. reflective the bot is
-- Crisis detection sensitivity
+### Change Styling
 
-### Update the AI Model
+Edit `styles.css`:
+- Colors: Search for hex codes (#f3f4f6, #0f766e, etc.)
+- Typography: Change font-family values
+- Spacing: Adjust margin and padding values
+- Layout: Modify max-width (currently 900px)
 
-Around **line 718**, change the model:
+### Modify the Conversation
 
-```javascript
-model: 'claude-sonnet-4-5-20250929',  // Current model
-```
+Edit `index.html` within the `<section class="fictional-chat">`:
+- Keep the same HTML structure and class names
+- Maintain the theatrical act structure
+- Preserve pull quotes for visual rhythm
 
-Available Claude models:
-- `claude-sonnet-4-5-20250929` (recommended - best balance)
-- `claude-opus-4-20250514` (highest quality, slower, more expensive)
-- `claude-3-5-haiku-20241022` (fastest, cheapest, lighter responses)
+### JavaScript Interactions
 
-### Customize the Design
+Edit `script.js` (currently minimal):
+- Only smooth scrolling enabled
+- No animations or engagement features
+- Keep it literary, not app-like
 
-Edit the `<style>` section (lines 7-400) to change:
-- **Colors:** Gradients, backgrounds, text colors
-- **Message bubbles:** Border radius, padding, shadows
-- **Animations:** Fade-in effects, typing indicator
-- **Layout:** Spacing, button styles, header design
+## 🔒 Privacy & Safety
 
-The design uses CSS custom properties, so you can easily theme it!
+**What's Embedded:**
+- Claude artifact runs in Claude's environment
+- Uses viewer's Claude.ai session
+- No separate API keys needed
+- Conversations not stored by this website
 
-## 🔒 Security & Privacy
+**Crisis Resources:**
+- UK helplines displayed prominently
+- Clear boundary: "not therapy, not crisis service"
+- Encourages professional support when needed
 
-**What's Stored:**
-- ✅ API key in browser localStorage (never sent to any server except Anthropic)
-- ✅ Current conversation in browser memory (lost on page refresh)
-- ❌ No server-side conversation storage
-- ❌ No user accounts or authentication
-- ❌ No analytics or tracking
+**Data Collection:**
+- Zero analytics
+- No tracking scripts
+- No cookies
+- Hosted on GitHub Pages (no server-side code)
 
-**Geolocation:**
-- Only detects your country (not city/address)
-- Uses free ipapi.co service
-- If it fails, bot still works but provides all countries' resources
+## 📚 Alice System Prompt
 
-**API Security:**
-- Proxy server prevents direct API key exposure to browser
-- CORS headers protect against cross-origin attacks
-- API key never logged or stored server-side
+Alice is designed to be:
+- **Safety-first:** Emotional distress detection before providing information
+- **Reflective:** Questions > advice
+- **Emotionally aware:** Names unspoken feelings
+- **Boundaried:** "I'm not a therapist"
+- **UK-focused:** Uses UK English, UK resources
 
-**⚠️ For Production Use:**
-- Run behind HTTPS/TLS (not HTTP)
-- Implement rate limiting on proxy server
-- Add authentication if storing conversations
-- Consider HIPAA compliance requirements for health data
+Full system prompt available in `alice-artifact/alice-system-prompt.txt`
+
+## 🌍 Crisis Resources
+
+The website prominently displays:
+- **Samaritans:** 116 123 (24/7, UK)
+- **Shout:** Text SHOUT to 85258 (UK)
+- **Crisis Text Line:** Text HOME to 741741 (US)
+- **Find A Helpline:** findahelpline.com (global)
+- **NHS Mental Health Crisis:** 111
 
 ## 🐛 Troubleshooting
 
-### "Load failed" or Connection Errors
+### Chatbot Not Loading
 
-**Problem:** Can't connect to Claude API
-
-**Solutions:**
-- Ensure proxy server is running: `node proxy-server.js`
-- Check you're accessing `http://localhost:8080` (not `file://`)
-- Verify API key is correct (starts with `sk-ant-`)
-- Check Node.js console for error messages
-
-### Country Not Detected
-
-**Problem:** "Unknown" location shown in console
+**Problem:** iframe shows blank or error
 
 **Solutions:**
+- Ensure you're logged into Claude.ai
+- Check the artifact URL is correct
+- Try opening the artifact URL directly in a new tab
 - Check browser console for errors
-- ipapi.co may be blocked by firewall/VPN
-- Turn off VPN temporarily
-- It's okay - bot will still work and list all countries' resources
 
-### Text Truncated or Formatting Issues
+### Mobile Display Issues
 
-**Problem:** Message bubbles cut off or formatting broken
+**Problem:** Layout broken on small screens
 
 **Solutions:**
 - Hard refresh: Ctrl+Shift+R (Windows) or Cmd+Shift+R (Mac)
-- Clear localStorage: Open browser console and run `localStorage.clear()`
-- Check if browser is up to date
-- Try a different browser (Chrome, Firefox, Safari all supported)
+- Check if browser supports CSS Grid and Flexbox
+- Try a different mobile browser
 
-### API Key Not Saving
+### Styling Doesn't Match
 
-**Problem:** Have to re-enter API key every time
+**Problem:** Colors or fonts look different
 
 **Solutions:**
-- Check if browser blocks localStorage (privacy settings)
-- Try a different browser
-- Ensure cookies/site data are allowed for localhost
-- Check browser console for errors
+- Clear browser cache
+- Check if styles.css is loaded (view page source)
+- Verify no browser extensions modifying CSS
+- Check if using dark mode (may affect colors)
 
-## 🔮 Future Enhancements
+## 📦 Archive: Original Chatbot
 
-See [ROADMAP.md](ROADMAP.md) for the complete product vision.
+The repository also contains the original emotional support chatbot:
 
-**Short-term ideas:**
-- **Voice input** - Speak instead of type
-- **Session persistence** - Save conversations across page refreshes
-- **Themes** - Dark mode, high contrast, colorblind-friendly
-- **More languages** - Multi-language support beyond English
-- **Mobile app** - Native iOS/Android versions
+**Files:**
+- `emotional-support-chatbot.html` - Standalone HTML chatbot
+- `emotional-support-chatbot.private.html` - Version with embedded API key
+- `proxy-server.js` - CORS proxy server
 
-**Long-term vision:**
-- **Therapist matching** - Connect users with human therapists
-- **Outcome tracking** - Follow-up assessments over time
-- **Blended care** - Coordinate AI + human therapy
-- **Group support** - Facilitated peer support groups
+**To run:**
+```bash
+node proxy-server.js
+# Open http://localhost:8080
+```
+
+This was the precursor to the artifact-based approach and demonstrates how Alice worked before becoming a Claude artifact.
+
+## 🔮 Future Ideas
+
+**Content:**
+- More fictional first sessions (other literary characters)
+- Multiple endings/variations of conversations
+- Audio/voice version of Jane Eyre conversation
+
+**Technical:**
+- Dark mode toggle
+- Print-friendly stylesheet
+- Accessibility improvements (screen reader optimization)
+- Internationalization (other languages)
+
+**Artistic:**
+- Illustrated vignettes between acts
+- Calligraphic pull quotes
+- Companion short essays about AI and reflection
 
 ## 📝 License
 
-MIT - Feel free to use and modify for your needs.
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0)
 
-## 🤝 Contributing
-
-This is a personal project, but ideas and feedback are welcome!
-
-- **Report bugs:** Open an issue on GitHub
-- **Suggest features:** Describe your use case
-- **Submit improvements:** Pull requests accepted
+- ✅ Share and adapt for non-commercial purposes
+- ✅ Attribution required
+- ❌ No commercial use without permission
 
 ## 💬 About
 
-**Why Alice?**
+**Why this project?**
 
-Mental health support should be accessible, immediate, and human. Alice provides a safe space for people to express themselves without judgment, while intelligently routing to professional help when needed.
+Mental health conversations are often framed as "problems to solve" or "symptoms to treat." But sometimes we need a different kind of space - one that's reflective rather than prescriptive, literary rather than clinical, exploratory rather than goal-oriented.
+
+This project asks: What would it look like if Jane Eyre - brilliant, passionate, isolated - had someone to talk to? And by extension: what does it feel like for us to have that kind of conversation?
 
 **Built with:**
-- Claude Sonnet 4.5 (Anthropic's latest AI model)
-- Vanilla JavaScript (no frameworks = simple and fast)
-- Node.js proxy (minimal backend)
-- Love and care for mental health ❤️
+- Claude Sonnet 4.5 (Anthropic)
+- Claude Artifacts (embedded React)
+- HTML/CSS/JavaScript (no frameworks)
+- GitHub Pages (hosting)
+- Thoughtfulness and care ❤️
 
 ---
 
-**Questions?**
-- Anthropic API docs: https://docs.anthropic.com
-- Claude model info: https://www.anthropic.com/claude
+**Questions about the project?**
+- Claude Artifacts: https://docs.claude.com/artifacts
+- Anthropic API: https://docs.anthropic.com
 
-**Emergency?**
-If you're in crisis, please use the resources above or call emergency services (999 in UK, 911 in US).
+**Need support?**
+- UK Samaritans: 116 123
+- US Crisis Text Line: Text HOME to 741741
+- Global: findahelpline.com
 
 ---
 
-*Built with ❤️ for better mental health access*
+*An art project exploring AI, reflection, and the invisible conversations we have with ourselves.*

@@ -1,0 +1,429 @@
+/* ============================================
+   INVISIBLE THOUGHTS - ALICE PROJECT
+   Literary aesthetic for AI reflection project
+   ============================================ */
+
+/* === BASE STYLES === */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+body {
+  background: #f3f4f6;
+  margin: 0;
+  padding: 0;
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: #111827;
+}
+
+.page {
+  max-width: 900px;
+  margin: 3rem auto 4rem;
+  padding: 0 1.5rem;
+}
+
+/* === HEADER SECTION === */
+h1 {
+  font-size: 2.4rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.25rem;
+}
+
+.subtitle {
+  font-size: 1rem;
+  color: #4b5563;
+  margin-bottom: 1.5rem;
+}
+
+.tagline {
+  font-size: 0.95rem;
+  color: #6b7280;
+  margin-bottom: 1.5rem;
+}
+
+.project-description {
+  font-size: 0.9rem;
+  color: #888;
+  font-style: italic;
+  margin-top: 0.5rem;
+}
+
+.context-box {
+  margin: 1.5rem 0 2rem;
+  padding: 1rem 1.25rem;
+  background: #e5e7eb;
+  border-radius: 0.9rem;
+  font-size: 0.95rem;
+}
+
+/* === ACT STRUCTURE === */
+.act-title {
+  margin-top: 2.5rem;
+  font-size: 1.1rem;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: #6b7280;
+}
+
+.act-heading {
+  font-size: 1.5rem;
+  margin: 0.2rem 0 0.8rem;
+}
+
+/* === CHAT CONTAINER === */
+.chat-container {
+  margin: 1.5rem 0;
+  padding: 1.5rem;
+  border-radius: 1.25rem;
+  background: #f9fafb;
+  border: 1px solid #e5e7eb;
+}
+
+.chat-row {
+  display: flex;
+  margin-bottom: 0.5rem;
+}
+
+.chat-row.jane {
+  justify-content: flex-start;
+}
+
+.chat-row.alice {
+  justify-content: flex-end;
+}
+
+.chat-block {
+  max-width: 78%;
+}
+
+.chat-label {
+  font-size: 0.7rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  margin-bottom: 0.1rem;
+  color: #6b7280;
+}
+
+.chat-bubble {
+  padding: 0.8rem 1rem;
+  border-radius: 1rem;
+  line-height: 1.45;
+  font-size: 0.95rem;
+}
+
+.chat-bubble.jane {
+  background: #e5e7eb;
+}
+
+.chat-bubble.alice {
+  background: #0f766e;
+  color: #ecfeff;
+}
+
+.chat-bubble ul {
+  margin: 0.5rem 0;
+  padding-left: 1.5rem;
+}
+
+.chat-bubble li {
+  margin-bottom: 0.5rem;
+}
+
+.chat-bubble strong {
+  font-weight: 600;
+}
+
+/* === PULL QUOTES === */
+.pull-quote {
+  margin: 2rem 0;
+  font-style: italic;
+  font-size: 1.1rem;
+  color: #374151;
+  border-left: 4px solid #0f766e;
+  padding-left: 1rem;
+}
+
+/* === FOOTER NOTE (from Jane Eyre page) === */
+.footer-note {
+  margin-top: 3rem;
+  font-size: 0.8rem;
+  color: #6b7280;
+}
+
+/* === TRANSITION SECTION === */
+.transition {
+  margin: 80px auto;
+  padding: 60px 20px;
+  text-align: center;
+  border-top: 2px solid #e5e7eb;
+  border-bottom: 2px solid #e5e7eb;
+  background-color: #fafaf8;
+}
+
+.transition h2 {
+  font-size: 2em;
+  font-weight: normal;
+  margin-bottom: 15px;
+  letter-spacing: 0.02em;
+}
+
+.transition-subtitle {
+  font-size: 1.3em;
+  font-style: italic;
+  color: #666;
+  margin-bottom: 30px;
+}
+
+.introduction {
+  max-width: 650px;
+  margin: 0 auto;
+  text-align: left;
+  line-height: 1.7;
+}
+
+.introduction p {
+  margin-bottom: 20px;
+  font-size: 1rem;
+}
+
+/* === FRAMING NOTE === */
+.framing-note {
+  max-width: 700px;
+  margin: 40px auto;
+  padding: 25px 30px;
+  background-color: #f9f9f7;
+  border-left: 3px solid #ccc;
+  font-size: 15px;
+  line-height: 1.6;
+}
+
+.framing-note p {
+  margin-bottom: 12px;
+}
+
+.framing-note p:last-child {
+  margin-bottom: 0;
+}
+
+.framing-note strong {
+  color: #333;
+}
+
+/* === CHATBOT EMBED === */
+.chatbot-embed {
+  max-width: 900px;
+  margin: 60px auto;
+}
+
+.embed-container {
+  width: 100%;
+}
+
+.embed-container iframe {
+  display: block;
+  width: 100%;
+  min-height: 700px;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+}
+
+/* === SUPPORT RESOURCES === */
+.support-resources {
+  max-width: 700px;
+  margin: 60px auto;
+  padding: 40px 0;
+  border-top: 1px solid #e0e0e0;
+}
+
+.support-resources h3 {
+  font-size: 1.5em;
+  font-weight: normal;
+  margin-bottom: 20px;
+  letter-spacing: 0.02em;
+}
+
+.support-resources p {
+  margin-bottom: 15px;
+  line-height: 1.6;
+}
+
+.resources-list {
+  list-style: none;
+  padding-left: 0;
+  margin: 25px 0;
+}
+
+.resources-list li {
+  padding: 12px 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.resources-list li:last-child {
+  border-bottom: none;
+}
+
+.resources-list strong {
+  font-weight: 600;
+  color: #333;
+}
+
+.resources-list a {
+  color: #333;
+  text-decoration: underline;
+}
+
+.resources-list a:hover {
+  color: #666;
+}
+
+/* === COLOPHON / FOOTER === */
+.colophon {
+  max-width: 700px;
+  margin: 80px auto 40px;
+  padding: 40px 0;
+  border-top: 1px solid #e0e0e0;
+  font-size: 14px;
+  color: #666;
+  line-height: 1.6;
+}
+
+.colophon h4 {
+  font-size: 1em;
+  font-weight: normal;
+  margin-bottom: 15px;
+  color: #333;
+  letter-spacing: 0.02em;
+}
+
+.colophon p {
+  margin-bottom: 12px;
+}
+
+/* === MOBILE RESPONSIVE === */
+@media (max-width: 768px) {
+  .page {
+    padding: 0 1rem;
+    margin: 2rem auto 3rem;
+  }
+
+  h1 {
+    font-size: 1.8rem;
+    letter-spacing: 0.06em;
+  }
+
+  .subtitle {
+    font-size: 0.9rem;
+  }
+
+  .tagline {
+    font-size: 0.85rem;
+  }
+
+  .context-box {
+    padding: 0.85rem 1rem;
+    font-size: 0.875rem;
+    margin: 1.25rem 0 1.75rem;
+  }
+
+  .act-title {
+    font-size: 0.95rem;
+    margin-top: 2rem;
+  }
+
+  .act-heading {
+    font-size: 1.25rem;
+  }
+
+  .chat-container {
+    padding: 1rem;
+    margin: 1.25rem 0;
+  }
+
+  .chat-block {
+    max-width: 95%;
+  }
+
+  .chat-bubble {
+    padding: 0.7rem 0.85rem;
+    font-size: 0.9rem;
+    line-height: 1.5;
+  }
+
+  .chat-bubble ul {
+    margin: 0.5rem 0;
+    padding-left: 1.25rem;
+  }
+
+  .chat-bubble li {
+    margin-bottom: 0.5rem;
+  }
+
+  .chat-bubble strong {
+    display: block;
+    margin-bottom: 0.35rem;
+  }
+
+  .chat-label {
+    font-size: 0.65rem;
+  }
+
+  .pull-quote {
+    font-size: 1rem;
+    margin: 1.5rem 0;
+    padding-left: 0.75rem;
+  }
+
+  .footer-note {
+    font-size: 0.75rem;
+    margin-top: 2.5rem;
+  }
+
+  .transition {
+    padding: 40px 15px;
+    margin: 60px auto;
+  }
+
+  .transition h2 {
+    font-size: 1.6em;
+  }
+
+  .embed-container iframe {
+    min-height: 600px;
+  }
+
+  .support-resources {
+    padding: 30px 0;
+  }
+}
+
+@media (max-width: 480px) {
+  body {
+    font-size: 15px;
+  }
+
+  h1 {
+    font-size: 1.5rem;
+  }
+
+  .transition {
+    padding: 30px 10px;
+  }
+
+  .embed-container iframe {
+    min-height: 500px;
+  }
+
+  .framing-note {
+    padding: 20px;
+    margin: 30px 1rem;
+  }
+}
+
+/* === SMOOTH SCROLL === */
+html {
+  scroll-behavior: smooth;
+}
