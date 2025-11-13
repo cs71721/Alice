@@ -392,8 +392,7 @@ h1 {
   }
 
   .embed-container iframe {
-    height: 100vh;
-    border-radius: 0;
+    height: 700px;
   }
 
   .support-resources {
@@ -415,8 +414,7 @@ h1 {
   }
 
   .embed-container iframe {
-    height: 100vh;
-    border-radius: 0;
+    height: 700px;
   }
 
   .framing-note {
