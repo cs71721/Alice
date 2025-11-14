@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chat Flow Comparison - Before & After</title>
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, sans-serif;
+      background: #1a1a1a;
+      color: #fff;
+      padding: 2rem;
+    }
+
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+    }
+
+    h1 {
+      text-align: center;
+      margin-bottom: 0.5rem;
+      font-size: 1.75rem;
+    }
+
+    .subtitle {
+      text-align: center;
+      color: #999;
+      margin-bottom: 2rem;
+      font-size: 0.95rem;
+    }
+
+    .comparison {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 2rem;
+      margin-bottom: 2rem;
+    }
+
+    .version {
+      background: #2a2a2a;
+      border-radius: 1rem;
+      padding: 1.5rem;
+      min-height: 600px;
+    }
+
+    .version h2 {
+      font-size: 1.1rem;
+      margin-bottom: 0.5rem;
+      color: #4a9eff;
+    }
+
+    .version p.description {
+      font-size: 0.85rem;
+      color: #999;
+      margin-bottom: 1.5rem;
+      line-height: 1.5;
+    }
+
+    .chat-container {
+      background: #f2f2f7;
+      border-radius: 0.75rem;
+      padding: 1rem 0.5rem;
+      min-height: 500px;
+    }
+
+    .message-group {
+      margin-bottom: 1rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .message-group.assistant {
+      align-items: flex-start;
+    }
+
+    .message-group.user {
+      align-items: flex-end;
+    }
+
+    .message-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      margin-bottom: 0.4rem;
+      padding: 0 0.5rem;
+    }
+
+    .avatar {
+      width: 24px;
+      height: 24px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-weight: 600;
+      font-size: 0.7rem;
+      flex-shrink: 0;
+    }
+
+    .avatar.assistant {
+      background: #10a37f;
+      color: white;
+    }
+
+    .avatar.user {
+      background: #5436da;
+      color: white;
+    }
+
+    .sender-name {
+      font-weight: 600;
+      font-size: 0.75rem;
+      color: #6b7280;
+    }
+
+    .message-bubble {
+      max-width: 85%;
+      padding: 0.5rem 0.7rem;
+      border-radius: 1rem;
+      font-size: 0.875rem;
+      line-height: 1.4;
+      word-wrap: break-word;
+    }
+
+    .message-group .message-bubble + .message-bubble {
+      margin-top: 0.15rem;
+    }
+
+    .message-group.assistant .message-bubble {
+      background: #e5e5ea;
+      color: #111827;
+      border-radius: 1rem 1rem 1rem 0.4rem;
+    }
+
+    .message-group.user .message-bubble {
+      background: #0b93f6;
+      color: #ffffff;
+      border-radius: 1rem 1rem 0.4rem 1rem;
+    }
+
+    .message-bubble p {
+      margin: 0;
+    }
+
+    .highlight {
+      background: #fff3cd;
+      padding: 0.1rem 0.3rem;
+      border-radius: 0.25rem;
+      color: #856404;
+      font-weight: 600;
+    }
+
+    .annotation {
+      margin: 0.75rem 0;
+      padding: 0.75rem 1rem;
+      background: rgba(74, 158, 255, 0.1);
+      border-left: 3px solid #4a9eff;
+      border-radius: 0.375rem;
+      font-size: 0.8rem;
+      color: #ccc;
+      font-style: italic;
+    }
+
+    @media (max-width: 968px) {
+      .comparison {
+        grid-template-columns: 1fr;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Chat Flow Comparison: BEFORE vs AFTER</h1>
+    <p class="subtitle">Visualizing the shift from "long speeches" to "iMessage-style back-and-forth"</p>
+
+    <div class="comparison">
+      <!-- BEFORE VERSION -->
+      <div class="version">
+        <h2>❌ BEFORE: Long Speeches</h2>
+        <p class="description">
+          Jane sends 7 bubbles in a row → Alice sends 4 bubbles in a row.<br>
+          Feels like "one big speech / one big response".<br>
+          Less conversational, more essay-like.
+        </p>
+
+        <div class="chat-container">
+          <!-- JANE -->
+          <div class="message-group user">
+            <div class="message-header">
+              <div class="avatar user">J</div>
+              <span class="sender-name">Jane</span>
+            </div>
+
+            <div class="message-bubble"><p>But here is what frightens me most.</p></div>
+            <div class="message-bubble"><p>Even knowing this, even having fled – there is a part of me that wonders if I should have stayed.</p></div>
+            <div class="message-bubble"><p>If leaving was pride rather than principle.</p></div>
+            <div class="message-bubble"><p>If perhaps I am simply too rigid, too governed by some idea of respectability that is itself a lie.</p></div>
+            <div class="message-bubble"><p>What if the real truth is that love matters more than law?</p></div>
+            <div class="message-bubble"><p>That we could have been happy, despite everything?</p></div>
+            <div class="message-bubble"><p>What if I chose loneliness over love because I could not bend?</p></div>
+          </div>
+
+          <div class="annotation">
+            ⬆️ Jane sends 7 bubbles without interruption
+          </div>
+
+          <!-- ALICE -->
+          <div class="message-group assistant">
+            <div class="message-header">
+              <div class="avatar assistant">A</div>
+              <span class="sender-name">Alice</span>
+            </div>
+
+            <div class="message-bubble"><p>Those are such painful questions to sit with. And I hear how much you're questioning yourself, wondering if you're "too rigid" or if leaving was pride.</p></div>
+            <div class="message-bubble"><p>Can I reflect something back to you? You're asking if love matters more than law. But there's something else here too, isn't there? It's not just about law or respectability. It's about whether being with him on those terms – knowing you'd have no legal standing, no protection, that you'd be dependent on his goodwill alone – would have let you still be yourself.</p></div>
+            <div class="message-bubble"><p>You said earlier that he would have made you "as though my conscience, my dignity, meant nothing." That's what you'd have had to ignore – not just society's rules, but your own sense of what you need to be whole.</p></div>
+            <div class="message-bubble"><p>I'm wondering: when you imagine that version of staying, what happens to Jane in that picture? Not "Jane the woman in love," but Jane, the person who sees clearly and refuses to lie to herself?</p></div>
+          </div>
+
+          <div class="annotation">
+            ⬆️ Then Alice responds with 4 long bubbles in one go
+          </div>
+        </div>
+      </div>
+
+      <!-- AFTER VERSION -->
+      <div class="version">
+        <h2>✅ AFTER: Back-and-Forth Flow</h2>
+        <p class="description">
+          Jane sends 4 bubbles → Alice interrupts with 2 short bubbles → Jane continues with 3 more → Alice responds with 5 shorter bubbles.<br>
+          Feels like <strong>real texting</strong>: reactive, dynamic, human.
+        </p>
+
+        <div class="chat-container">
+          <!-- JANE: part 1 -->
+          <div class="message-group user">
+            <div class="message-header">
+              <div class="avatar user">J</div>
+              <span class="sender-name">Jane</span>
+            </div>
+
+            <div class="message-bubble"><p>But here is what frightens me most.</p></div>
+            <div class="message-bubble"><p>Even knowing this, even having fled, there is a part of me that wonders if I should have stayed.</p></div>
+            <div class="message-bubble"><p>If leaving was pride rather than principle.</p></div>
+            <div class="message-bubble"><p>If perhaps I am simply too rigid, too governed by some idea of respectability that is itself a lie.</p></div>
+          </div>
+
+          <div class="annotation">
+            ⬆️ Jane starts pouring out her doubts...
+          </div>
+
+          <!-- ALICE: short early reaction -->
+          <div class="message-group assistant">
+            <div class="message-header">
+              <div class="avatar assistant">A</div>
+              <span class="sender-name">Alice</span>
+            </div>
+
+            <div class="message-bubble"><p>That's such a painful place to be in.</p></div>
+            <div class="message-bubble"><p>Torn between "I did what I had to" and "what if it was just pride?".</p></div>
+          </div>
+
+          <div class="annotation">
+            ⬆️ Alice cuts in with quick validation (like real texting!)
+          </div>
+
+          <!-- JANE: part 2 -->
+          <div class="message-group user">
+            <div class="message-header">
+              <div class="avatar user">J</div>
+              <span class="sender-name">Jane</span>
+            </div>
+
+            <div class="message-bubble"><p>What if the real truth is that love matters more than law?</p></div>
+            <div class="message-bubble"><p>That we could have been happy, despite everything?</p></div>
+            <div class="message-bubble"><p>What if I chose loneliness over love because I could not bend?</p></div>
+          </div>
+
+          <div class="annotation">
+            ⬆️ Jane continues with the harder questions
+          </div>
+
+          <!-- ALICE: deeper reframing, shorter bubbles -->
+          <div class="message-group assistant">
+            <div class="message-header">
+              <div class="avatar assistant">A</div>
+              <span class="sender-name">Alice</span>
+            </div>
+
+            <div class="message-bubble"><p>Let me reflect something back to you.</p></div>
+            <div class="message-bubble"><p>You're asking if love matters more than law, but it isn't just about law or respectability, is it?</p></div>
+            <div class="message-bubble"><p>It's about whether being with him on those terms – no legal standing, no protection, relying entirely on his goodwill – would have let you still be yourself.</p></div>
+            <div class="message-bubble"><p>You said earlier that he would have made you "as though my conscience, my dignity, meant nothing." That's what you'd have had to ignore – not just society's rules, but your own sense of what you need to be whole.</p></div>
+            <div class="message-bubble"><p>When you imagine that version of staying, what happens to Jane in that picture? Not Jane the woman in love, but Jane who sees clearly and refuses to lie to herself?</p></div>
+          </div>
+
+          <div class="annotation">
+            ⬆️ Alice responds with the reframe, but same content split across bubbles
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="background: #2a2a2a; border-radius: 0.75rem; padding: 1.5rem; margin-top: 1rem;">
+      <h3 style="color: #4a9eff; margin-bottom: 1rem; font-size: 1rem;">Key Differences:</h3>
+      <ul style="color: #ccc; line-height: 1.8; font-size: 0.9rem; padding-left: 1.5rem;">
+        <li><strong>BEFORE:</strong> 7 Jane bubbles → 4 Alice bubbles = feels like "turn-taking speeches"</li>
+        <li><strong>AFTER:</strong> 4 Jane → 2 Alice → 3 Jane → 5 Alice = feels like <strong>real conversation</strong></li>
+        <li>Alice's early interruption makes her feel <strong>present and reactive</strong>, not just "waiting her turn"</li>
+        <li>Same content, same emotional depth, but <strong>more iMessage-authentic</strong></li>
+        <li>Teens will recognize this pattern: typing a lot → friend responds quickly → you continue → deeper reply</li>
+      </ul>
+    </div>
+  </div>
+</body>
+</html>
