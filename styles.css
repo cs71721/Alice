@@ -153,6 +153,62 @@ h1 {
   color: #6b7280;
 }
 
+/* === MORE CONVERSATIONS === */
+.more-conversations {
+  margin: 2.5rem auto;
+  padding: 1.5rem 2rem;
+  max-width: 700px;
+  background: #f9fafb;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.more-conversations h3 {
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: #6b7280;
+  margin-bottom: 1rem;
+}
+
+.conversation-link {
+  display: block;
+  padding: 1rem 1.25rem;
+  background: white;
+  border-radius: 0.5rem;
+  border: 1px solid #d1d5db;
+  text-decoration: none;
+  transition: all 0.2s;
+  margin-bottom: 0.75rem;
+}
+
+.conversation-link:hover {
+  border-color: #0f766e;
+  box-shadow: 0 2px 8px rgba(15, 118, 110, 0.1);
+}
+
+.conversation-link:last-child {
+  margin-bottom: 0;
+}
+
+.conversation-title {
+  font-size: 1.05rem;
+  font-weight: 600;
+  color: #0f766e;
+  margin-bottom: 0.25rem;
+}
+
+.conversation-link:hover .conversation-title {
+  color: #0d6559;
+}
+
+.conversation-description {
+  font-size: 0.875rem;
+  color: #6b7280;
+  line-height: 1.5;
+}
+
 /* === TRANSITION SECTION === */
 .transition {
   margin: 80px auto;
@@ -380,6 +436,23 @@ h1 {
   .footer-note {
     font-size: 0.75rem;
     margin-top: 2.5rem;
+  }
+
+  .more-conversations {
+    margin: 2rem 1rem;
+    padding: 1.25rem 1rem;
+  }
+
+  .conversation-link {
+    padding: 0.875rem 1rem;
+  }
+
+  .conversation-title {
+    font-size: 1rem;
+  }
+
+  .conversation-description {
+    font-size: 0.8125rem;
   }
 
   .transition {
