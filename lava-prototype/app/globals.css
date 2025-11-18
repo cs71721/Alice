@@ -38,6 +38,16 @@ body {
   transition: height 0.1s ease;
 }
 
+/* Lava AI response styling */
+.lava-response {
+  display: block !important;
+  visibility: visible !important;
+  opacity: 1 !important;
+  min-height: 1.5em;
+  overflow: visible;
+  height: auto;
+}
+
 /* Modern send button */
 .send-button {
   cursor: pointer;

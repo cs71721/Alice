@@ -203,8 +203,9 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       >
         {messages.map((msg) => {
           const isDocUpdate = msg.nickname === 'DocumentUpdate'
+          const isLava = msg.nickname === 'Lava'
           const isMention = msg.text.includes('@' + nickname) && msg.nickname !== nickname
-          
+
           return (
             <div key={msg.id} className="group w-full max-w-full">
               {isDocUpdate ? (
@@ -216,7 +217,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
                                       <span>Document updated</span>
                                     </div>
                                     {msg.preview && (
-                                      <div 
+                                      <div
                                         className="text-sm text-gray-700 italic line-clamp-2"
                                         style={{
                                           wordWrap: 'break-word',
@@ -238,6 +239,34 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
                   {/* Desktop: Simple one-line notification */}
                   <div className="hidden md:block text-sm text-gray-500 italic">
                     → Document updated ✓
+                  </div>
+                </>
+              ) : isLava ? (
+                <>
+                  <div className="flex items-baseline gap-2">
+                    <span className="font-semibold text-sm text-purple-600">
+                      🌋 Lava
+                    </span>
+                    <span className="text-xs text-gray-400">
+                      {new Date(msg.timestamp).toLocaleTimeString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                      })}
+                    </span>
+                  </div>
+                  <div
+                    className="lava-response text-base mt-1 w-full max-w-full text-gray-900 bg-purple-50 px-3 py-2 rounded-lg border border-purple-200"
+                    style={{
+                      wordWrap: 'break-word',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word',
+                      display: 'block',
+                      visibility: 'visible',
+                      opacity: 1,
+                      minHeight: '1.5em'
+                    }}
+                  >
+                    {truncateUrl(msg.text)}
                   </div>
                 </>
               ) : (
