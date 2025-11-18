@@ -15,14 +15,11 @@ body {
   height: 100dvh; /* Use dynamic viewport height on mobile */
 }
 
-/* Safe area support for iPhone */
-.safe-area-container {
+/* Safe area support for iPhone - apply to main container */
+.safe-area-main {
+  height: 100vh;
+  height: calc(100vh - env(safe-area-inset-bottom));
   padding-bottom: env(safe-area-inset-bottom);
-}
-
-/* Chat input form - add extra bottom padding for iPhone home indicator */
-.chat-input-form {
-  padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
 }
 
 /* Chat container - prevent horizontal scroll */
