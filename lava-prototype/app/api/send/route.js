@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { kv } from '@vercel/kv'
-import { addMessage, getDocument, updateDocument } from '@/lib/kv'
+import { addMessage, getDocument, updateDocument, getMessages } from '@/lib/kv'
 import { processLavaCommand } from '@/lib/openai'
 import { DocumentEngine } from '@/lib/documentEngine'
 
@@ -59,6 +59,17 @@ export async function POST(request) {
       const instruction = lavaMatch[1]
 
       try {
+        // === DIAGNOSTIC LOGGING ===
+        const chatHistory = await getMessages()
+        console.log('=== LAVA CONTEXT CHECK ===')
+        console.log('Current command:', instruction)
+        console.log('Chat history available?', chatHistory ? chatHistory.length + ' messages' : 'NO')
+        if (chatHistory && chatHistory.length > 0) {
+          console.log('Last 5 messages:', chatHistory.slice(-5).map(m => `${m.nickname}: ${m.text.substring(0, 50)}`))
+        }
+        console.log('========================')
+        // === END DIAGNOSTIC LOGGING ===
+
         const doc = await getDocument()
         const oldContent = doc.content
 
