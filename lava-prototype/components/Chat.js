@@ -45,29 +45,46 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     return scrollTop + clientHeight >= scrollHeight - 50
   }
 
+  const forceScrollToBottom = () => {
+    if (!scrollContainerRef.current) return
+
+    // AGGRESSIVE SCROLL - try all methods
+    const container = scrollContainerRef.current
+
+    // Method 1: Nuclear option - scroll with huge value
+    container.scrollTop = container.scrollHeight + 9999
+
+    // Method 2: scrollIntoView on end marker
+    if (messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView(false)
+    }
+
+    // Method 3: Scroll last message into view
+    const messages = container.querySelectorAll('.message-appear')
+    if (messages.length > 0) {
+      messages[messages.length - 1].scrollIntoView(false)
+    }
+  }
+
   const scrollToBottom = (force = false) => {
     if (force || isNearBottom() || isFirstLoad.current) {
-      requestAnimationFrame(() => {
-        if (scrollContainerRef.current) {
-          // Method 1: Aggressive direct scroll (add extra to ensure we're at absolute bottom)
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight + 1000
-
-          // Method 2: scrollIntoView as backup
-          if (messagesEndRef.current) {
-            messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' })
-          }
-
-          // Method 3: Scroll last message into view for extra reliability
-          const messages = scrollContainerRef.current.querySelectorAll('.message-appear')
-          if (messages.length > 0) {
-            messages[messages.length - 1].scrollIntoView({ behavior: 'smooth', block: 'end' })
-          }
-        }
-      })
+      forceScrollToBottom()
       setShowNewMessages(false)
       setUnreadCount(0)
       userScrolled.current = false
     }
+  }
+
+  const ensureScrolledToBottom = () => {
+    // Multiple attempts with increasing delays for mobile
+    forceScrollToBottom() // Immediate
+    setTimeout(forceScrollToBottom, 10)
+    setTimeout(forceScrollToBottom, 50)
+    setTimeout(forceScrollToBottom, 100)
+    setTimeout(forceScrollToBottom, 250)
+    setTimeout(forceScrollToBottom, 500)
+    setTimeout(forceScrollToBottom, 1000)
+    setTimeout(forceScrollToBottom, 1500)
   }
 
 
@@ -82,19 +99,61 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     adjustTextareaHeight()
   }, [inputText])
 
-  // Initial mount - ensure scroll to bottom
+  // Initial mount - NUCLEAR SCROLL
   useEffect(() => {
-    // Scroll on mount
-    const initialScroll = () => {
-      scrollToBottom(true)
-      // Double and triple check to catch async content
-      setTimeout(() => scrollToBottom(true), 200)
-      setTimeout(() => scrollToBottom(true), 500)
-      setTimeout(() => scrollToBottom(true), 1000)
+    // Mobile Safari detection
+    const isMobileSafari = /iP(ad|hone|od).+Version\/[\d\.]+.*Safari/i.test(navigator.userAgent)
+
+    if (isMobileSafari && scrollContainerRef.current) {
+      // Force reflow for Safari
+      const container = scrollContainerRef.current
+      container.style.display = 'none'
+      container.offsetHeight // Force reflow
+      container.style.display = ''
     }
 
-    // Run immediately and after delay
-    requestAnimationFrame(initialScroll)
+    // Aggressive scroll on mount
+    ensureScrolledToBottom()
+
+    // Add visibility change listener for mobile
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        setTimeout(() => forceScrollToBottom(), 100)
+      }
+    }
+
+    // Add pageshow listener for iOS web app
+    const handlePageShow = (event) => {
+      if (event.persisted) {
+        ensureScrolledToBottom()
+      }
+    }
+
+    // Add orientation change for mobile
+    const handleOrientationChange = () => {
+      ensureScrolledToBottom()
+    }
+
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('pageshow', handlePageShow)
+    window.addEventListener('orientationchange', handleOrientationChange)
+
+    // Brute force interval for first 3 seconds
+    let scrollAttempts = 0
+    const scrollInterval = setInterval(() => {
+      forceScrollToBottom()
+      scrollAttempts++
+      if (scrollAttempts > 20) {
+        clearInterval(scrollInterval)
+      }
+    }, 150)
+
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('pageshow', handlePageShow)
+      window.removeEventListener('orientationchange', handleOrientationChange)
+      clearInterval(scrollInterval)
+    }
   }, [])
 
   // Auto-scroll when messages change
@@ -142,11 +201,8 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         setLastMessageCount(data.messages.length)
 
         if (isFirstLoad.current) {
-          // Multiple scroll attempts on first load to ensure it works
-          requestAnimationFrame(() => scrollToBottom(true))
-          setTimeout(() => scrollToBottom(true), 100)
-          setTimeout(() => scrollToBottom(true), 300)
-          setTimeout(() => scrollToBottom(true), 600)
+          // NUCLEAR scroll on first data load
+          ensureScrolledToBottom()
           isFirstLoad.current = false
         }
       } catch (error) {

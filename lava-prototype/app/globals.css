@@ -79,6 +79,18 @@ html, body {
   overflow-y: auto !important;
   scroll-behavior: smooth !important;
   -webkit-overflow-scrolling: touch !important;
+  /* Force hardware acceleration on mobile */
+  transform: translateZ(0);
+  will-change: scroll-position;
+}
+
+/* Mobile-specific height handling */
+@media (max-width: 768px) {
+  .chat-messages-wrapper {
+    min-height: 0;
+    /* Ensure proper height calculation on mobile */
+    height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 180px) !important;
+  }
 }
 
 /* Modern send button with instant feedback */
