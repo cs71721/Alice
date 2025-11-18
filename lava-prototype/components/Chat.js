@@ -17,6 +17,27 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   const isFirstLoad = useRef(true)
   const userScrolled = useRef(false)
 
+
+  const truncateUrl = (text) => {
+    // URL regex pattern
+    const urlRegex = /(https?:\/\/[^\s]+)/g
+    return text.replace(urlRegex, (url) => {
+      if (url.length > 40) {
+        // Extract domain and last part
+        const match = url.match(/https?:\/\/([^\/]+)(.*)/)
+        if (match) {
+          const domain = match[1]
+          const path = match[2]
+          if (path.length > 20) {
+            const lastPart = path.slice(-10)
+            return `...${domain}${lastPart}`
+          }
+        }
+      }
+      return url
+    })
+  }
+
   const isNearBottom = () => {
     if (!scrollContainerRef.current) return true
     const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
@@ -178,7 +199,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 relative w-full max-w-full"
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-2 relative w-full max-w-full"
       >
         {messages.map((msg) => {
           const isDocUpdate = msg.nickname === 'DocumentUpdate'
@@ -187,7 +208,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           return (
             <div key={msg.id} className="group w-full max-w-full">
               {isDocUpdate ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2 w-full max-w-full">
+                <div className="border border-blue-200 rounded-lg p-3 space-y-2 w-full max-w-full" style={{ backgroundColor: "#f0f8ff" }}">
                   <div className="flex items-center gap-2 text-blue-700 font-semibold text-sm">
                     <span>📄</span>
                     <span>Document updated</span>
@@ -234,7 +255,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
                       overflowWrap: 'break-word'
                     }}
                   >
-                    {msg.text}
+                    {truncateUrl(msg.text)}
                   </div>
                 </>
               )}

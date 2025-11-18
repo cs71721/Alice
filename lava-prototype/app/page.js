@@ -33,7 +33,7 @@ export default function Home() {
 
   return (
     <main className="h-screen flex flex-col">
-      <header className="bg-gray-900 text-white px-4 md:px-6 py-3 md:py-4 shadow-md">
+      <header className="bg-gray-900 text-white px-4 md:px-6 py-2 md:py-4 shadow-md">
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Lava</h1>
@@ -52,7 +52,7 @@ export default function Home() {
         <div className="md:hidden flex border-b border-gray-200 bg-white">
           <button
             onClick={() => switchToTab('chat')}
-            className={'flex-1 relative py-3 text-base font-medium transition-colors min-h-[44px] ' + (activeTab === 'chat' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-600')}
+            className={'flex-1 relative py-3 text-base transition-colors min-h-[44px] ' + (activeTab === 'chat' ? 'text-blue-600 font-bold border-b-3 border-blue-600 bg-blue-50 underline' : 'text-gray-600 font-medium')}
           >
             Chat
             {hasUnseenChatActivity && activeTab !== 'chat' && (
@@ -61,7 +61,7 @@ export default function Home() {
           </button>
           <button
             onClick={() => switchToTab('document')}
-            className={'flex-1 relative py-3 text-base font-medium transition-colors min-h-[44px] ' + (activeTab === 'document' ? 'text-blue-600 border-b-2 border-blue-600 bg-blue-50' : 'text-gray-600')}
+            className={'flex-1 relative py-3 text-base transition-colors min-h-[44px] ' + (activeTab === 'document' ? 'text-blue-600 font-bold border-b-3 border-blue-600 bg-blue-50 underline' : 'text-gray-600 font-medium')}
           >
             Document
             {hasUnseenDocChanges && activeTab !== 'document' && (

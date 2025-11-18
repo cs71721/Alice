@@ -38,6 +38,11 @@ body {
   transition: height 0.1s ease;
 }
 
+/* Custom border width for active tabs */
+.border-b-3 {
+  border-bottom-width: 3px;
+}
+
 /* Markdown link styling */
 .prose a {
   color: #2563eb;
