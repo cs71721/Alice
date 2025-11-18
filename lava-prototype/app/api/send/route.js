@@ -2,6 +2,40 @@ import { NextResponse } from 'next/server'
 import { kv } from '@vercel/kv'
 import { addMessage, getDocument, updateDocument } from '@/lib/kv'
 import { processLavaCommand } from '@/lib/openai'
+import { DocumentEngine } from '@/lib/documentEngine'
+
+/**
+ * Detect if command is an editing operation or a question
+ */
+function isEditingCommand(instruction) {
+  const editingKeywords = [
+    'add', 'insert', 'delete', 'remove', 'replace', 'change',
+    'make', 'format', 'bold', 'italic', 'underline', 'move',
+    'reorder', 'undo', 'go back', 'previous version', 'heading',
+    'strikethrough', 'quote', 'list', 'bullet'
+  ]
+
+  const questionKeywords = [
+    'what', 'how', 'why', 'when', 'where', 'who',
+    'explain', 'tell me', 'show me', 'can you',
+    'is there', 'are there', '?'
+  ]
+
+  const lowerInstruction = instruction.toLowerCase()
+
+  // Check for question indicators first
+  if (questionKeywords.some(keyword => lowerInstruction.includes(keyword))) {
+    return false
+  }
+
+  // Check for editing indicators
+  if (editingKeywords.some(keyword => lowerInstruction.includes(keyword))) {
+    return true
+  }
+
+  // Default to editing if unclear
+  return true
+}
 
 export async function POST(request) {
   try {
@@ -27,45 +61,80 @@ export async function POST(request) {
         // Save current version as previous BEFORE making changes
         await kv.set('document-previous', oldContent)
 
-        const aiResponse = await processLavaCommand(oldContent, instruction)
+        // HYBRID ARCHITECTURE: Detect if editing or chatting
+        if (isEditingCommand(instruction)) {
+          // EDITING MODE: Use DocumentEngine for precise edits
+          console.log('Using DocumentEngine for editing command:', instruction)
 
-        // Parse the AI response to determine mode
-        if (aiResponse.startsWith('EDIT:')) {
-          // EDIT mode: Update the document
-          const updatedContent = aiResponse.substring(5).trim()
+          // Initialize engine with current document
+          const engine = new DocumentEngine(oldContent)
 
-          await updateDocument(updatedContent)
+          // Process command with hybrid AI+Code approach
+          const result = await engine.processCommand(instruction)
 
-          const preview = updatedContent.slice(0, 100) + (updatedContent.length > 100 ? '...' : '')
+          if (result.success) {
+            // Update document with edited content
+            await updateDocument(result.document)
 
-          await addMessage('DocumentUpdate', `Document updated by ${nickname}`, preview)
+            // Show success message in chat
+            await addMessage('Lava', '✓ Document updated')
 
-          return NextResponse.json({
-            message,
-            documentUpdated: true
-          })
-        } else if (aiResponse.startsWith('CHAT:')) {
-          // CHAT mode: Post response as a message from Lava
-          const chatResponse = aiResponse.substring(5).trim()
+            return NextResponse.json({
+              message,
+              documentUpdated: true
+            })
+          } else {
+            // Show error in chat
+            await addMessage('Lava', `Could not edit: ${result.error}`)
 
-          await addMessage('Lava', chatResponse)
-
-          return NextResponse.json({
-            message,
-            documentUpdated: false
-          })
+            return NextResponse.json({
+              message,
+              documentUpdated: false
+            })
+          }
         } else {
-          // Fallback: treat as chat if no prefix found
-          await addMessage('Lava', aiResponse)
+          // CHAT MODE: Use GPT-4 for conversational responses
+          console.log('Using GPT-4 chat mode for question:', instruction)
 
-          return NextResponse.json({
-            message,
-            documentUpdated: false
-          })
+          const aiResponse = await processLavaCommand(oldContent, instruction)
+
+          // Parse the AI response
+          if (aiResponse.startsWith('EDIT:')) {
+            // Fallback to old behavior if GPT-4 thinks it should edit
+            const updatedContent = aiResponse.substring(5).trim()
+            await updateDocument(updatedContent)
+            await addMessage('DocumentUpdate', `Document updated by ${nickname}`)
+
+            return NextResponse.json({
+              message,
+              documentUpdated: true
+            })
+          } else if (aiResponse.startsWith('CHAT:')) {
+            const chatResponse = aiResponse.substring(5).trim()
+            await addMessage('Lava', chatResponse)
+
+            return NextResponse.json({
+              message,
+              documentUpdated: false
+            })
+          } else {
+            // Fallback: treat as chat
+            await addMessage('Lava', aiResponse)
+
+            return NextResponse.json({
+              message,
+              documentUpdated: false
+            })
+          }
         }
       } catch (error) {
         console.error('Error processing @lava command:', error)
-        await addMessage('System', 'Error: Failed to process @lava command')
+        await addMessage('Lava', `Error: ${error.message || 'Failed to process command'}`)
+
+        return NextResponse.json({
+          message,
+          documentUpdated: false
+        })
       }
     }
 
