@@ -275,7 +275,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         {showNewMessages && (
           <button
             onClick={() => scrollToBottom(true)}
-            className="fixed bottom-20 left-1/2 transform -translate-x-1/2 md:left-[20%] bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2 text-sm font-medium z-10"
+            className="md:hidden fixed bottom-20 left-1/2 transform -translate-x-1/2 bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2 text-sm font-medium z-10"
           >
             {unreadCount > 0 && (
               <span className="bg-white text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
