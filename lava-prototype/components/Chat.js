@@ -49,12 +49,18 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     if (force || isNearBottom() || isFirstLoad.current) {
       requestAnimationFrame(() => {
         if (scrollContainerRef.current) {
-          // Method 1: Direct scroll
-          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+          // Method 1: Aggressive direct scroll (add extra to ensure we're at absolute bottom)
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight + 1000
 
           // Method 2: scrollIntoView as backup
           if (messagesEndRef.current) {
             messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' })
+          }
+
+          // Method 3: Scroll last message into view for extra reliability
+          const messages = scrollContainerRef.current.querySelectorAll('.message-appear')
+          if (messages.length > 0) {
+            messages[messages.length - 1].scrollIntoView({ behavior: 'smooth', block: 'end' })
           }
         }
       })
@@ -76,9 +82,26 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     adjustTextareaHeight()
   }, [inputText])
 
+  // Initial mount - ensure scroll to bottom
+  useEffect(() => {
+    // Scroll on mount
+    const initialScroll = () => {
+      scrollToBottom(true)
+      // Double and triple check to catch async content
+      setTimeout(() => scrollToBottom(true), 200)
+      setTimeout(() => scrollToBottom(true), 500)
+      setTimeout(() => scrollToBottom(true), 1000)
+    }
+
+    // Run immediately and after delay
+    requestAnimationFrame(initialScroll)
+  }, [])
+
   // Auto-scroll when messages change
   useEffect(() => {
     if (messages.length > 0 && !userScrolled.current) {
+      requestAnimationFrame(() => scrollToBottom(true))
+      // Backup scroll after delay for async content
       setTimeout(() => scrollToBottom(true), 100)
     }
   }, [messages])
@@ -119,7 +142,11 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         setLastMessageCount(data.messages.length)
 
         if (isFirstLoad.current) {
+          // Multiple scroll attempts on first load to ensure it works
+          requestAnimationFrame(() => scrollToBottom(true))
           setTimeout(() => scrollToBottom(true), 100)
+          setTimeout(() => scrollToBottom(true), 300)
+          setTimeout(() => scrollToBottom(true), 600)
           isFirstLoad.current = false
         }
       } catch (error) {
