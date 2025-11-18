@@ -191,7 +191,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   }
 
   return (
-    <div className="flex flex-col h-full w-full max-w-full overflow-hidden">
+    <div className="flex flex-col h-full w-full max-w-full overflow-hidden" style={{ position: 'relative' }}>
       <div className="bg-white border-b border-gray-200 px-4 py-3 md:block hidden">
         <h2 className="font-semibold text-gray-900">
           Chat <span className="text-sm text-gray-500">({nickname})</span>
@@ -201,10 +201,10 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         </p>
       </div>
 
-      <div 
+      <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-2 relative w-full max-w-full"
+        className="chat-messages-wrapper flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-2 relative w-full max-w-full"
       >
         {messages.map((msg) => {
           const isDocUpdate = msg.nickname === 'DocumentUpdate'
