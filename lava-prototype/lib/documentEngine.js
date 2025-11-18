@@ -95,7 +95,7 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
           }
         ],
         temperature: 0.1,
-        max_tokens: 150 // Reduced to fit within token limits
+        max_tokens: 500 // Increased for GPT-4 Turbo's 128K context
       })
 
       const response = completion.choices[0].message.content.trim()
@@ -171,7 +171,7 @@ Generate ONLY the requested content, no explanations or meta-text. Make it fit n
           }
         ],
         temperature: 0.7, // Higher temperature for creative content
-        max_tokens: 800 // Reduced to fit within token limits
+        max_tokens: 2000 // Increased for GPT-4 Turbo's 128K context
       })
 
       const newContent = completion.choices[0].message.content.trim()

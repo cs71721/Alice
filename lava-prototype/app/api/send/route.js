@@ -44,15 +44,16 @@ function estimateTokens(messages) {
 
 /**
  * Get adaptive chat context based on command and token limits
- * GPT-4 limit: 8192 tokens total
- * Budget: ~1500 for document, ~2000 for completion, ~3500 for chat context
+ * GPT-4 Turbo limit: 128,000 tokens total
+ * Budget: generous room for everything - no aggressive truncation needed!
  */
 function getAdaptiveContext(chatHistory, command, documentContent = '') {
-  const MAX_TOTAL_TOKENS = 8192
-  const DOCUMENT_BUFFER = Math.ceil(documentContent.length / 3) + 200 // Document + formatting
-  const COMPLETION_TOKENS = 1500 // Reduced from 4000
-  const SYSTEM_PROMPT_TOKENS = 500 // System instructions
+  const MAX_TOTAL_TOKENS = 128000 // GPT-4 Turbo: 128K tokens!
+  const DOCUMENT_BUFFER = Math.ceil(documentContent.length / 3) + 500 // Document + formatting
+  const COMPLETION_TOKENS = 4000 // Restored to 4000 (plenty of room now)
+  const SYSTEM_PROMPT_TOKENS = 1000 // System instructions
   const MAX_CONTEXT_TOKENS = MAX_TOTAL_TOKENS - DOCUMENT_BUFFER - COMPLETION_TOKENS - SYSTEM_PROMPT_TOKENS
+  // This will be ~122,000 tokens for context! (roughly 300-400 messages)
   const contextLevel = determineContextNeeded(command)
 
   let messagesToSend
