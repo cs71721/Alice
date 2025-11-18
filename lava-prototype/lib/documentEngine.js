@@ -35,9 +35,9 @@ export class DocumentEngine {
 
   /**
    * STEP 1: Parse user intent with GPT-4 (understanding)
-   * GPT-4 converts natural language to structured operations
+   * GPT-4 intelligently understands context and figures out what to do
    */
-  async parseIntent(userCommand) {
+  async parseIntent(userCommand, recentMessages = []) {
     // Check if this is a GENERATION request (creating new content with AI)
     const generationKeywords = [
       'write', 'create', 'generate', 'add a paragraph about',
@@ -57,29 +57,50 @@ export class DocumentEngine {
       }
     }
 
-    // Otherwise, parse as manipulation operation
-    const prompt = `Convert this editing command into a structured operation.
+    // Format recent chat context
+    const chatContext = recentMessages.length > 0
+      ? '\n\nRECENT CONVERSATION:\n' + recentMessages.slice(-10).map(msg =>
+          `${msg.nickname}: ${msg.text}`
+        ).join('\n')
+      : ''
 
-Command: "${userCommand}"
+    // Let GPT-4 understand the command in context
+    const prompt = `You are editing a document. Understand what the user wants and how to do it.
+
+CURRENT DOCUMENT:
+${this.document}
+
+${chatContext}
+
+USER COMMAND: "${userCommand}"
+
+If the user references something (like "the poem at the end" or "that paragraph"), find it in the document.
+If the user wants formatting or transformation (like "display as a poem", "format as a list"), figure out what changes are needed.
 
 Respond with ONLY valid JSON in this format:
 {
-  "action": "insert|delete|replace|format|move|reorder",
-  "target": "exact text to find or position (start|end|after:text|before:text|paragraph:N)",
-  "value": "new text or format type (bold|italic|underline|heading1|heading2)",
-  "all": true/false (apply to all instances or just first)
+  "action": "insert|delete|replace|format|transform|move|reorder",
+  "target": "exact text to find (or position like start|end|after:text|before:text|paragraph:N)",
+  "value": "new text, format type, or transformation description",
+  "all": true/false (apply to all instances or just first),
+  "explanation": "brief explanation of what you understood"
 }
 
-Examples:
-"add 'Hello' after the title" → {"action":"insert","target":"after:title","value":"Hello"}
-"make Items to Buy bold" → {"action":"format","target":"Items to Buy","value":"bold"}
-"delete the second paragraph" → {"action":"delete","target":"paragraph:2","value":""}
-"replace all 'PJs' with 'Products'" → {"action":"replace","target":"PJs","value":"Products","all":true}
-"insert 'New text' at the beginning" → {"action":"insert","target":"start","value":"New text"}
-"remove everything after Summary" → {"action":"delete","target":"after:Summary","value":""}
-"change 'old' to 'new'" → {"action":"replace","target":"old","value":"new","all":false}
+Actions:
+- insert: Add new text at a position
+- delete: Remove text
+- replace: Replace text with other text
+- format: Apply markdown formatting (bold, italic, heading, etc.)
+- transform: Change the structure/layout of existing text (e.g., single line → poem format, list → paragraph)
+- move: Move text to different position
+- reorder: Change order of items
 
-CRITICAL: Respond with ONLY the JSON object, no explanations.`
+Examples:
+"display the poem at the end in the form of a poem" → {"action":"transform","target":"[exact poem text]","value":"format as multi-line poem with proper line breaks","explanation":"Found poem at end, will reformat from single line to proper poem layout"}
+"make Items to Buy bold" → {"action":"format","target":"Items to Buy","value":"bold","explanation":"Apply bold formatting"}
+"add 'Hello' after the title" → {"action":"insert","target":"after:title","value":"Hello","explanation":"Insert text after title"}
+
+CRITICAL: Respond with ONLY the JSON object, no explanations outside the JSON.`
 
     try {
       const completion = await openai.chat.completions.create({
@@ -87,15 +108,15 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
         messages: [
           {
             role: 'system',
-            content: 'You are a precise intent parser. You convert natural language editing commands into structured JSON operations. Always respond with valid JSON only.'
+            content: 'You are an intelligent document editor. You understand context, find referenced content in documents, and figure out what transformations are needed. Always respond with valid JSON only.'
           },
           {
             role: 'user',
             content: prompt
           }
         ],
-        temperature: 0.1,
-        max_tokens: 500 // Increased for GPT-4 Turbo's 128K context
+        temperature: 0.2, // Slightly higher for better contextual understanding
+        max_tokens: 1000 // More tokens for complex transformations
       })
 
       const response = completion.choices[0].message.content.trim()
@@ -107,7 +128,9 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
         throw new Error('No JSON found in response')
       }
 
-      return JSON.parse(jsonMatch[0])
+      const parsed = JSON.parse(jsonMatch[0])
+      console.log('Parsed intent:', parsed.explanation || parsed.action)
+      return parsed
     } catch (e) {
       console.error('Failed to parse intent:', e)
       return null
@@ -119,7 +142,7 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
    * Precise, predictable text manipulation
    */
   executeOperation(operation) {
-    const { action, target, value, all, request } = operation
+    const { action, target, value, all, request, explanation } = operation
 
     switch (action) {
       case 'generate':
@@ -132,6 +155,8 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
         return this.replaceText(target, value, all)
       case 'format':
         return this.formatText(target, value)
+      case 'transform':
+        return this.transformText(target, value, explanation)
       case 'move':
         return this.moveText(target, value)
       case 'reorder':
@@ -329,6 +354,65 @@ Generate ONLY the requested content, no explanations or meta-text. Make it fit n
   }
 
   /**
+   * AI-powered text transformation
+   * Uses GPT-4 to intelligently transform text structure/layout
+   */
+  async transformText(target, transformDescription, explanation = '') {
+    if (!this.document.includes(target)) {
+      return { success: false, error: `Cannot find "${target}"` }
+    }
+
+    console.log(`Transforming text: ${explanation || transformDescription}`)
+
+    const prompt = `Transform the following text according to the instructions.
+
+ORIGINAL TEXT:
+${target}
+
+TRANSFORMATION REQUESTED:
+${transformDescription}
+
+${explanation ? `CONTEXT: ${explanation}` : ''}
+
+Instructions:
+- Apply the requested transformation (e.g., format as poem with line breaks, convert to list, change layout)
+- Preserve the content and meaning
+- Return ONLY the transformed text, no explanations
+- Use proper markdown formatting
+
+Return the transformed text:`
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4-turbo-preview',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a precise text transformer. You restructure and reformat text while preserving its content. Return only the transformed text with no explanations.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.3,
+        max_tokens: 2000
+      })
+
+      const transformedText = completion.choices[0].message.content.trim()
+      console.log('Transformed text:', transformedText.substring(0, 100) + '...')
+
+      // Replace the original text with transformed version
+      this.saveToHistory()
+      this.document = this.document.replace(target, transformedText)
+      return { success: true, document: this.document }
+    } catch (e) {
+      console.error('Failed to transform text:', e)
+      return { success: false, error: 'Failed to transform text' }
+    }
+  }
+
+  /**
    * Move text from one location to another
    */
   moveText(target, destination) {
@@ -392,7 +476,7 @@ Generate ONLY the requested content, no explanations or meta-text. Make it fit n
    * Main entry point: Process a user command
    * Handles both simple and complex/mixed commands
    */
-  async processCommand(userCommand) {
+  async processCommand(userCommand, recentMessages = []) {
     // Special commands
     if (userCommand.toLowerCase().includes('undo')) {
       return this.undo()
@@ -416,7 +500,7 @@ Generate ONLY the requested content, no explanations or meta-text. Make it fit n
         const formatMatch = userCommand.match(/(make|format|turn)\s+(it|that|this)\s+(\w+)/i)
 
         // First, generate the content
-        const genResult = await this.processCommand(genCommand)
+        const genResult = await this.processCommand(genCommand, recentMessages)
 
         if (genResult.success) {
           // Store the current document before formatting
@@ -443,8 +527,8 @@ Generate ONLY the requested content, no explanations or meta-text. Make it fit n
     }
 
     // Handle as single operation for simple commands
-    // Parse intent with GPT-4
-    const operation = await this.parseIntent(userCommand)
+    // Parse intent with GPT-4 (with chat context)
+    const operation = await this.parseIntent(userCommand, recentMessages)
     if (!operation) {
       return { success: false, error: 'Could not understand the command. Try being more specific.' }
     }

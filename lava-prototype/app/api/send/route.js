@@ -176,8 +176,8 @@ export async function POST(request) {
           // Initialize engine with current document
           const engine = new DocumentEngine(oldContent)
 
-          // Process command with hybrid AI+Code approach
-          const result = await engine.processCommand(instruction)
+          // Process command with hybrid AI+Code approach (pass chat context)
+          const result = await engine.processCommand(instruction, contextMessages)
 
           if (result.success) {
             // Update document with edited content
