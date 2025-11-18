@@ -76,8 +76,9 @@ html, body {
 /* Adjust chat messages container to account for fixed input */
 .chat-messages-wrapper {
   padding-bottom: 100px !important;
-  height: calc(100vh - 200px) !important;
   overflow-y: auto !important;
+  scroll-behavior: smooth !important;
+  -webkit-overflow-scrolling: touch !important;
 }
 
 /* Modern send button */

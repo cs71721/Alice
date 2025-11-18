@@ -46,9 +46,17 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
 
   const scrollToBottom = (force = false) => {
     if (force || isNearBottom() || isFirstLoad.current) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
-      }, 0)
+      requestAnimationFrame(() => {
+        if (scrollContainerRef.current) {
+          // Method 1: Direct scroll
+          scrollContainerRef.current.scrollTop = scrollContainerRef.current.scrollHeight
+
+          // Method 2: scrollIntoView as backup
+          if (messagesEndRef.current) {
+            messagesEndRef.current.scrollIntoView({ behavior: 'smooth', block: 'end', inline: 'nearest' })
+          }
+        }
+      })
       setShowNewMessages(false)
       setUnreadCount(0)
       userScrolled.current = false
@@ -67,6 +75,13 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     adjustTextareaHeight()
   }, [inputText])
 
+  // Auto-scroll when messages change
+  useEffect(() => {
+    if (messages.length > 0 && !userScrolled.current) {
+      setTimeout(() => scrollToBottom(true), 100)
+    }
+  }, [messages])
+
   useEffect(() => {
     if (!isNicknameSet) return
 
@@ -82,18 +97,21 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           const newMessages = data.messages.slice(lastMessageCount)
           const hasLavaCommand = newMessages.some(msg => msg.text.includes('@lava'))
           const hasMention = newMessages.some(msg => msg.text.includes('@' + nickname) && msg.nickname !== nickname)
+          const isLavaResponse = newMessages.some(msg => msg.nickname === 'Lava')
+          const isMyMessage = newMessages.some(msg => msg.nickname === nickname)
 
           if (hasLavaCommand || hasMention) {
             onChatActivity?.()
           }
 
-          if (!wasNearBottom && !isFirstLoad.current) {
+          // Auto-scroll if: user sent message, Lava responded, or user was already near bottom
+          if (isMyMessage || isLavaResponse || wasNearBottom) {
+            userScrolled.current = false
+            setTimeout(() => scrollToBottom(true), 100)
+          } else if (!wasNearBottom && !isFirstLoad.current) {
             const newCount = data.messages.length - lastMessageCount
             setUnreadCount(prev => prev + newCount)
             setShowNewMessages(true)
-          } else if (wasNearBottom) {
-            // If user was near bottom, scroll to bottom after new messages
-            setTimeout(() => scrollToBottom(true), 50)
           }
         }
 
@@ -159,7 +177,11 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       
       setInputText('')
 
-      setTimeout(() => scrollToBottom(true), 200)
+      // Force scroll to bottom after sending, with multiple attempts to ensure it works
+      userScrolled.current = false
+      setTimeout(() => scrollToBottom(true), 100)
+      setTimeout(() => scrollToBottom(true), 300)
+      setTimeout(() => scrollToBottom(true), 500)
     } catch (error) {
       console.error('Error sending message:', error)
     }
