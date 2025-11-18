@@ -17,11 +17,19 @@ export async function updateDocumentWithAI(currentContent, instruction) {
       messages: [
         {
           role: 'system',
-          content: 'You are a document editor. Apply the requested changes to the document and return the complete updated content in markdown format. Do not include any explanations or comments, just the document content.',
+          content: 'You are a document editor. Apply the requested changes and return ONLY the document content in markdown format. Never include prompt text or meta-instructions in your response.',
         },
         {
           role: 'user',
-          content: `Current document:\n\n${currentContent}\n\nPrevious version (use if user wants to revert/undo):\n\n${previousContent}\n\nInstruction: ${instruction}\n\nReturn the appropriate version based on the instruction.`,
+          content: `CURRENT DOCUMENT:
+${currentContent}
+
+PREVIOUS VERSION FOR REFERENCE:
+${previousContent}
+
+USER INSTRUCTION: ${instruction}
+
+Apply the instruction and return ONLY the updated document content. Do not include any explanations, labels like "Previous version", or meta-text.`,
         },
       ],
       temperature: 0.5,

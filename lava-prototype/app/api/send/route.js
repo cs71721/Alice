@@ -16,7 +16,7 @@ export async function POST(request) {
 
     const message = await addMessage(nickname, text)
 
-    const lavaMatch = text.match(/@lava\s+(.+)/i)
+    const lavaMatch = text.match(/@lava\s+([\s\S]+)/i)
     if (lavaMatch) {
       const instruction = lavaMatch[1]
       
