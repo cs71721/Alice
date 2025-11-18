@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 
-export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onChatActivity, onSwitchToDocument }) {
+export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onChatActivity }) {
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState('')
   const [isNicknameSet, setIsNicknameSet] = useState(false)

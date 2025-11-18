@@ -78,7 +78,6 @@ export default function Home() {
             onNicknameChange={setNickname}
             onDocumentUpdate={handleDocumentChange}
             onChatActivity={handleChatActivity}
-            onSwitchToDocument={() => switchToTab('document')}
           />
         </div>
 
