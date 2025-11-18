@@ -289,13 +289,13 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       </div>
 
       <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-4 w-full max-w-full">
-        <div className="flex gap-2 items-end w-full max-w-full">
+        <div className="flex gap-2 items-center w-full max-w-full">
           <textarea
             ref={textareaRef}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
             onKeyDown={handleKeyDown}
-            placeholder="Type a message... (Shift+Enter for new line)"
+            placeholder="Type a message..."
             rows={1}
             className="message-input flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-base resize-none overflow-y-auto"
             style={{ 
@@ -307,14 +307,15 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-base font-medium min-h-[44px] flex-shrink-0"
+            className="send-button bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors flex-shrink-0 flex items-center justify-center"
+            style={{ width: '44px', height: '44px', minWidth: '44px', minHeight: '44px' }}
+            title="Send message (or press Enter)"
           >
-            Send
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+              <path d="M3.4 20.4l17.45-7.48c.81-.35.81-1.49 0-1.84L3.4 3.6c-.66-.29-1.39.2-1.39.91L2 9.12c0 .5.37.93.87.99L17 12 2.87 13.88c-.5.07-.87.5-.87 1l.01 4.61c0 .71.73 1.2 1.39.91z"/>
+            </svg>
           </button>
         </div>
-        <p className="text-xs text-gray-500 mt-1 md:hidden">
-          Tip: Shift+Enter for new line
-        </p>
       </form>
     </div>
   )

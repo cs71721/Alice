@@ -38,6 +38,26 @@ body {
   transition: height 0.1s ease;
 }
 
+/* Modern send button */
+.send-button {
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.send-button:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+}
+
+.send-button:active {
+  transform: scale(0.95);
+}
+
+.send-button svg {
+  display: block;
+}
+
 /* Custom border width for active tabs */
 .border-b-3 {
   border-bottom-width: 3px;
