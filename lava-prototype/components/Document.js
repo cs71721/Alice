@@ -52,8 +52,8 @@ export default function Document({ onDocumentChange }) {
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 md:p-6">
-        <div 
+      <div className="flex-1 overflow-y-auto p-4 md:p-6" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+        <div
           className={'max-w-4xl mx-auto prose prose-sm md:prose-base transition-all duration-500 ' + (isHighlighted ? 'bg-yellow-100 p-4 rounded' : '')}
           style={{ fontSize: '16px', lineHeight: '1.6' }}
         >

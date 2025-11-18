@@ -32,7 +32,7 @@ export default function Home() {
   }
 
   return (
-    <main className="h-screen flex flex-col" style={{ paddingBottom: 'env(safe-area-inset-bottom)' }}>
+    <main className="h-screen flex flex-col">
       <header className="bg-gray-900 text-white px-4 md:px-6 shadow-md" style={{ paddingTop: "max(env(safe-area-inset-top), 0.75rem)", paddingBottom: "0.5rem" }}>
         <div className="flex items-center justify-between">
           <div>
