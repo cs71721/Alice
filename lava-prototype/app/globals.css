@@ -20,6 +20,11 @@ body {
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* Chat input form - add extra bottom padding for iPhone home indicator */
+.chat-input-form {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom)) !important;
+}
+
 /* Chat container - prevent horizontal scroll */
 .chat-container {
   overflow-x: hidden;
