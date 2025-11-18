@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { kv } from '@vercel/kv'
 import { addMessage, getDocument, updateDocument } from '@/lib/kv'
 import { updateDocumentWithAI } from '@/lib/openai'
 
@@ -22,6 +23,10 @@ export async function POST(request) {
       try {
         const doc = await getDocument()
         const oldContent = doc.content
+        
+        // Save current version as previous BEFORE making changes
+        await kv.set('document-previous', oldContent)
+        
         const updatedContent = await updateDocumentWithAI(oldContent, instruction)
         
         await updateDocument(updatedContent)

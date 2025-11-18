@@ -6,6 +6,12 @@ const openai = new OpenAI({
 
 export async function updateDocumentWithAI(currentContent, instruction) {
   try {
+    // Import kv to access previous version
+    const { kv } = await import('@vercel/kv')
+    
+    // Get previous version (might be null on first edit)
+    const previousContent = await kv.get('document-previous') || currentContent
+    
     const completion = await openai.chat.completions.create({
       model: 'gpt-4',
       messages: [
@@ -15,7 +21,7 @@ export async function updateDocumentWithAI(currentContent, instruction) {
         },
         {
           role: 'user',
-          content: `Current document:\n\n${currentContent}\n\nInstruction: ${instruction}\n\nPlease update the document according to this instruction and return the complete updated document.`,
+          content: `Current document:\n\n${currentContent}\n\nPrevious version (use if user wants to revert/undo):\n\n${previousContent}\n\nInstruction: ${instruction}\n\nReturn the appropriate version based on the instruction.`,
         },
       ],
       temperature: 0.5,
