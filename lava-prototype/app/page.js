@@ -49,20 +49,20 @@ export default function Home() {
         <div className="md:hidden flex border-b border-gray-200 bg-white">
           <button
             onClick={() => switchToTab('chat')}
-            className={'flex-1 relative py-3 text-base transition-colors min-h-[44px] ' + (activeTab === 'chat' ? 'text-blue-600 font-bold border-b-3 border-blue-600 bg-blue-50 underline' : 'text-gray-600 font-medium')}
+            className={'flex-1 py-3 text-base transition-colors min-h-[44px] flex items-center justify-center gap-2 ' + (activeTab === 'chat' ? 'text-blue-600 font-bold border-b-3 border-blue-600 bg-blue-50 underline' : 'text-gray-600 font-medium')}
           >
-            Chat
+            <span>Chat</span>
             {hasUnseenChatActivity && activeTab !== 'chat' && (
-              <span className="absolute top-2 right-1/4 w-2 h-2 bg-gray-500 rounded-full"></span>
+              <span className="w-2 h-2 bg-gray-500 rounded-full flex-shrink-0"></span>
             )}
           </button>
           <button
             onClick={() => switchToTab('document')}
-            className={'flex-1 relative py-3 text-base transition-colors min-h-[44px] ' + (activeTab === 'document' ? 'text-blue-600 font-bold border-b-3 border-blue-600 bg-blue-50 underline' : 'text-gray-600 font-medium')}
+            className={'flex-1 py-3 text-base transition-colors min-h-[44px] flex items-center justify-center gap-2 ' + (activeTab === 'document' ? 'text-blue-600 font-bold border-b-3 border-blue-600 bg-blue-50 underline' : 'text-gray-600 font-medium')}
           >
-            Document
+            <span>Document</span>
             {hasUnseenDocChanges && activeTab !== 'document' && (
-              <span className="absolute top-2 right-1/4 w-2 h-2 bg-red-500 rounded-full"></span>
+              <span className="w-2 h-2 bg-red-500 rounded-full flex-shrink-0"></span>
             )}
           </button>
         </div>
