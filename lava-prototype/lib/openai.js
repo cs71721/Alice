@@ -204,7 +204,7 @@ Execute the instruction precisely and respond with "EDIT:" followed by the compl
         },
       ],
       temperature: 0.1, // Lower temperature for more consistent edits
-      max_tokens: 4000,
+      max_tokens: 1500, // Reduced to fit within 8192 token limit
     })
 
     const response = completion.choices[0].message.content

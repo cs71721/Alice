@@ -35,19 +35,24 @@ function determineContextNeeded(command) {
 
 /**
  * Estimate token count for messages (rough approximation)
- * Average: 1 token ≈ 4 characters
+ * More conservative: 1 token ≈ 3 characters (accounts for tokenization overhead)
  */
 function estimateTokens(messages) {
   const totalChars = messages.reduce((sum, msg) => sum + (msg.text?.length || 0) + (msg.nickname?.length || 0), 0)
-  return Math.ceil(totalChars / 4)
+  return Math.ceil(totalChars / 3) // More conservative estimate
 }
 
 /**
  * Get adaptive chat context based on command and token limits
- * GPT-4 limit: ~8000 tokens, we reserve ~2000 for response + document
+ * GPT-4 limit: 8192 tokens total
+ * Budget: ~1500 for document, ~2000 for completion, ~3500 for chat context
  */
-function getAdaptiveContext(chatHistory, command) {
-  const MAX_CONTEXT_TOKENS = 6000 // Leave room for document + response
+function getAdaptiveContext(chatHistory, command, documentContent = '') {
+  const MAX_TOTAL_TOKENS = 8192
+  const DOCUMENT_BUFFER = Math.ceil(documentContent.length / 3) + 200 // Document + formatting
+  const COMPLETION_TOKENS = 1500 // Reduced from 4000
+  const SYSTEM_PROMPT_TOKENS = 500 // System instructions
+  const MAX_CONTEXT_TOKENS = MAX_TOTAL_TOKENS - DOCUMENT_BUFFER - COMPLETION_TOKENS - SYSTEM_PROMPT_TOKENS
   const contextLevel = determineContextNeeded(command)
 
   let messagesToSend
@@ -67,11 +72,13 @@ function getAdaptiveContext(chatHistory, command) {
   // Check token count and truncate if needed
   let estimatedTokens = estimateTokens(messagesToSend)
 
+  console.log(`📊 Token budget: MAX=${MAX_CONTEXT_TOKENS}, Document=${DOCUMENT_BUFFER}, Messages=${estimatedTokens}`)
+
   if (estimatedTokens > MAX_CONTEXT_TOKENS) {
-    console.log(`⚠️ Context too large (${estimatedTokens} tokens), truncating...`)
+    console.log(`⚠️ Context too large (${estimatedTokens} tokens > ${MAX_CONTEXT_TOKENS}), truncating...`)
 
     // Intelligently truncate: keep most recent messages
-    while (estimatedTokens > MAX_CONTEXT_TOKENS && messagesToSend.length > 5) {
+    while (estimatedTokens > MAX_CONTEXT_TOKENS && messagesToSend.length > 3) {
       // Remove from the middle (keep first few for context, last few for recency)
       const removeIndex = Math.floor(messagesToSend.length / 2)
       messagesToSend.splice(removeIndex, 1)
@@ -80,7 +87,7 @@ function getAdaptiveContext(chatHistory, command) {
 
     console.log(`✓ Truncated to ${messagesToSend.length} messages (${estimatedTokens} tokens)`)
   } else {
-    console.log(`✓ Sending ${messagesToSend.length} messages (${estimatedTokens} tokens) - context level: ${contextLevel}`)
+    console.log(`✓ Sending ${messagesToSend.length} messages (${estimatedTokens} tokens) - level: ${contextLevel}`)
   }
 
   return messagesToSend
@@ -146,8 +153,8 @@ export async function POST(request) {
         const doc = await getDocument()
         const oldContent = doc.content
 
-        // Get adaptive context based on command type
-        const contextMessages = getAdaptiveContext(chatHistory, instruction)
+        // Get adaptive context based on command type (with document size considered)
+        const contextMessages = getAdaptiveContext(chatHistory, instruction, oldContent)
 
         // === DIAGNOSTIC LOGGING ===
         console.log('=== LAVA CONTEXT CHECK ===')
