@@ -145,7 +145,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   }
 
   return (
-    <div className="flex flex-col h-full">
+    <div className="flex flex-col h-full w-full max-w-full overflow-hidden">
       <div className="bg-white border-b border-gray-200 px-4 py-3 md:block hidden">
         <h2 className="font-semibold text-gray-900">
           Chat <span className="text-sm text-gray-500">({nickname})</span>
@@ -158,22 +158,29 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       <div 
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto p-4 space-y-3 relative"
+        className="flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-3 relative w-full max-w-full"
       >
         {messages.map((msg) => {
           const isDocUpdate = msg.nickname === 'DocumentUpdate'
           const isMention = msg.text.includes('@' + nickname) && msg.nickname !== nickname
           
           return (
-            <div key={msg.id} className="group">
+            <div key={msg.id} className="group w-full max-w-full">
               {isDocUpdate ? (
-                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2">
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 space-y-2 w-full max-w-full">
                   <div className="flex items-center gap-2 text-blue-700 font-semibold text-sm">
                     <span>📄</span>
                     <span>Document updated</span>
                   </div>
                   {msg.preview && (
-                    <div className="text-sm text-gray-700 italic line-clamp-2">
+                    <div 
+                      className="text-sm text-gray-700 italic line-clamp-2"
+                      style={{
+                        wordWrap: 'break-word',
+                        wordBreak: 'break-word',
+                        overflowWrap: 'break-word'
+                      }}
+                    >
                       {msg.preview}
                     </div>
                   )}
@@ -200,7 +207,12 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
                     </span>
                   </div>
                   <div
-                    className={'text-base mt-1 ' + (msg.nickname === 'System' ? 'text-gray-500 italic' : isMention ? 'text-gray-900 bg-yellow-50 px-2 py-1 rounded' : 'text-gray-900')}
+                    className={'text-base mt-1 w-full max-w-full ' + (msg.nickname === 'System' ? 'text-gray-500 italic' : isMention ? 'text-gray-900 bg-yellow-50 px-2 py-1 rounded' : 'text-gray-900')}
+                    style={{
+                      wordWrap: 'break-word',
+                      wordBreak: 'break-word',
+                      overflowWrap: 'break-word'
+                    }}
                   >
                     {msg.text}
                   </div>
@@ -227,8 +239,8 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         )}
       </div>
 
-      <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-4">
-        <div className="flex gap-2">
+      <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-4 w-full max-w-full">
+        <div className="flex gap-2 w-full max-w-full">
           <input
             type="text"
             value={inputText}

@@ -6,11 +6,35 @@ body {
   @apply bg-gray-50 text-gray-900;
 }
 
+/* Chat container - prevent horizontal scroll */
+.chat-container {
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Message wrapping */
+.message {
+  word-wrap: break-word;
+  word-break: break-word;
+  overflow-wrap: break-word;
+  max-width: 100%;
+}
+
+/* Messages list */
+.messages-list {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
 /* Markdown link styling */
 .prose a {
   color: #2563eb;
   text-decoration: underline;
   transition: color 0.2s;
+  word-wrap: break-word;
+  word-break: break-all;
+  overflow-wrap: break-word;
 }
 
 .prose a:hover {
