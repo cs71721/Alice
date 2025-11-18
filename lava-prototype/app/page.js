@@ -32,8 +32,8 @@ export default function Home() {
   }
 
   return (
-    <main className="h-screen flex flex-col">
-      <header className="bg-gray-900 text-white px-4 md:px-6 shadow-md" style={{ paddingTop: "max(env(safe-area-inset-top), 0.5rem)", paddingBottom: "0.5rem" }}>
+    <main className="h-screen flex flex-col" style={{ paddingTop: 'env(safe-area-inset-top)' }}>
+      <header className="bg-gray-900 text-white px-4 md:px-6 shadow-md" style={{ paddingTop: "0.75rem", paddingBottom: "0.5rem" }}>
         <div className="flex items-center justify-between">
           <div>
             <h1 className="text-xl md:text-2xl font-bold">Lava</h1>

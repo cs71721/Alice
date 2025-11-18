@@ -2,8 +2,18 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
+html, body {
   @apply bg-gray-50 text-gray-900;
+  margin: 0;
+  padding: 0;
+  overflow: hidden;
+}
+
+body {
+  position: fixed;
+  width: 100%;
+  height: 100vh;
+  height: 100dvh; /* Use dynamic viewport height on mobile */
 }
 
 /* Chat container - prevent horizontal scroll */
