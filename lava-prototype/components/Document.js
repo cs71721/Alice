@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import ReactMarkdown from 'react-markdown'
 
 export default function Document({ onDocumentChange }) {
   const [document, setDocument] = useState(null)
   const [prevContent, setPrevContent] = useState('')
-  const [highlightedLines, setHighlightedLines] = useState(new Set())
+  const [isHighlighted, setIsHighlighted] = useState(false)
 
   useEffect(() => {
     const fetchDocument = async () => {
@@ -15,18 +16,8 @@ export default function Document({ onDocumentChange }) {
 
         if (data.document) {
           if (data.document.content !== prevContent && prevContent !== '') {
-            const oldLines = prevContent.split('\n')
-            const newLines = data.document.content.split('\n')
-            const changed = new Set()
-
-            newLines.forEach((line, index) => {
-              if (oldLines[index] !== line) {
-                changed.add(index)
-              }
-            })
-
-            setHighlightedLines(changed)
-            setTimeout(() => setHighlightedLines(new Set()), 3000)
+            setIsHighlighted(true)
+            setTimeout(() => setIsHighlighted(false), 3000)
             
             onDocumentChange?.()
           }
@@ -52,8 +43,6 @@ export default function Document({ onDocumentChange }) {
     )
   }
 
-  const lines = document.content.split('\n')
-
   return (
     <div className="flex flex-col h-full bg-white">
       <div className="border-b border-gray-200 px-4 md:px-6 py-3 md:block hidden">
@@ -64,16 +53,24 @@ export default function Document({ onDocumentChange }) {
       </div>
 
       <div className="flex-1 overflow-y-auto p-4 md:p-6">
-        <div className="max-w-4xl mx-auto prose prose-sm md:prose-base">
-          {lines.map((line, index) => (
-            <div
-              key={index}
-              className={'transition-colors duration-500 ' + (highlightedLines.has(index) ? 'bg-yellow-100 px-2 -mx-2 rounded' : '')}
-              style={{ fontSize: '16px', lineHeight: '1.6' }}
-            >
-              {line === '' ? '\u00A0' : line}
-            </div>
-          ))}
+        <div 
+          className={'max-w-4xl mx-auto prose prose-sm md:prose-base transition-all duration-500 ' + (isHighlighted ? 'bg-yellow-100 p-4 rounded' : '')}
+          style={{ fontSize: '16px', lineHeight: '1.6' }}
+        >
+          <ReactMarkdown
+            components={{
+              a: ({node, ...props}) => (
+                <a
+                  {...props}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-blue-600 underline hover:text-blue-800"
+                />
+              )
+            }}
+          >
+            {document.content}
+          </ReactMarkdown>
         </div>
       </div>
     </div>

@@ -9,11 +9,12 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@vercel/kv": "^1.0.1",
     "next": "^14.2.0",
+    "openai": "^4.28.0",
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
-    "@vercel/kv": "^1.0.1",
-    "openai": "^4.28.0"
+    "react-markdown": "^10.1.0"
   },
   "devDependencies": {
     "autoprefixer": "^10.4.18",

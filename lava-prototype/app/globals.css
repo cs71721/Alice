@@ -6,6 +6,17 @@ body {
   @apply bg-gray-50 text-gray-900;
 }
 
+/* Markdown link styling */
+.prose a {
+  color: #2563eb;
+  text-decoration: underline;
+  transition: color 0.2s;
+}
+
+.prose a:hover {
+  color: #1d4ed8;
+}
+
 /* Mobile optimizations */
 @media (max-width: 767px) {
   body {
