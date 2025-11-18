@@ -264,7 +264,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         )}
       </div>
 
-      <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-4 w-full max-w-full">
+      <form onSubmit={handleSendMessage} className="chat-input-form border-t border-gray-200 p-4 w-full max-w-full">
         <div className="flex gap-2 items-center w-full max-w-full">
           <textarea
             ref={textareaRef}
