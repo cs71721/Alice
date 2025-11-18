@@ -12,7 +12,11 @@ function isEditingCommand(instruction) {
     'add', 'insert', 'delete', 'remove', 'replace', 'change',
     'make', 'format', 'bold', 'italic', 'underline', 'move',
     'reorder', 'undo', 'go back', 'previous version', 'heading',
-    'strikethrough', 'quote', 'list', 'bullet'
+    'strikethrough', 'quote', 'list', 'bullet',
+    // Generation keywords
+    'write', 'create', 'generate', 'draft', 'compose',
+    'add a paragraph about', 'add a section on', 'add an introduction',
+    'add a conclusion', 'elaborate on', 'expand on', 'add details about'
   ]
 
   const questionKeywords = [
@@ -28,7 +32,7 @@ function isEditingCommand(instruction) {
     return false
   }
 
-  // Check for editing indicators
+  // Check for editing indicators (including generation)
   if (editingKeywords.some(keyword => lowerInstruction.includes(keyword))) {
     return true
   }

@@ -16,10 +16,48 @@ export class DocumentEngine {
   }
 
   /**
+   * Helper to extract insertion point from command
+   */
+  extractInsertionPoint(command) {
+    const lower = command.toLowerCase()
+    if (lower.includes('at the end') || lower.includes('to the end')) return 'end'
+    if (lower.includes('at the beginning') || lower.includes('at the start')) return 'start'
+    if (lower.includes('after')) {
+      const match = command.match(/after\s+(?:the\s+)?["']?([^"'.,]+)["']?/i)
+      if (match) return `after:${match[1].trim()}`
+    }
+    if (lower.includes('before')) {
+      const match = command.match(/before\s+(?:the\s+)?["']?([^"'.,]+)["']?/i)
+      if (match) return `before:${match[1].trim()}`
+    }
+    return 'end' // Default to end if not specified
+  }
+
+  /**
    * STEP 1: Parse user intent with GPT-4 (understanding)
    * GPT-4 converts natural language to structured operations
    */
   async parseIntent(userCommand) {
+    // Check if this is a GENERATION request (creating new content with AI)
+    const generationKeywords = [
+      'write', 'create', 'generate', 'add a paragraph about',
+      'add a section on', 'add an introduction', 'add a conclusion',
+      'draft', 'compose', 'elaborate on', 'expand on', 'add details about'
+    ]
+
+    const isGeneration = generationKeywords.some(keyword =>
+      userCommand.toLowerCase().includes(keyword)
+    )
+
+    if (isGeneration) {
+      return {
+        action: 'generate',
+        request: userCommand,
+        target: this.extractInsertionPoint(userCommand)
+      }
+    }
+
+    // Otherwise, parse as manipulation operation
     const prompt = `Convert this editing command into a structured operation.
 
 Command: "${userCommand}"
@@ -81,9 +119,11 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
    * Precise, predictable text manipulation
    */
   executeOperation(operation) {
-    const { action, target, value, all } = operation
+    const { action, target, value, all, request } = operation
 
     switch (action) {
+      case 'generate':
+        return this.handleGeneration(request, target)
       case 'insert':
         return this.insertText(target, value)
       case 'delete':
@@ -99,6 +139,61 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
       default:
         return { success: false, error: `Unknown action: ${action}` }
     }
+  }
+
+  /**
+   * STEP 3: Generate NEW content with AI when needed
+   */
+  async generateContent(request, context = '') {
+    const contextText = context || this.document.substring(0, 500)
+    const truncated = !context && this.document.length > 500
+
+    const prompt = `Generate the requested content for this document.
+
+Request: "${request}"
+
+Current document context:
+${contextText}${truncated ? '\n...[truncated]' : ''}
+
+Generate ONLY the requested content, no explanations or meta-text. Make it fit naturally with the document's existing tone and style. Return clean markdown.`
+
+    try {
+      const completion = await openai.chat.completions.create({
+        model: 'gpt-4',
+        messages: [
+          {
+            role: 'system',
+            content: 'You are a precise content generator. You create content that fits naturally into existing documents. Return only the content requested, no explanations.'
+          },
+          {
+            role: 'user',
+            content: prompt
+          }
+        ],
+        temperature: 0.7, // Higher temperature for creative content
+        max_tokens: 1000
+      })
+
+      const newContent = completion.choices[0].message.content.trim()
+      console.log('Generated content:', newContent.substring(0, 100) + '...')
+
+      return { success: true, content: newContent }
+    } catch (e) {
+      console.error('Failed to generate content:', e)
+      return { success: false, error: 'Failed to generate content' }
+    }
+  }
+
+  /**
+   * Handle content generation + insertion
+   */
+  async handleGeneration(request, insertionPoint) {
+    // First, generate the content
+    const result = await this.generateContent(request)
+    if (!result.success) return result
+
+    // Then, insert it at the right place
+    return this.insertText(insertionPoint, result.content)
   }
 
   /**
@@ -295,6 +390,7 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
 
   /**
    * Main entry point: Process a user command
+   * Handles both simple and complex/mixed commands
    */
   async processCommand(userCommand) {
     // Special commands
@@ -306,6 +402,47 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
       return this.undo()
     }
 
+    // Detect mixed commands (e.g., "write a paragraph about pricing and make it bold")
+    const hasGeneration = /write|create|draft|compose|generate/.test(userCommand.toLowerCase())
+    const hasFormatting = /and\s+(make|format|turn)\s+(it|that|this)\s+(bold|italic|underline|heading)/i.test(userCommand)
+
+    if (hasGeneration && hasFormatting) {
+      console.log('Detected mixed command: generation + formatting')
+
+      // Extract the generation part (everything before "and make/format")
+      const genMatch = userCommand.match(/^(.+?)\s+and\s+(make|format|turn)/i)
+      if (genMatch) {
+        const genCommand = genMatch[1]
+        const formatMatch = userCommand.match(/(make|format|turn)\s+(it|that|this)\s+(\w+)/i)
+
+        // First, generate the content
+        const genResult = await this.processCommand(genCommand)
+
+        if (genResult.success) {
+          // Store the current document before formatting
+          const beforeFormat = this.document
+
+          // Find what was just added (last paragraph/section)
+          const oldLines = this.history[this.history.length - 1]?.split('\n') || []
+          const newLines = this.document.split('\n')
+          const addedContent = newLines.slice(oldLines.length).join('\n').trim()
+
+          if (addedContent && formatMatch) {
+            const formatType = formatMatch[3].toLowerCase()
+            // Format the newly added content
+            const formatResult = await this.formatText(addedContent, formatType)
+            if (formatResult.success) {
+              return formatResult
+            }
+          }
+
+          return genResult
+        }
+        return genResult
+      }
+    }
+
+    // Handle as single operation for simple commands
     // Parse intent with GPT-4
     const operation = await this.parseIntent(userCommand)
     if (!operation) {
