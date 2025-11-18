@@ -73,8 +73,10 @@ html, body {
 .chat-messages-wrapper {
   flex: 1 1 auto !important;
   overflow-y: auto !important;
+  overflow-x: hidden !important;
   scroll-behavior: smooth !important;
   -webkit-overflow-scrolling: touch !important;
+  overscroll-behavior: contain !important;
   padding-bottom: 1rem !important;
   min-height: 0 !important;
 }
