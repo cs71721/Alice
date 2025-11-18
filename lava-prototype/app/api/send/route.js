@@ -68,6 +68,9 @@ export async function POST(request) {
           console.log('Last 5 messages:', chatHistory.slice(-5).map(m => `${m.nickname}: ${m.text.substring(0, 50)}`))
         }
         console.log('========================')
+
+        // Send diagnostic info to chat so user can see it
+        await addMessage('System', `[DEBUG] Lava received command. Chat history: ${chatHistory ? chatHistory.length + ' messages' : 'NONE'}`)
         // === END DIAGNOSTIC LOGGING ===
 
         const doc = await getDocument()
