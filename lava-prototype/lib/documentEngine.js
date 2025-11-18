@@ -83,7 +83,7 @@ CRITICAL: Respond with ONLY the JSON object, no explanations.`
 
     try {
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4-turbo-preview',
         messages: [
           {
             role: 'system',
@@ -159,7 +159,7 @@ Generate ONLY the requested content, no explanations or meta-text. Make it fit n
 
     try {
       const completion = await openai.chat.completions.create({
-        model: 'gpt-4',
+        model: 'gpt-4-turbo-preview',
         messages: [
           {
             role: 'system',
