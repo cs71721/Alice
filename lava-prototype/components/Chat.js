@@ -208,30 +208,38 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           return (
             <div key={msg.id} className="group w-full max-w-full">
               {isDocUpdate ? (
-                <div className="border border-blue-200 rounded-lg p-3 space-y-2 w-full max-w-full" style={{ backgroundColor: "#f0f8ff" }}">
-                  <div className="flex items-center gap-2 text-blue-700 font-semibold text-sm">
-                    <span>📄</span>
-                    <span>Document updated</span>
+                <>
+                  {/* Mobile: Full card with preview */}
+                  <div className="md:hidden border border-blue-200 rounded-lg p-3 space-y-2 w-full max-w-full" style={{ backgroundColor: "#f0f8ff" }}>
+                                    <div className="flex items-center gap-2 text-blue-700 font-semibold text-sm">
+                                      <span>📄</span>
+                                      <span>Document updated</span>
+                                    </div>
+                                    {msg.preview && (
+                                      <div 
+                                        className="text-sm text-gray-700 italic line-clamp-2"
+                                        style={{
+                                          wordWrap: 'break-word',
+                                          wordBreak: 'break-word',
+                                          overflowWrap: 'break-word'
+                                        }}
+                                      >
+                                        {msg.preview}
+                                      </div>
+                                    )}
+                                    <button
+                                      onClick={onSwitchToDocument}
+                                      className="text-blue-600 hover:text-blue-800 text-sm font-medium"
+                                    >
+                                      View full document →
+                                    </button>
                   </div>
-                  {msg.preview && (
-                    <div 
-                      className="text-sm text-gray-700 italic line-clamp-2"
-                      style={{
-                        wordWrap: 'break-word',
-                        wordBreak: 'break-word',
-                        overflowWrap: 'break-word'
-                      }}
-                    >
-                      {msg.preview}
-                    </div>
-                  )}
-                  <button
-                    onClick={onSwitchToDocument}
-                    className="text-blue-600 hover:text-blue-800 text-sm font-medium"
-                  >
-                    View full document →
-                  </button>
-                </div>
+
+                  {/* Desktop: Simple one-line notification */}
+                  <div className="hidden md:block text-sm text-gray-500 italic">
+                    → Document updated ✓
+                  </div>
+                </>
               ) : (
                 <>
                   <div className="flex items-baseline gap-2">
