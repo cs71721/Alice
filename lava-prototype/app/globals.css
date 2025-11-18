@@ -81,10 +81,10 @@ html, body {
   -webkit-overflow-scrolling: touch !important;
 }
 
-/* Modern send button */
+/* Modern send button with instant feedback */
 .send-button {
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.1s ease;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }
 
@@ -95,10 +95,39 @@ html, body {
 
 .send-button:active {
   transform: scale(0.95);
+  opacity: 0.7;
+  transition: all 0.1s;
+}
+
+.send-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .send-button svg {
   display: block;
+}
+
+/* Message animations */
+@keyframes slideIn {
+  from {
+    transform: translateY(10px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+.message-appear {
+  animation: slideIn 0.2s ease-out;
+}
+
+/* Optimistic message styling */
+.message-optimistic {
+  opacity: 0.8;
+  animation: slideIn 0.2s ease-out;
 }
 
 /* Custom border width for active tabs */

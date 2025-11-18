@@ -10,6 +10,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   const [lastMessageCount, setLastMessageCount] = useState(0)
   const [showNewMessages, setShowNewMessages] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
+  const [isSending, setIsSending] = useState(false)
   
   const messagesEndRef = useRef(null)
   const scrollContainerRef = useRef(null)
@@ -160,30 +161,54 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
 
   const handleSendMessage = async (e) => {
     e.preventDefault()
-    if (!inputText.trim()) return
+    if (!inputText.trim() || isSending) return
 
+    setIsSending(true)
+    const messageText = inputText.trim()
+
+    // 1. IMMEDIATELY add optimistic message to UI
+    const optimisticMessage = {
+      id: Date.now(),
+      nickname: nickname,
+      text: messageText,
+      timestamp: Date.now(),
+      optimistic: true
+    }
+    setMessages(prev => [...prev, optimisticMessage])
+
+    // 2. IMMEDIATELY clear input
+    setInputText('')
+
+    // 3. IMMEDIATELY scroll to bottom
+    userScrolled.current = false
+    requestAnimationFrame(() => scrollToBottom(true))
+
+    // 4. THEN send to server asynchronously (don't block UI)
     try {
       const response = await fetch('/api/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ nickname, text: inputText }),
+        body: JSON.stringify({ nickname, text: messageText }),
       })
-      
+
       const data = await response.json()
-      
+
       if (data.documentUpdated) {
         onDocumentUpdate?.()
       }
-      
-      setInputText('')
 
-      // Force scroll to bottom after sending, with multiple attempts to ensure it works
-      userScrolled.current = false
-      setTimeout(() => scrollToBottom(true), 100)
-      setTimeout(() => scrollToBottom(true), 300)
-      setTimeout(() => scrollToBottom(true), 500)
+      // Server will handle adding the real message, polling will pick it up
+      // Remove optimistic message once server confirms
+      setTimeout(() => {
+        setMessages(prev => prev.filter(msg => !msg.optimistic || msg.text !== messageText))
+      }, 1000)
     } catch (error) {
       console.error('Error sending message:', error)
+      // On error, remove optimistic message and show error
+      setMessages(prev => prev.filter(msg => msg.id !== optimisticMessage.id))
+    } finally {
+      // Re-enable send button after a short delay
+      setTimeout(() => setIsSending(false), 500)
     }
   }
 
@@ -233,7 +258,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           const isMention = msg.text.includes('@' + nickname) && msg.nickname !== nickname
 
           return (
-            <div key={msg.id} className="group w-full max-w-full">
+            <div key={msg.id} className={'group w-full max-w-full message-appear' + (msg.optimistic ? ' message-optimistic' : '')}>
               {isDocUpdate ? (
                 <div className="text-sm text-gray-500 italic">
                   → Document updated ✓
@@ -305,6 +330,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           />
           <button
             type="submit"
+            disabled={isSending || !inputText.trim()}
             className="send-button bg-blue-600 text-white rounded-full hover:bg-blue-700 transition-colors flex-shrink-0 flex items-center justify-center"
             style={{ width: '44px', height: '44px', minWidth: '44px', minHeight: '44px' }}
             title="Send message (or press Enter)"
