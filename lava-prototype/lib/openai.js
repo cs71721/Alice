@@ -11,14 +11,14 @@ export async function updateDocumentWithAI(currentContent, instruction) {
       messages: [
         {
           role: 'system',
-          content: 'You are a helpful AI assistant that edits documents based on user instructions. Return only the updated document content in markdown format. Do not include any explanations or comments, just the document content.',
+          content: 'You are a document editor. Apply the requested changes to the document and return the complete updated content in markdown format. Do not include any explanations or comments, just the document content.',
         },
         {
           role: 'user',
           content: `Current document:\n\n${currentContent}\n\nInstruction: ${instruction}\n\nPlease update the document according to this instruction and return the complete updated document.`,
         },
       ],
-      temperature: 0.7,
+      temperature: 0.5,
     })
 
     return completion.choices[0].message.content
