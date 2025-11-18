@@ -13,6 +13,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   
   const messagesEndRef = useRef(null)
   const scrollContainerRef = useRef(null)
+  const textareaRef = useRef(null)
   const isFirstLoad = useRef(true)
   const userScrolled = useRef(false)
 
@@ -30,6 +31,18 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       userScrolled.current = false
     }
   }
+
+
+  const adjustTextareaHeight = () => {
+    if (textareaRef.current) {
+      textareaRef.current.style.height = 'auto'
+      textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px'
+    }
+  }
+
+  useEffect(() => {
+    adjustTextareaHeight()
+  }, [inputText])
 
   useEffect(() => {
     if (!isNicknameSet) return
@@ -91,6 +104,13 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     if (tempNickname.trim()) {
       onNicknameChange(tempNickname.trim())
       setIsNicknameSet(true)
+    }
+  }
+
+  const handleKeyDown = (e) => {
+    if (e.key === 'Enter' && !e.shiftKey) {
+      e.preventDefault()
+      handleSendMessage(e)
     }
   }
 
@@ -240,22 +260,32 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       </div>
 
       <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-4 w-full max-w-full">
-        <div className="flex gap-2 w-full max-w-full">
-          <input
-            type="text"
+        <div className="flex gap-2 items-end w-full max-w-full">
+          <textarea
+            ref={textareaRef}
             value={inputText}
             onChange={(e) => setInputText(e.target.value)}
-            placeholder="Type a message..."
-            className="flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-base min-h-[44px]"
-            style={{ fontSize: '16px' }}
+            onKeyDown={handleKeyDown}
+            placeholder="Type a message... (Shift+Enter for new line)"
+            rows={1}
+            className="message-input flex-1 px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none text-base resize-none overflow-y-auto"
+            style={{ 
+              fontSize: '16px',
+              minHeight: '44px',
+              maxHeight: '120px',
+              lineHeight: '1.5'
+            }}
           />
           <button
             type="submit"
-            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-base font-medium min-h-[44px]"
+            className="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors text-base font-medium min-h-[44px] flex-shrink-0"
           >
             Send
           </button>
         </div>
+        <p className="text-xs text-gray-500 mt-1 md:hidden">
+          Tip: Shift+Enter for new line
+        </p>
       </form>
     </div>
   )

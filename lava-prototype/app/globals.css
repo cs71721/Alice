@@ -27,6 +27,17 @@ body {
   overflow-x: hidden;
 }
 
+/* Auto-expanding message input */
+.message-input {
+  min-height: 44px;
+  max-height: 120px;
+  resize: none;
+  overflow-y: auto;
+  width: 100%;
+  line-height: 1.5;
+  transition: height 0.1s ease;
+}
+
 /* Markdown link styling */
 .prose a {
   color: #2563eb;
