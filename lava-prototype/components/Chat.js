@@ -92,6 +92,13 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px'
+
+      // Also adjust padding when textarea changes
+      const inputForm = document.querySelector('.chat-input-form')
+      if (inputForm && scrollContainerRef.current) {
+        const inputHeight = inputForm.offsetHeight
+        scrollContainerRef.current.style.paddingBottom = `${inputHeight + 20}px`
+      }
     }
   }
 
@@ -112,8 +119,24 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       container.style.display = ''
     }
 
-    // Aggressive scroll on mount
-    ensureScrolledToBottom()
+    // Measure input height and adjust padding
+    const adjustPaddingForInput = () => {
+      const inputForm = document.querySelector('.chat-input-form')
+      if (inputForm && scrollContainerRef.current) {
+        const inputHeight = inputForm.offsetHeight
+        // Add extra padding to ensure last message is visible
+        scrollContainerRef.current.style.paddingBottom = `${inputHeight + 20}px`
+      }
+    }
+
+    // Adjust padding and scroll (with delay for DOM to settle)
+    setTimeout(() => {
+      adjustPaddingForInput()
+      ensureScrolledToBottom()
+    }, 100)
+
+    // Re-adjust on resize
+    window.addEventListener('resize', adjustPaddingForInput)
 
     // Add visibility change listener for mobile
     const handleVisibilityChange = () => {
@@ -152,6 +175,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('pageshow', handlePageShow)
       window.removeEventListener('orientationchange', handleOrientationChange)
+      window.removeEventListener('resize', adjustPaddingForInput)
       clearInterval(scrollInterval)
     }
   }, [])

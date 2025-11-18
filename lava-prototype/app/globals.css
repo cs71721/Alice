@@ -75,7 +75,8 @@ html, body {
 
 /* Adjust chat messages container to account for fixed input */
 .chat-messages-wrapper {
-  padding-bottom: 100px !important;
+  /* INCREASED padding to ensure messages aren't hidden behind input */
+  padding-bottom: 200px !important;
   overflow-y: auto !important;
   scroll-behavior: smooth !important;
   -webkit-overflow-scrolling: touch !important;
@@ -88,8 +89,8 @@ html, body {
 @media (max-width: 768px) {
   .chat-messages-wrapper {
     min-height: 0;
-    /* Ensure proper height calculation on mobile */
-    height: calc(100vh - env(safe-area-inset-top, 0px) - env(safe-area-inset-bottom, 0px) - 180px) !important;
+    /* Much larger padding for mobile with safe areas */
+    padding-bottom: calc(150px + env(safe-area-inset-bottom, 0px)) !important;
   }
 }
 
