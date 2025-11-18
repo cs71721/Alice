@@ -5,6 +5,88 @@ import { processLavaCommand } from '@/lib/openai'
 import { DocumentEngine } from '@/lib/documentEngine'
 
 /**
+ * Determine how much context is needed based on command type
+ */
+function determineContextNeeded(command) {
+  const fullContextKeywords = [
+    'summarize', 'summary', 'recap', 'overview',
+    'everything', 'all', 'entire', 'whole conversation',
+    'from the beginning', 'full discussion', 'all messages',
+    'complete history', 'what we discussed', 'conversation so far'
+  ]
+
+  const mediumContextKeywords = [
+    'recent', 'last few', 'we discussed',
+    'earlier', 'before', 'previous', 'mentioned',
+    'said', 'talked about', 'we were', 'someone'
+  ]
+
+  const cmdLower = command.toLowerCase()
+
+  // Check what type of command it is
+  if (fullContextKeywords.some(keyword => cmdLower.includes(keyword))) {
+    return 'full' // Send ALL messages (for summarization)
+  } else if (mediumContextKeywords.some(keyword => cmdLower.includes(keyword))) {
+    return 'medium' // Send last 30-50 messages (for contextual questions)
+  } else {
+    return 'recent' // Send last 10-15 messages (for simple edits/questions)
+  }
+}
+
+/**
+ * Estimate token count for messages (rough approximation)
+ * Average: 1 token ≈ 4 characters
+ */
+function estimateTokens(messages) {
+  const totalChars = messages.reduce((sum, msg) => sum + (msg.text?.length || 0) + (msg.nickname?.length || 0), 0)
+  return Math.ceil(totalChars / 4)
+}
+
+/**
+ * Get adaptive chat context based on command and token limits
+ * GPT-4 limit: ~8000 tokens, we reserve ~2000 for response + document
+ */
+function getAdaptiveContext(chatHistory, command) {
+  const MAX_CONTEXT_TOKENS = 6000 // Leave room for document + response
+  const contextLevel = determineContextNeeded(command)
+
+  let messagesToSend
+
+  switch (contextLevel) {
+    case 'full':
+      messagesToSend = chatHistory // All messages
+      break
+    case 'medium':
+      messagesToSend = chatHistory.slice(-30) // Last 30
+      break
+    case 'recent':
+      messagesToSend = chatHistory.slice(-10) // Last 10
+      break
+  }
+
+  // Check token count and truncate if needed
+  let estimatedTokens = estimateTokens(messagesToSend)
+
+  if (estimatedTokens > MAX_CONTEXT_TOKENS) {
+    console.log(`⚠️ Context too large (${estimatedTokens} tokens), truncating...`)
+
+    // Intelligently truncate: keep most recent messages
+    while (estimatedTokens > MAX_CONTEXT_TOKENS && messagesToSend.length > 5) {
+      // Remove from the middle (keep first few for context, last few for recency)
+      const removeIndex = Math.floor(messagesToSend.length / 2)
+      messagesToSend.splice(removeIndex, 1)
+      estimatedTokens = estimateTokens(messagesToSend)
+    }
+
+    console.log(`✓ Truncated to ${messagesToSend.length} messages (${estimatedTokens} tokens)`)
+  } else {
+    console.log(`✓ Sending ${messagesToSend.length} messages (${estimatedTokens} tokens) - context level: ${contextLevel}`)
+  }
+
+  return messagesToSend
+}
+
+/**
  * Detect if command is an editing operation or a question
  */
 function isEditingCommand(instruction) {
@@ -59,22 +141,24 @@ export async function POST(request) {
       const instruction = lavaMatch[1]
 
       try {
-        // === DIAGNOSTIC LOGGING ===
+        // Fetch chat history and document
         const chatHistory = await getMessages()
+        const doc = await getDocument()
+        const oldContent = doc.content
+
+        // Get adaptive context based on command type
+        const contextMessages = getAdaptiveContext(chatHistory, instruction)
+
+        // === DIAGNOSTIC LOGGING ===
         console.log('=== LAVA CONTEXT CHECK ===')
         console.log('Current command:', instruction)
-        console.log('Chat history available?', chatHistory ? chatHistory.length + ' messages' : 'NO')
-        if (chatHistory && chatHistory.length > 0) {
-          console.log('Last 5 messages:', chatHistory.slice(-5).map(m => `${m.nickname}: ${m.text.substring(0, 50)}`))
-        }
+        console.log('Total chat history:', chatHistory ? chatHistory.length + ' messages' : 'NO')
+        console.log('Context being sent:', contextMessages.length + ' messages')
         console.log('========================')
 
         // Send diagnostic info to chat so user can see it
-        await addMessage('System', `[DEBUG] Lava received command. Chat history: ${chatHistory ? chatHistory.length + ' messages' : 'NONE'}`)
+        await addMessage('System', `[DEBUG] Context: ${contextMessages.length}/${chatHistory.length} messages`)
         // === END DIAGNOSTIC LOGGING ===
-
-        const doc = await getDocument()
-        const oldContent = doc.content
 
         // Save current version as previous BEFORE making changes
         await kv.set('document-previous', oldContent)
@@ -114,7 +198,7 @@ export async function POST(request) {
           // CHAT MODE: Use GPT-4 for conversational responses
           console.log('Using GPT-4 chat mode for question:', instruction)
 
-          const aiResponse = await processLavaCommand(oldContent, instruction)
+          const aiResponse = await processLavaCommand(oldContent, instruction, contextMessages)
 
           // Parse the AI response
           if (aiResponse.startsWith('EDIT:')) {

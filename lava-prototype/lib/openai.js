@@ -109,7 +109,7 @@ function validateEdit(originalDoc, editedDoc, instruction) {
   return { success: true }
 }
 
-export async function processLavaCommand(currentContent, instruction) {
+export async function processLavaCommand(currentContent, instruction, chatHistory = []) {
   try {
     // Import kv to access previous version
     const { kv } = await import('@vercel/kv')
@@ -119,6 +119,13 @@ export async function processLavaCommand(currentContent, instruction) {
 
     // Enhance the instruction for better precision
     const enhancedInstruction = enhanceInstruction(instruction)
+
+    // Format chat history for context
+    const chatContext = chatHistory.length > 0
+      ? '\n\nCHAT CONVERSATION CONTEXT:\n' + chatHistory.map(msg =>
+          `${msg.nickname}: ${msg.text}`
+        ).join('\n') + '\n'
+      : ''
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-4',
@@ -130,6 +137,8 @@ export async function processLavaCommand(currentContent, instruction) {
 2. CHAT conversationally when asked questions or given non-editing requests
 
 CRITICAL: You must prefix your response with exactly "EDIT:" or "CHAT:" to indicate the mode.
+
+You have access to the conversation history to understand context and references.When users mention "we discussed" or "earlier" or refer to previous messages, you can see that context.
 
 FORMATTING RULES:
 - Bold: **text** or <b>text</b>
@@ -187,7 +196,7 @@ PREVIOUS VERSION FOR REFERENCE:
 <<<PREVIOUS_START>>>
 ${previousContent}
 <<<PREVIOUS_END>>>
-
+${chatContext}
 INSTRUCTION: ${enhancedInstruction}
 
 Analyze whether this is an EDIT request (modify the document) or a CHAT request (question/conversation).
