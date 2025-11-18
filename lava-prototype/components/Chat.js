@@ -41,12 +41,14 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   const isNearBottom = () => {
     if (!scrollContainerRef.current) return true
     const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
-    return scrollTop + clientHeight >= scrollHeight - 100
+    return scrollTop + clientHeight >= scrollHeight - 50
   }
 
   const scrollToBottom = (force = false) => {
     if (force || isNearBottom() || isFirstLoad.current) {
-      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth', block: 'end' })
+      }, 0)
       setShowNewMessages(false)
       setUnreadCount(0)
       userScrolled.current = false
@@ -72,7 +74,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       try {
         const response = await fetch('/api/messages')
         const data = await response.json()
-        
+
         const wasNearBottom = isNearBottom()
         setMessages(data.messages)
 
@@ -80,7 +82,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           const newMessages = data.messages.slice(lastMessageCount)
           const hasLavaCommand = newMessages.some(msg => msg.text.includes('@lava'))
           const hasMention = newMessages.some(msg => msg.text.includes('@' + nickname) && msg.nickname !== nickname)
-          
+
           if (hasLavaCommand || hasMention) {
             onChatActivity?.()
           }
@@ -89,9 +91,12 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
             const newCount = data.messages.length - lastMessageCount
             setUnreadCount(prev => prev + newCount)
             setShowNewMessages(true)
+          } else if (wasNearBottom) {
+            // If user was near bottom, scroll to bottom after new messages
+            setTimeout(() => scrollToBottom(true), 50)
           }
         }
-        
+
         setLastMessageCount(data.messages.length)
 
         if (isFirstLoad.current) {
@@ -153,8 +158,8 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       }
       
       setInputText('')
-      
-      setTimeout(() => scrollToBottom(true), 100)
+
+      setTimeout(() => scrollToBottom(true), 200)
     } catch (error) {
       console.error('Error sending message:', error)
     }
