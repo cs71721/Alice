@@ -1,6 +1,5 @@
 import { kv } from '@vercel/kv'
 
-// Initialize document if it doesn't exist
 export async function initDocument() {
   const doc = await kv.get('document')
   if (!doc) {
@@ -11,12 +10,10 @@ export async function initDocument() {
   }
 }
 
-// Get document
 export async function getDocument() {
   return await kv.get('document')
 }
 
-// Update document
 export async function updateDocument(content) {
   return await kv.set('document', {
     content,
@@ -24,14 +21,12 @@ export async function updateDocument(content) {
   })
 }
 
-// Get messages
 export async function getMessages() {
   const messages = await kv.get('messages')
   return messages || []
 }
 
-// Add message
-export async function addMessage(nickname, text) {
+export async function addMessage(nickname, text, preview = null) {
   const messages = await getMessages()
   const newMessage = {
     id: Date.now(),
@@ -39,9 +34,13 @@ export async function addMessage(nickname, text) {
     text,
     timestamp: Date.now(),
   }
+  
+  if (preview) {
+    newMessage.preview = preview
+  }
+  
   messages.push(newMessage)
   
-  // Keep only last 100 messages
   if (messages.length > 100) {
     messages.shift()
   }

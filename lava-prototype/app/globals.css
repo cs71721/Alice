@@ -5,3 +5,30 @@
 body {
   @apply bg-gray-50 text-gray-900;
 }
+
+/* Mobile optimizations */
+@media (max-width: 767px) {
+  body {
+    font-size: 16px;
+  }
+
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+
+  button {
+    min-height: 44px;
+  }
+
+  .prose {
+    font-size: 16px;
+    line-height: 1.6;
+  }
+}
+
+/* Prevent zoom on input focus for iOS */
+@supports (-webkit-touch-callout: none) {
+  input, textarea, select {
+    font-size: 16px !important;
+  }
+}

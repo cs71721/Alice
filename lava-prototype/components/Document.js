@@ -2,12 +2,11 @@
 
 import { useState, useEffect } from 'react'
 
-export default function Document() {
+export default function Document({ onDocumentChange }) {
   const [document, setDocument] = useState(null)
   const [prevContent, setPrevContent] = useState('')
   const [highlightedLines, setHighlightedLines] = useState(new Set())
 
-  // Poll for document updates every second
   useEffect(() => {
     const fetchDocument = async () => {
       try {
@@ -15,9 +14,7 @@ export default function Document() {
         const data = await response.json()
 
         if (data.document) {
-          // Check if content changed
           if (data.document.content !== prevContent && prevContent !== '') {
-            // Highlight changed lines
             const oldLines = prevContent.split('\n')
             const newLines = data.document.content.split('\n')
             const changed = new Set()
@@ -29,9 +26,9 @@ export default function Document() {
             })
 
             setHighlightedLines(changed)
-
-            // Clear highlights after 3 seconds
             setTimeout(() => setHighlightedLines(new Set()), 3000)
+            
+            onDocumentChange?.()
           }
 
           setPrevContent(data.document.content)
@@ -42,14 +39,10 @@ export default function Document() {
       }
     }
 
-    // Initial fetch
     fetchDocument()
-
-    // Poll every second
     const interval = setInterval(fetchDocument, 1000)
-
     return () => clearInterval(interval)
-  }, [prevContent])
+  }, [prevContent, onDocumentChange])
 
   if (!document) {
     return (
@@ -63,23 +56,20 @@ export default function Document() {
 
   return (
     <div className="flex flex-col h-full bg-white">
-      <div className="border-b border-gray-200 px-6 py-3">
+      <div className="border-b border-gray-200 px-4 md:px-6 py-3 md:block hidden">
         <h2 className="font-semibold text-gray-900">Document</h2>
         <p className="text-xs text-gray-500 mt-1">
           Last modified: {new Date(document.lastModified).toLocaleString()}
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-6">
-        <div className="max-w-4xl mx-auto prose prose-sm">
+      <div className="flex-1 overflow-y-auto p-4 md:p-6">
+        <div className="max-w-4xl mx-auto prose prose-sm md:prose-base">
           {lines.map((line, index) => (
             <div
               key={index}
-              className={`transition-colors duration-500 ${
-                highlightedLines.has(index)
-                  ? 'bg-yellow-100 px-2 -mx-2 rounded'
-                  : ''
-              }`}
+              className={'transition-colors duration-500 ' + (highlightedLines.has(index) ? 'bg-yellow-100 px-2 -mx-2 rounded' : '')}
+              style={{ fontSize: '16px', lineHeight: '1.6' }}
             >
               {line === '' ? '\u00A0' : line}
             </div>

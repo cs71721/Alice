@@ -13,29 +13,22 @@ export async function POST(request) {
       )
     }
 
-    // Add message to chat
     const message = await addMessage(nickname, text)
 
-    // Check if message contains @lava command
     const lavaMatch = text.match(/@lava\s+(.+)/i)
     if (lavaMatch) {
       const instruction = lavaMatch[1]
       
       try {
-        // Get current document
         const doc = await getDocument()
+        const oldContent = doc.content
+        const updatedContent = await updateDocumentWithAI(oldContent, instruction)
         
-        // Update document using AI
-        const updatedContent = await updateDocumentWithAI(
-          doc.content,
-          instruction
-        )
-        
-        // Save updated document
         await updateDocument(updatedContent)
         
-        // Add system message about the update
-        await addMessage('System', `Document updated by ${nickname} using @lava`)
+        const preview = updatedContent.slice(0, 100) + (updatedContent.length > 100 ? '...' : '')
+        
+        await addMessage('DocumentUpdate', `Document updated by ${nickname}`, preview)
         
         return NextResponse.json({ 
           message, 
