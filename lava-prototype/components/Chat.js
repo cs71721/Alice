@@ -92,13 +92,6 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     if (textareaRef.current) {
       textareaRef.current.style.height = 'auto'
       textareaRef.current.style.height = Math.min(textareaRef.current.scrollHeight, 120) + 'px'
-
-      // Also adjust padding when textarea changes
-      const inputForm = document.querySelector('.chat-input-form')
-      if (inputForm && scrollContainerRef.current) {
-        const inputHeight = inputForm.offsetHeight
-        scrollContainerRef.current.style.paddingBottom = `${inputHeight + 20}px`
-      }
     }
   }
 
@@ -119,24 +112,8 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       container.style.display = ''
     }
 
-    // Measure input height and adjust padding
-    const adjustPaddingForInput = () => {
-      const inputForm = document.querySelector('.chat-input-form')
-      if (inputForm && scrollContainerRef.current) {
-        const inputHeight = inputForm.offsetHeight
-        // Add extra padding to ensure last message is visible
-        scrollContainerRef.current.style.paddingBottom = `${inputHeight + 20}px`
-      }
-    }
-
-    // Adjust padding and scroll (with delay for DOM to settle)
-    setTimeout(() => {
-      adjustPaddingForInput()
-      ensureScrolledToBottom()
-    }, 100)
-
-    // Re-adjust on resize
-    window.addEventListener('resize', adjustPaddingForInput)
+    // Just scroll on mount
+    ensureScrolledToBottom()
 
     // Add visibility change listener for mobile
     const handleVisibilityChange = () => {
@@ -175,7 +152,6 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('pageshow', handlePageShow)
       window.removeEventListener('orientationchange', handleOrientationChange)
-      window.removeEventListener('resize', adjustPaddingForInput)
       clearInterval(scrollInterval)
     }
   }, [])
@@ -345,8 +321,8 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   }
 
   return (
-    <div className="flex flex-col h-full w-full max-w-full overflow-hidden" style={{ position: 'relative' }}>
-      <div className="bg-white border-b border-gray-200 px-4 py-3 md:block hidden">
+    <div className="chat-container-parent flex flex-col h-full w-full max-w-full overflow-hidden">
+      <div className="bg-white border-b border-gray-200 px-4 py-3 md:block hidden flex-shrink-0">
         <h2 className="font-semibold text-gray-900">
           Chat <span className="text-sm text-gray-500">({nickname})</span>
         </h2>
@@ -358,7 +334,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       <div
         ref={scrollContainerRef}
         onScroll={handleScroll}
-        className="chat-messages-wrapper flex-1 overflow-y-auto overflow-x-hidden p-4 space-y-2 relative w-full max-w-full"
+        className="chat-messages-wrapper p-4 space-y-2 w-full"
       >
         {messages.map((msg) => {
           const isDocUpdate = msg.nickname === 'DocumentUpdate'
