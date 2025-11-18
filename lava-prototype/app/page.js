@@ -33,12 +33,9 @@ export default function Home() {
 
   return (
     <main className="h-screen flex flex-col">
-      <header className="bg-gray-900 text-white px-4 md:px-6 shadow-md" style={{ paddingTop: "max(env(safe-area-inset-top), 0.75rem)", paddingBottom: "0.5rem" }}>
+      <header className="bg-gray-900 text-white px-4 md:px-6 shadow-md" style={{ paddingTop: "max(env(safe-area-inset-top), 0.75rem)", paddingBottom: "0.75rem" }}>
         <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-xl md:text-2xl font-bold">Lava</h1>
-            <p className="text-xs md:text-sm text-gray-300">Collaborative Document Editor</p>
-          </div>
+          <h1 className="text-xl md:text-2xl font-bold">Lava</h1>
           {nickname && (
             <div className="text-xs md:text-sm">
               <span className="text-gray-400">Logged in as:</span>{' '}
