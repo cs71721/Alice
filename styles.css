@@ -209,6 +209,53 @@ h1 {
   line-height: 1.5;
 }
 
+/* === CONVERSATION GENERATOR === */
+.conversation-generator {
+  max-width: 900px;
+  margin: 80px auto;
+  padding: 40px 20px;
+  text-align: center;
+  background-color: #f9fafb;
+  border-radius: 0.75rem;
+  border: 1px solid #e5e7eb;
+}
+
+.conversation-generator h2 {
+  font-size: 1.75em;
+  font-weight: 600;
+  margin-bottom: 10px;
+  letter-spacing: 0.02em;
+  color: #111827;
+}
+
+.generator-subtitle {
+  font-size: 1.1em;
+  font-style: italic;
+  color: #6b7280;
+  margin-bottom: 25px;
+}
+
+.generator-description {
+  max-width: 650px;
+  margin: 0 auto 30px;
+  text-align: left;
+  line-height: 1.6;
+}
+
+.generator-description p {
+  margin-bottom: 15px;
+  font-size: 0.95rem;
+  color: #374151;
+}
+
+.generator-embed {
+  margin-top: 30px;
+}
+
+.generator-embed .embed-container iframe {
+  height: 900px;
+}
+
 /* === TRANSITION SECTION === */
 .transition {
   margin: 80px auto;
@@ -455,6 +502,23 @@ h1 {
     font-size: 0.8125rem;
   }
 
+  .conversation-generator {
+    margin: 60px 1rem;
+    padding: 30px 15px;
+  }
+
+  .conversation-generator h2 {
+    font-size: 1.5em;
+  }
+
+  .generator-subtitle {
+    font-size: 1em;
+  }
+
+  .generator-embed .embed-container iframe {
+    height: 750px;
+  }
+
   .transition {
     padding: 40px 15px;
     margin: 60px auto;
@@ -480,6 +544,18 @@ h1 {
 
   h1 {
     font-size: 1.5rem;
+  }
+
+  .conversation-generator {
+    padding: 20px 10px;
+  }
+
+  .conversation-generator h2 {
+    font-size: 1.3em;
+  }
+
+  .generator-embed .embed-container iframe {
+    height: 700px;
   }
 
   .transition {
