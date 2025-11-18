@@ -8,7 +8,28 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   const [isNicknameSet, setIsNicknameSet] = useState(false)
   const [tempNickname, setTempNickname] = useState('')
   const [lastMessageCount, setLastMessageCount] = useState(0)
+  const [showNewMessages, setShowNewMessages] = useState(false)
+  const [unreadCount, setUnreadCount] = useState(0)
+  
   const messagesEndRef = useRef(null)
+  const scrollContainerRef = useRef(null)
+  const isFirstLoad = useRef(true)
+  const userScrolled = useRef(false)
+
+  const isNearBottom = () => {
+    if (!scrollContainerRef.current) return true
+    const { scrollTop, scrollHeight, clientHeight } = scrollContainerRef.current
+    return scrollTop + clientHeight >= scrollHeight - 100
+  }
+
+  const scrollToBottom = (force = false) => {
+    if (force || isNearBottom() || isFirstLoad.current) {
+      messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
+      setShowNewMessages(false)
+      setUnreadCount(0)
+      userScrolled.current = false
+    }
+  }
 
   useEffect(() => {
     if (!isNicknameSet) return
@@ -17,6 +38,8 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       try {
         const response = await fetch('/api/messages')
         const data = await response.json()
+        
+        const wasNearBottom = isNearBottom()
         setMessages(data.messages)
 
         if (data.messages.length > lastMessageCount && lastMessageCount > 0) {
@@ -27,9 +50,20 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           if (hasLavaCommand || hasMention) {
             onChatActivity?.()
           }
+
+          if (!wasNearBottom && !isFirstLoad.current) {
+            const newCount = data.messages.length - lastMessageCount
+            setUnreadCount(prev => prev + newCount)
+            setShowNewMessages(true)
+          }
         }
         
         setLastMessageCount(data.messages.length)
+
+        if (isFirstLoad.current) {
+          setTimeout(() => scrollToBottom(true), 100)
+          isFirstLoad.current = false
+        }
       } catch (error) {
         console.error('Error fetching messages:', error)
       }
@@ -40,9 +74,17 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     return () => clearInterval(interval)
   }, [isNicknameSet, lastMessageCount, nickname, onChatActivity])
 
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [messages])
+  const handleScroll = () => {
+    if (!scrollContainerRef.current) return
+    
+    const nearBottom = isNearBottom()
+    userScrolled.current = !nearBottom
+
+    if (nearBottom) {
+      setShowNewMessages(false)
+      setUnreadCount(0)
+    }
+  }
 
   const handleNicknameSubmit = (e) => {
     e.preventDefault()
@@ -70,6 +112,8 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       }
       
       setInputText('')
+      
+      setTimeout(() => scrollToBottom(true), 100)
     } catch (error) {
       console.error('Error sending message:', error)
     }
@@ -111,7 +155,11 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         </p>
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-3">
+      <div 
+        ref={scrollContainerRef}
+        onScroll={handleScroll}
+        className="flex-1 overflow-y-auto p-4 space-y-3 relative"
+      >
         {messages.map((msg) => {
           const isDocUpdate = msg.nickname === 'DocumentUpdate'
           const isMention = msg.text.includes('@' + nickname) && msg.nickname !== nickname
@@ -162,6 +210,21 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           )
         })}
         <div ref={messagesEndRef} />
+
+        {showNewMessages && (
+          <button
+            onClick={() => scrollToBottom(true)}
+            className="fixed bottom-20 left-1/2 transform -translate-x-1/2 md:left-[20%] bg-blue-600 text-white px-4 py-2 rounded-full shadow-lg hover:bg-blue-700 transition-all flex items-center gap-2 text-sm font-medium z-10"
+          >
+            {unreadCount > 0 && (
+              <span className="bg-white text-blue-600 rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+                {unreadCount}
+              </span>
+            )}
+            <span>New messages</span>
+            <span>↓</span>
+          </button>
+        )}
       </div>
 
       <form onSubmit={handleSendMessage} className="border-t border-gray-200 p-4">
