@@ -34,17 +34,19 @@ export async function addMessage(nickname, text, preview = null) {
     text,
     timestamp: Date.now(),
   }
-  
+
   if (preview) {
     newMessage.preview = preview
   }
-  
+
   messages.push(newMessage)
-  
-  if (messages.length > 100) {
-    messages.shift()
-  }
-  
+
+  // REMOVED: message limit - keep ALL messages for full conversation history
+  // This is a living document of the discussion, not a chat that forgets
+  // if (messages.length > 100) {
+  //   messages.shift()
+  // }
+
   await kv.set('messages', messages)
   return newMessage
 }
