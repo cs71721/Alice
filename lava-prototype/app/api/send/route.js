@@ -156,15 +156,12 @@ export async function POST(request) {
         // Get adaptive context based on command type (with document size considered)
         const contextMessages = getAdaptiveContext(chatHistory, instruction, oldContent)
 
-        // === DIAGNOSTIC LOGGING ===
+        // === DIAGNOSTIC LOGGING (server-side only) ===
         console.log('=== LAVA CONTEXT CHECK ===')
         console.log('Current command:', instruction)
         console.log('Total chat history:', chatHistory ? chatHistory.length + ' messages' : 'NO')
         console.log('Context being sent:', contextMessages.length + ' messages')
         console.log('========================')
-
-        // Send diagnostic info to chat so user can see it
-        await addMessage('System', `[DEBUG] Context: ${contextMessages.length}/${chatHistory.length} messages`)
         // === END DIAGNOSTIC LOGGING ===
 
         // Save current version as previous BEFORE making changes
