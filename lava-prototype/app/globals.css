@@ -15,6 +15,11 @@ body {
   height: 100dvh; /* Use dynamic viewport height on mobile */
 }
 
+/* Safe area support for iPhone */
+.safe-area-container {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
 /* Chat container - prevent horizontal scroll */
 .chat-container {
   overflow-x: hidden;
