@@ -189,62 +189,59 @@ export class DocumentEngine {
    * Use Claude Haiku for fast, cheap intent detection
    */
   async detectIntent(command, chatHistory) {
+    // SIMPLE RULE: If user highlighted text, they want to work on it → EDIT mode
+    // This is a concrete user action (highlighting), not keyword matching
+    if (command.includes('CONTEXT:')) {
+      return {
+        role: 'EDIT',
+        reasoning: 'User highlighted specific text to work on'
+      };
+    }
+
     const recentContext = chatHistory.slice(-5).map(m =>
       `${m.nickname}: ${m.text}`
     ).join('\n');
-
-    // Check if user highlighted text (CONTEXT: marker)
-    const hasHighlightedText = command.includes('CONTEXT:');
 
     const response = await callClaudeHaiku({
       messages: [
         {
           role: 'system',
-          content: `You are an intent classifier. Your job is to determine what the user wants to do with their document.
+          content: `You are an intent classifier for document commands (highlighted text cases are already handled).
 
-The three modes are:
+Three modes:
 
-EDIT: User wants to MODIFY or CHANGE the document
-- Asking to change, rewrite, improve, shorten, expand, fix existing text
-- Asking questions about text they've highlighted (they want feedback before editing)
-- Affirmative responses after suggestions ("yes", "go ahead", "do it", "sounds good", "apply it")
-- ANY request to modify the document in any way
+EDIT: User wants to modify the document
+- Change, rewrite, improve, fix existing text
+- Follow-ups like "yes", "go ahead", "do it" after edit suggestions
+- Any request to modify existing content
 
-CREATE: User wants to ADD NEW content
-- Writing new sections, paragraphs, chapters
-- Adding content that doesn't exist yet
-- Generating new material
+CREATE: User wants to add new content
+- Write new sections, paragraphs, chapters
+- Add content that doesn't exist yet
+- Generate new material
 
-CHAT: User wants to DISCUSS without changing anything
-- Pure questions with no editing intent ("what is this about?", "explain X to me")
-- Asking for opinions without planning to change anything
+CHAT: User wants to discuss without changes
+- Questions about the document
+- Asking for explanations or opinions
 - General conversation
 
-KEY DECISION RULES:
-1. If command contains "CONTEXT:" → User highlighted text → They want to modify it → EDIT
-2. If previous message suggested an edit and user says "yes"/"sure"/"go ahead"/"do it" → EDIT
-3. If user asks about highlighted text (even just "thoughts?") → They want feedback to edit → EDIT
-4. If in doubt between CHAT and EDIT → Choose EDIT (better to attempt edit than refuse)
-5. Only use CHAT if user clearly just wants to talk with no document changes intended
-
-Focus on USER INTENT, not the exact words. Understand conversational context.`
+Default to EDIT if ambiguous - it's better to attempt an edit than refuse.`
         },
         {
           role: 'user',
           content: `Recent conversation:
 ${recentContext}
 
-Current command: "${command}"
-${hasHighlightedText ? '\n⚠️ IMPORTANT: User has highlighted specific text in the document (CONTEXT: marker present)' : ''}
+Command: "${command}"
 
-Respond with JSON only:
+JSON response:
 {
   "role": "EDIT" or "CREATE" or "CHAT",
   "reasoning": "brief explanation"
 }`
         }
       ],
-      temperature: 0.1,  // Very low for consistent classification
+      temperature: 0.1,
       max_tokens: 200
     });
 
@@ -275,29 +272,43 @@ Respond with JSON only:
       messages: [
         {
           role: 'system',
-          content: `You are a PRECISE document editor.
+          content: `You are an intelligent document editor that can both consult and improve text.
 
-Your job: Execute the EXACT edit requested. Nothing more, nothing less.
-- Apply formatting exactly as requested
-- Move/delete text precisely
-- Do not add creative flourishes
-- Do not explain your changes
-- Use chat context to understand references like "that text" or "the paragraph we discussed"
-- Pay special attention to any referenced sections the user has highlighted
-- Return ONLY the edited document`
+When the user highlights text, they want to improve it. Your job is to understand their request and make the document better.
+
+USER REQUEST TYPES:
+1. Asking for feedback ("do you like this?", "thoughts?", "what do you think?")
+   → Provide brief feedback on what works and what could improve
+   → Then make improvements to the highlighted text
+   → Always edit the document, even if they only asked for opinions
+
+2. Asking for changes ("make it more concise", "rewrite this", "tweak please")
+   → Make the requested improvements directly
+   → Can provide brief explanation of changes if helpful
+
+3. Follow-up after suggestions ("yes", "go ahead", "do it", "apply it")
+   → Apply the previously suggested changes
+   → Reference chat history to understand what was suggested
+
+IMPORTANT RULES:
+- User highlighted text because they want to improve it - ALWAYS make edits
+- Be conversational but concise - no need for lengthy explanations
+- Focus on the highlighted section but maintain document flow
+- Use chat context to understand references and previous suggestions
+- Return the complete edited document`
         },
         {
           role: 'user',
           content: `Document to edit:
 ${this.document}
 ${chatContext}${sectionInfo}
-Command: ${command}
+User request: ${command}
 
-Execute this edit precisely and return the complete edited document.`
+Understand what they want and make the document better.`
         }
       ],
-      temperature: 0.1,  // Very low for mechanical precision
-      max_tokens: 8192  // Increased for GPT-4o capacity
+      temperature: 0.3,  // Balanced for understanding intent + making precise edits
+      max_tokens: 8192
     });
 
     this.saveToHistory();
