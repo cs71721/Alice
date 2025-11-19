@@ -672,8 +672,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
               ref={documentRef}
               className={'max-w-4xl mx-auto prose prose-sm md:prose-base transition-all duration-500 ' + (isHighlighted ? 'bg-yellow-100 p-4 rounded' : '')}
               style={{ fontSize: '16px', lineHeight: '1.6', cursor: 'text' }}
-              onDoubleClick={() => handleEditToggle()}
-              title="Double-click to edit"
+              onDoubleClick={() => !isViewingOldVersion && handleEditToggle()}
             >
               <ReactMarkdown
                 components={{
