@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 
 export default function Document({ onDocumentChange, nickname }) {
-  const [document, setDocument] = useState(null)
+  const [doc, setDoc] = useState(null)
   const [prevContent, setPrevContent] = useState('')
   const [isHighlighted, setIsHighlighted] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -29,7 +29,7 @@ export default function Document({ onDocumentChange, nickname }) {
           }
 
           setPrevContent(data.document.content)
-          setDocument(data.document)
+          setDoc(data.document)
 
           // Update edit content if not currently editing
           if (!isEditing) {
@@ -65,19 +65,19 @@ export default function Document({ onDocumentChange, nickname }) {
   const handleEditToggle = () => {
     if (!isEditing) {
       // Entering edit mode
-      setEditContent(document.content)
+      setEditContent(doc.content)
       setIsEditing(true)
       // Focus textarea after state update
       setTimeout(() => textareaRef.current?.focus(), 0)
     } else {
       // Exiting edit mode without saving
-      setEditContent(document.content)
+      setEditContent(doc.content)
       setIsEditing(false)
     }
   }
 
   const handleSave = async () => {
-    if (editContent === document.content) {
+    if (editContent === doc.content) {
       // No changes, just exit edit mode
       setIsEditing(false)
       return
@@ -92,7 +92,7 @@ export default function Document({ onDocumentChange, nickname }) {
         },
         body: JSON.stringify({
           content: editContent,
-          expectedVersion: document.version, // CAS: send expected version
+          expectedVersion: doc.version, // CAS: send expected version
           nickname: nickname || 'Unknown User' // Send the actual user's nickname
         }),
       })
@@ -113,7 +113,7 @@ export default function Document({ onDocumentChange, nickname }) {
           const docResponse = await fetch('/api/document')
           const data = await docResponse.json()
           if (data.document) {
-            setDocument(data.document)
+            setDoc(data.document)
             setPrevContent(data.document.content)
             setEditContent(data.document.content)
           }
@@ -126,7 +126,7 @@ export default function Document({ onDocumentChange, nickname }) {
         const docResponse = await fetch('/api/document')
         const data = await docResponse.json()
         if (data.document) {
-          setDocument(data.document)
+          setDoc(data.document)
           setPrevContent(data.document.content)
         }
       } else {
@@ -248,7 +248,7 @@ export default function Document({ onDocumentChange, nickname }) {
   // Download functions
   const downloadMarkdown = () => {
     try {
-      const blob = new Blob([document.content], { type: 'text/markdown;charset=utf-8' })
+      const blob = new Blob([doc.content], { type: 'text/markdown;charset=utf-8' })
       const url = URL.createObjectURL(blob)
       const link = document.createElement('a')
       link.href = url
@@ -267,7 +267,7 @@ export default function Document({ onDocumentChange, nickname }) {
   const downloadHTML = () => {
     try {
       // Simple markdown to HTML conversion
-      let htmlContent = document.content
+      let htmlContent = doc.content
         // Headers
         .replace(/^### (.*$)/gim, '<h3>$1</h3>')
         .replace(/^## (.*$)/gim, '<h2>$1</h2>')
@@ -384,7 +384,7 @@ export default function Document({ onDocumentChange, nickname }) {
     }
   }
 
-  if (!document) {
+  if (!doc) {
     return (
       <div className="flex items-center justify-center h-full">
         <div className="text-gray-500">Loading document...</div>
@@ -397,10 +397,10 @@ export default function Document({ onDocumentChange, nickname }) {
       <div className="border-b border-gray-200 px-4 md:px-6 py-3 flex justify-between items-start">
         <div className="flex-1">
           <h2 className="font-semibold text-gray-900">
-            Document {document.version && `v${document.version}`}
+            Document {doc.version && `v${doc.version}`}
           </h2>
           <p className="text-xs text-gray-500 mt-1">
-            Last modified: {new Date(document.lastModified).toLocaleString()}
+            Last modified: {new Date(doc.lastModified).toLocaleString()}
           </p>
         </div>
         <div className="flex gap-2">
@@ -505,7 +505,7 @@ export default function Document({ onDocumentChange, nickname }) {
                 )
               }}
             >
-              {document.content}
+              {doc.content}
             </ReactMarkdown>
           </div>
         )}
