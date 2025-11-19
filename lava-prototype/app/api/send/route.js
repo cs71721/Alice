@@ -82,16 +82,21 @@ function getAdaptiveContext(chatHistory, command, documentContent = '') {
 
 export async function POST(request) {
   try {
+    console.log('[API /send] Request received')
     const { nickname, text } = await request.json()
+    console.log('[API /send] Parsed data:', { nickname, textLength: text?.length })
 
     if (!nickname || !text) {
+      console.error('[API /send] Missing nickname or text')
       return NextResponse.json(
         { error: 'Username and message are required' },
         { status: 400 }
       )
     }
 
+    console.log('[API /send] Attempting to add message to KV...')
     const message = await addMessage(nickname, text)
+    console.log('[API /send] Message added successfully:', message.id)
 
     const lavaMatch = text.match(/@lava\s+([\s\S]+)/i)
     if (lavaMatch) {
@@ -159,7 +164,12 @@ export async function POST(request) {
           })
         }
       } catch (error) {
-        console.error('Error processing @lava command:', error)
+        console.error('[API /send] Error processing @lava command:', error)
+        console.error('[API /send] Error details:', {
+          message: error.message,
+          stack: error.stack,
+          name: error.name
+        })
         await addMessage('Lava', `Error: ${error.message || 'Failed to process command'}`)
 
         return NextResponse.json({
@@ -169,11 +179,18 @@ export async function POST(request) {
       }
     }
 
+    console.log('[API /send] Returning success response')
     return NextResponse.json({ message })
   } catch (error) {
-    console.error('Error sending message:', error)
+    console.error('[API /send] FATAL ERROR:', error)
+    console.error('[API /send] Error details:', {
+      message: error.message,
+      stack: error.stack,
+      name: error.name,
+      cause: error.cause
+    })
     return NextResponse.json(
-      { error: 'Failed to send message' },
+      { error: 'Failed to send message', details: error.message },
       { status: 500 }
     )
   }
