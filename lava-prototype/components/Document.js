@@ -174,25 +174,37 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
   // Restore selection to keep blue highlight visible (like Gemini)
   useEffect(() => {
     if (savedRange && selectedText) {
-      // Restore the selection after a brief delay to ensure the input has focused
       const restoreSelection = () => {
         try {
           const selection = window.getSelection()
-          selection.removeAllRanges()
-          selection.addRange(savedRange)
+          // Only restore if selection was cleared
+          if (selection.rangeCount === 0 || selection.toString().trim() === '') {
+            selection.removeAllRanges()
+            selection.addRange(savedRange)
+          }
         } catch (error) {
           // Range might be invalid if DOM changed
           console.warn('Could not restore selection:', error)
         }
       }
 
-      // Restore immediately and also on focus events
+      // Restore immediately
       restoreSelection()
 
-      // Also restore when user interacts with the input
-      const timer = setInterval(restoreSelection, 100)
+      // Keep restoring aggressively while input is open
+      const timer = setInterval(restoreSelection, 50) // More frequent: every 50ms
 
-      return () => clearInterval(timer)
+      // Also restore on any document interaction
+      document.addEventListener('selectionchange', restoreSelection)
+      document.addEventListener('mousedown', restoreSelection)
+      document.addEventListener('focus', restoreSelection, true)
+
+      return () => {
+        clearInterval(timer)
+        document.removeEventListener('selectionchange', restoreSelection)
+        document.removeEventListener('mousedown', restoreSelection)
+        document.removeEventListener('focus', restoreSelection, true)
+      }
     }
   }, [savedRange, selectedText])
 
