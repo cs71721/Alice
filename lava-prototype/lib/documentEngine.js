@@ -54,19 +54,19 @@ export class DocumentEngine {
     // Fix "change the font to strikethrough for X" → "apply strikethrough to X"
     const fontPatterns = [
       {
-        pattern: /change\s+the\s+font\s+to\s+strikethrough\s+for\s+["']?(.+?)["']?$/i,
+        pattern: /change\s+the\s+font\s+to\s+strikethrough\s+for\s+["']?(.+?)["']?\s*\??$/i,
         replacement: 'apply strikethrough formatting to "$1"'
       },
       {
-        pattern: /change\s+the\s+font\s+to\s+bold\s+for\s+["']?(.+?)["']?$/i,
+        pattern: /change\s+the\s+font\s+to\s+bold\s+for\s+["']?(.+?)["']?\s*\??$/i,
         replacement: 'make "$1" bold'
       },
       {
-        pattern: /change\s+the\s+font\s+to\s+italic\s+for\s+["']?(.+?)["']?$/i,
+        pattern: /change\s+the\s+font\s+to\s+italic\s+for\s+["']?(.+?)["']?\s*\??$/i,
         replacement: 'make "$1" italic'
       },
       {
-        pattern: /change\s+font\s+to\s+(\w+)\s+for\s+["']?(.+?)["']?$/i,
+        pattern: /change\s+font\s+to\s+(\w+)\s+for\s+["']?(.+?)["']?\s*\??$/i,
         replacement: 'apply $1 formatting to "$2"'
       }
     ]
