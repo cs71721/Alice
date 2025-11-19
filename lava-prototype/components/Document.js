@@ -246,11 +246,17 @@ export default function Document({ onDocumentChange, nickname }) {
   }
 
   // Download functions
-  const downloadMarkdown = async () => {
+  const downloadMarkdown = () => {
     try {
-      const { saveAs } = await import('file-saver')
       const blob = new Blob([document.content], { type: 'text/markdown;charset=utf-8' })
-      saveAs(blob, 'document.md')
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'document.md'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
       setShowDownloadMenu(false)
     } catch (error) {
       console.error('Error downloading file:', error)
@@ -258,10 +264,8 @@ export default function Document({ onDocumentChange, nickname }) {
     }
   }
 
-  const downloadHTML = async () => {
+  const downloadHTML = () => {
     try {
-      const { saveAs } = await import('file-saver')
-
       // Simple markdown to HTML conversion
       let htmlContent = document.content
         // Headers
@@ -365,7 +369,14 @@ export default function Document({ onDocumentChange, nickname }) {
 </html>`
 
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-      saveAs(blob, 'document.html')
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = 'document.html'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
       setShowDownloadMenu(false)
     } catch (error) {
       console.error('Error downloading file:', error)
