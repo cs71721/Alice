@@ -262,20 +262,23 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     if (!confirmed) return
 
     try {
-      const response = await fetch('/api/send', {
+      const response = await fetch('/api/restore', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          nickname,
-          text: `@restore ${viewingVersion.version}`
+          version: viewingVersion.version,
+          nickname
         }),
       })
 
       if (response.ok) {
-        // Wait for confirmation message, then go back to current
-        setTimeout(() => {
-          onBackToCurrent?.()
-        }, 1000)
+        const data = await response.json()
+        // Success message already added to chat by API
+        // Go back to current to see the restored version
+        onBackToCurrent?.()
+      } else {
+        const error = await response.json()
+        alert(`Failed to restore: ${error.error || 'Unknown error'}`)
       }
     } catch (error) {
       console.error('Error restoring version:', error)
