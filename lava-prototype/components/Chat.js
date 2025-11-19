@@ -299,12 +299,12 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     return (
       <div className="flex items-center justify-center h-full p-6">
         <form onSubmit={handleNicknameSubmit} className="w-full max-w-sm">
-          <h2 className="text-2xl font-bold mb-4">Enter your nickname</h2>
+          <h2 className="text-2xl font-bold mb-4">Enter your username</h2>
           <input
             type="text"
             value={tempNickname}
             onChange={(e) => setTempNickname(e.target.value)}
-            placeholder="Your nickname"
+            placeholder="Your username"
             className="w-full px-4 py-3 text-base border border-gray-300 rounded-lg mb-4 focus:ring-2 focus:ring-blue-500 focus:outline-none"
             autoFocus
             style={{ fontSize: '16px' }}

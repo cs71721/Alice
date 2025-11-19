@@ -86,7 +86,7 @@ export async function POST(request) {
 
     if (!nickname || !text) {
       return NextResponse.json(
-        { error: 'Nickname and text are required' },
+        { error: 'Username and message are required' },
         { status: 400 }
       )
     }

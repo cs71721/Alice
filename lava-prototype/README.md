@@ -8,7 +8,7 @@ A real-time collaborative document editor with chat and AI-powered editing capab
 - **Real-time chat**: Messages update every second via polling
 - **AI-powered editing**: Use `@lava [instruction]` in chat to update the document
 - **Change highlighting**: Document changes are highlighted in yellow for 3 seconds
-- **Simple nickname system**: Just enter a nickname to join
+- **Simple username system**: Just enter a username to join
 
 ## Tech Stack
 
@@ -70,7 +70,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 ## Usage
 
-1. **Enter your nickname** to join the chat
+1. **Enter your username** to join the chat
 2. **Send messages** to communicate with other users
 3. **Use @lava commands** to update the document:
    - `@lava add a section about getting started`
