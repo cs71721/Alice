@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { kv } from '@vercel/kv'
 import { addMessage, getDocument, updateDocument, getMessages } from '@/lib/kv'
 import { processLavaCommand } from '@/lib/openai'
+import { DocumentEngine } from '@/lib/documentEngine'
 
 /**
  * Determine how much context is needed based on command type
@@ -130,32 +131,38 @@ export async function POST(request) {
         // Save current version as previous BEFORE making changes
         await kv.set('document-previous', oldContent)
 
-        // SIMPLIFIED: Just use ONE GPT-4 system for everything
-        console.log('Processing with unified GPT-4 system:', instruction)
+        // Use intent-based DocumentEngine
+        console.log('Processing with DocumentEngine:', instruction)
 
-        const aiResponse = await processLavaCommand(oldContent, instruction, contextMessages)
+        // Initialize engine with current document
+        const engine = new DocumentEngine()
+        engine.setDocument(oldContent)
 
-        // Parse the AI response
-        if (aiResponse.startsWith('EDIT:')) {
-          const updatedContent = aiResponse.substring(5).trim()
-          await updateDocument(updatedContent)
-          await addMessage('Lava', '✓ Document updated')
+        // Process command with intent detection
+        const result = await engine.processCommand(instruction, contextMessages)
 
-          return NextResponse.json({
-            message,
-            documentUpdated: true
-          })
-        } else if (aiResponse.startsWith('CHAT:')) {
-          const chatResponse = aiResponse.substring(5).trim()
-          await addMessage('Lava', chatResponse)
+        if (result.success) {
+          if (result.mode === 'EDIT' || result.mode === 'CREATE') {
+            // Document was modified
+            await updateDocument(result.document)
+            await addMessage('Lava', result.message)
 
-          return NextResponse.json({
-            message,
-            documentUpdated: false
-          })
+            return NextResponse.json({
+              message,
+              documentUpdated: true
+            })
+          } else if (result.mode === 'CHAT') {
+            // Conversational response, no document update
+            await addMessage('Lava', result.message)
+
+            return NextResponse.json({
+              message,
+              documentUpdated: false
+            })
+          }
         } else {
-          // Fallback: treat as chat
-          await addMessage('Lava', aiResponse)
+          // Handle unclear intent or errors
+          await addMessage('Lava', result.message)
 
           return NextResponse.json({
             message,
