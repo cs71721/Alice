@@ -145,8 +145,7 @@ export async function POST(request) {
       if (!versionData) {
         await addMessage('System', `❌ Version ${versionNum} not found`)
       } else {
-        const preview = versionData.content.substring(0, 300)
-        await addMessage('System', `📄 Version ${versionNum}:\nEditor: ${versionData.lastEditor}\nChange: ${versionData.changeSummary}\n\nPreview:\n${preview}${versionData.content.length > 300 ? '...' : ''}`)
+        await addMessage('System', `📄 Version ${versionNum}:\nEditor: ${versionData.lastEditor}\nChange: ${versionData.changeSummary}\n\nFull content:\n\n${versionData.content}`)
       }
 
       return NextResponse.json({ message })
