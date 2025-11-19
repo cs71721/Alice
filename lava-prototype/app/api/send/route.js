@@ -61,19 +61,15 @@ function getAdaptiveContext(chatHistory, command, documentContent = '') {
       break
   }
 
-  // Calculate available token budget using tiktoken
+  // Calculate available token budget
   const availableTokens = calculateContextBudget(documentContent)
 
   // Check token count and truncate if needed
   const messageTokens = countMessageTokens(messagesToSend)
 
-  console.log(`📊 Context level: ${contextLevel}, Messages: ${messagesToSend.length}, Tokens: ${messageTokens}`)
-
   if (messageTokens > availableTokens) {
     // Use intelligent truncation
     messagesToSend = truncateMessagesToFit(messagesToSend, availableTokens)
-  } else {
-    console.log(`✓ All ${messagesToSend.length} messages fit within budget (${messageTokens} tokens)`)
   }
 
   return messagesToSend
@@ -82,21 +78,16 @@ function getAdaptiveContext(chatHistory, command, documentContent = '') {
 
 export async function POST(request) {
   try {
-    console.log('[API /send] Request received')
     const { nickname, text } = await request.json()
-    console.log('[API /send] Parsed data:', { nickname, textLength: text?.length })
 
     if (!nickname || !text) {
-      console.error('[API /send] Missing nickname or text')
       return NextResponse.json(
         { error: 'Username and message are required' },
         { status: 400 }
       )
     }
 
-    console.log('[API /send] Attempting to add message to KV...')
     const message = await addMessage(nickname, text)
-    console.log('[API /send] Message added successfully:', message.id)
 
     const lavaMatch = text.match(/@lava\s+([\s\S]+)/i)
     if (lavaMatch) {
@@ -111,18 +102,8 @@ export async function POST(request) {
         // Get adaptive context based on command type (with document size considered)
         const contextMessages = getAdaptiveContext(chatHistory, instruction, oldContent)
 
-        // === DIAGNOSTIC LOGGING (server-side only) ===
-        console.log('=== LAVA PROCESSING ===')
-        console.log('Command:', instruction)
-        console.log('Total history:', chatHistory ? chatHistory.length + ' messages' : 'NO')
-        console.log('Context sent:', contextMessages.length + ' messages')
-        console.log('=======================')
-
         // Save current version as previous BEFORE making changes
         await kv.set('document-previous', oldContent)
-
-        // Use intent-based DocumentEngine
-        console.log('Processing with DocumentEngine:', instruction)
 
         // Initialize engine with current document
         const engine = new DocumentEngine()
@@ -164,12 +145,7 @@ export async function POST(request) {
           })
         }
       } catch (error) {
-        console.error('[API /send] Error processing @lava command:', error)
-        console.error('[API /send] Error details:', {
-          message: error.message,
-          stack: error.stack,
-          name: error.name
-        })
+        console.error('Error processing @lava command:', error)
         await addMessage('Lava', `Error: ${error.message || 'Failed to process command'}`)
 
         return NextResponse.json({
@@ -179,18 +155,11 @@ export async function POST(request) {
       }
     }
 
-    console.log('[API /send] Returning success response')
     return NextResponse.json({ message })
   } catch (error) {
-    console.error('[API /send] FATAL ERROR:', error)
-    console.error('[API /send] Error details:', {
-      message: error.message,
-      stack: error.stack,
-      name: error.name,
-      cause: error.cause
-    })
+    console.error('Error sending message:', error)
     return NextResponse.json(
-      { error: 'Failed to send message', details: error.message },
+      { error: 'Failed to send message' },
       { status: 500 }
     )
   }

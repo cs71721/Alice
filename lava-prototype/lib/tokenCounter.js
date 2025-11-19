@@ -1,90 +1,31 @@
-// Lazy-load tiktoken to avoid WASM loading issues in serverless environments
-// Cache the encoder for performance
-let encoder = null
-let tiktokenLoadAttempted = false
-
 /**
- * Get the tiktoken encoder for GPT-4
- * Uses cl100k_base encoding which is used by GPT-4
- */
-function getEncoder() {
-  if (!tiktokenLoadAttempted) {
-    tiktokenLoadAttempted = true
-    try {
-      // Dynamically import tiktoken only when needed
-      const { encoding_for_model } = require('tiktoken')
-      // GPT-4 uses cl100k_base encoding
-      encoder = encoding_for_model('gpt-4-turbo')
-      console.log('✓ Tiktoken loaded successfully')
-    } catch (error) {
-      console.warn('⚠️ Tiktoken not available, using fallback estimation:', error.message)
-      encoder = null
-    }
-  }
-  return encoder
-}
-
-/**
- * Count exact tokens in a text string using tiktoken
+ * Estimate tokens in a text string
+ * Uses character-based estimation: ~4 chars per token for English text
+ * This is a conservative estimate that works well for GPT-4
  * @param {string} text - The text to count tokens for
- * @returns {number} The number of tokens
+ * @returns {number} The estimated number of tokens
  */
 export function countTokens(text) {
-  const enc = getEncoder()
-
-  if (!enc) {
-    // Fallback to estimation if tiktoken fails
-    // More conservative: ~4 chars per token for English text
-    return Math.ceil(text.length / 4)
-  }
-
-  try {
-    const tokens = enc.encode(text)
-    return tokens.length
-  } catch (error) {
-    console.warn('Error counting tokens, falling back to estimation', error)
-    return Math.ceil(text.length / 4)
-  }
+  if (!text) return 0
+  // Conservative estimate: ~4 characters per token
+  return Math.ceil(text.length / 4)
 }
 
 /**
- * Count tokens for an array of messages (chat format)
+ * Estimate tokens for an array of messages (chat format)
  * Accounts for message formatting overhead
  * @param {Array} messages - Array of message objects with text and nickname
- * @returns {number} Total token count
+ * @returns {number} Total token count estimate
  */
 export function countMessageTokens(messages) {
   if (!messages || messages.length === 0) return 0
 
-  const enc = getEncoder()
+  // Estimate including overhead for message structure
+  const totalChars = messages.reduce((sum, msg) => {
+    return sum + (msg.text?.length || 0) + (msg.nickname?.length || 0) + 10 // overhead
+  }, 0)
 
-  if (!enc) {
-    // Fallback estimation including overhead
-    const totalChars = messages.reduce((sum, msg) => {
-      return sum + (msg.text?.length || 0) + (msg.nickname?.length || 0) + 10 // overhead
-    }, 0)
-    return Math.ceil(totalChars / 4)
-  }
-
-  try {
-    let totalTokens = 0
-
-    for (const msg of messages) {
-      // Format as it would appear in the prompt
-      const formatted = `${msg.nickname}: ${msg.text}`
-      totalTokens += countTokens(formatted)
-      // Add overhead for message structure (approximately 4 tokens per message)
-      totalTokens += 4
-    }
-
-    return totalTokens
-  } catch (error) {
-    console.warn('Error counting message tokens, falling back to estimation', error)
-    const totalChars = messages.reduce((sum, msg) => {
-      return sum + (msg.text?.length || 0) + (msg.nickname?.length || 0) + 10
-    }, 0)
-    return Math.ceil(totalChars / 4)
-  }
+  return Math.ceil(totalChars / 4)
 }
 
 /**
@@ -105,14 +46,6 @@ export function calculateContextBudget(
 
   const availableTokens = maxTotalTokens - documentTokens - completionTokens - SYSTEM_PROMPT_TOKENS - bufferTokens
 
-  console.log(`📊 Token budget breakdown:
-    Max Total: ${maxTotalTokens}
-    Document: ${documentTokens}
-    Completion: ${completionTokens}
-    System: ${SYSTEM_PROMPT_TOKENS}
-    Buffer: ${bufferTokens}
-    Available for context: ${availableTokens}`)
-
   return Math.max(0, availableTokens)
 }
 
@@ -132,8 +65,6 @@ export function truncateMessagesToFit(messages, maxTokens) {
     return messages // All messages fit
   }
 
-  console.log(`⚠️ Context too large (${currentTokens} tokens > ${maxTokens}), truncating...`)
-
   // Keep most recent messages, remove from the middle
   let truncated = [...messages]
 
@@ -144,17 +75,6 @@ export function truncateMessagesToFit(messages, maxTokens) {
     currentTokens = countMessageTokens(truncated)
   }
 
-  console.log(`✓ Truncated to ${truncated.length} messages (${currentTokens} tokens)`)
-
   return truncated
 }
 
-/**
- * Clean up encoder when done (frees memory)
- */
-export function cleanup() {
-  if (encoder) {
-    encoder.free()
-    encoder = null
-  }
-}
