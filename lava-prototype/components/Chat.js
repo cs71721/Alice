@@ -188,6 +188,13 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       const data = await response.json()
 
       const wasNearBottom = isNearBottom()
+
+      // Safety check: ensure messages is an array
+      if (!data.messages || !Array.isArray(data.messages)) {
+        console.warn('Invalid messages data:', data)
+        return
+      }
+
       setMessages(data.messages)
 
       if (data.messages.length > lastMessageCount && lastMessageCount > 0) {
@@ -460,7 +467,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         onScroll={handleScroll}
         className="chat-messages-wrapper p-4 space-y-2 w-full"
       >
-        {messages.map((msg) => {
+        {messages && messages.map((msg) => {
           const isDocUpdate = msg.nickname === 'DocumentUpdate'
           const isMention = msg.text.includes('@' + nickname) && msg.nickname !== nickname
 
