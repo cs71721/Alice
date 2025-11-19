@@ -176,9 +176,9 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   // Auto-scroll when messages change
   useEffect(() => {
     if (messages.length > 0 && !userScrolled.current) {
-      requestAnimationFrame(() => scrollToBottom(true))
+      requestAnimationFrame(() => scrollToBottom())
       // Backup scroll after delay for async content
-      setTimeout(() => scrollToBottom(true), 100)
+      setTimeout(() => scrollToBottom(), 100)
     }
   }, [messages])
 
