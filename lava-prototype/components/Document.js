@@ -13,10 +13,12 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
   const [selectedText, setSelectedText] = useState(null)
   const [selectionPosition, setSelectionPosition] = useState(null)
+  const [referenceInput, setReferenceInput] = useState('')
   const prevContentRef = useRef('')
   const textareaRef = useRef(null)
   const downloadRef = useRef(null)
   const documentRef = useRef(null)
+  const referenceInputRef = useRef(null)
 
   // Create fetchDocument function for adaptive polling
   const fetchDocument = useCallback(async () => {
@@ -164,21 +166,56 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     }
   }, [isEditing])
 
-  // Handle reference button click
-  const handleCopyReference = () => {
-    if (selectedText && selectionPosition) {
-      const reference = selectionPosition.sectionId
-        ? `#${selectionPosition.sectionId}: "${selectedText}"`
-        : `"${selectedText}"`
+  // Smart truncation for long quotes (Option C)
+  const createAbbreviatedReference = (text, sectionId) => {
+    const maxLength = 100
+    let abbreviated = text
 
-      // Call parent callback if provided
-      onSectionReference?.(reference)
-
-      // Clear selection
-      setSelectedText(null)
-      setSelectionPosition(null)
-      window.getSelection().removeAllRanges()
+    if (text.length > maxLength) {
+      abbreviated = text.substring(0, maxLength).trim() + '...'
     }
+
+    if (sectionId) {
+      return `Referenced from #${sectionId}:\n"${abbreviated} [see more]"`
+    } else {
+      return `"${abbreviated} [see more]"`
+    }
+  }
+
+  // Handle reference input submission
+  const handleReferenceSubmit = (e) => {
+    e.preventDefault()
+
+    if (!selectedText || !selectionPosition) return
+
+    const userComment = referenceInput.trim()
+
+    // Create abbreviated reference
+    const abbreviatedRef = createAbbreviatedReference(
+      selectedText,
+      selectionPosition.sectionId
+    )
+
+    // Full reference for metadata
+    const fullReference = {
+      text: selectedText,
+      sectionId: selectionPosition.sectionId,
+      abbreviated: abbreviatedRef,
+      userComment: userComment
+    }
+
+    // Send reference with comment
+    const messageToSend = userComment
+      ? `${abbreviatedRef}\n\n${userComment}`
+      : abbreviatedRef
+
+    onSectionReference?.(messageToSend)
+
+    // Clear state
+    setReferenceInput('')
+    setSelectedText(null)
+    setSelectionPosition(null)
+    window.getSelection().removeAllRanges()
   }
 
   const handleEditToggle = () => {
@@ -735,21 +772,47 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
               </ReactMarkdown>
             </div>
 
-            {/* Floating reference button */}
+            {/* Floating inline input for references */}
             {selectedText && selectionPosition && (
-              <button
-                onClick={handleCopyReference}
-                className="fixed z-50 bg-blue-600 text-white px-3 py-1 rounded-full text-sm shadow-lg hover:bg-blue-700 transition-all flex items-center gap-1"
+              <form
+                onSubmit={handleReferenceSubmit}
+                className="fixed z-50 bg-white border-2 border-blue-600 rounded-lg shadow-xl p-3"
                 style={{
-                  left: `${Math.min(Math.max(selectionPosition.x - 50, 10), window.innerWidth - 110)}px`,
-                  top: `${Math.max(selectionPosition.y, 10)}px`,
+                  left: `${Math.min(Math.max(selectionPosition.x - 150, 10), window.innerWidth - 310)}px`,
+                  top: `${Math.max(selectionPosition.y + 10, 10)}px`,
+                  width: '300px'
                 }}
               >
-                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
-                </svg>
-                Reference
-              </button>
+                <input
+                  ref={referenceInputRef}
+                  type="text"
+                  value={referenceInput}
+                  onChange={(e) => setReferenceInput(e.target.value)}
+                  placeholder="Ask @lava or discuss with team..."
+                  className="w-full px-3 py-2 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  autoFocus
+                />
+                <div className="flex gap-2 mt-2">
+                  <button
+                    type="submit"
+                    className="flex-1 bg-blue-600 text-white px-3 py-1 rounded text-sm hover:bg-blue-700 transition-colors"
+                  >
+                    Send
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSelectedText(null)
+                      setSelectionPosition(null)
+                      setReferenceInput('')
+                      window.getSelection().removeAllRanges()
+                    }}
+                    className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
+                  >
+                    Cancel
+                  </button>
+                </div>
+              </form>
             )}
           </>
         )}
