@@ -286,19 +286,15 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
         ? `#${selectionPosition.sectionId}`
         : 'selected text'
 
-      // Clean message format: shows what section, not the full text (already visible as highlighted)
-      // But includes full context for @lava API with clear boundaries
-      const preview = selectedText.length > 50 ? selectedText.substring(0, 50) + '...' : selectedText
+      // Format instruction clearly for AI with the exact text to modify
+      messageToSend = `@lava ${instruction}
 
-      messageToSend = `@lava Editing highlighted text from ${sectionRef}: "${preview}"
-
-Request: ${instruction}
-
-[Full context for AI]
-ONLY modify this exact highlighted text (do not change anything else):
----START---
+CONTEXT: The user has highlighted this specific text to modify:
+"""
 ${selectedText}
----END---`
+"""
+
+IMPORTANT: Only apply "${instruction}" to the text shown above. Do not modify any other part of the document.`
     } else if (userComment) {
       // Team discussion mode: Show abbreviated reference + comment
       messageToSend = `${abbreviatedRef}\n\n${userComment}`
