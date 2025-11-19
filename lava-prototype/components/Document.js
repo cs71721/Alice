@@ -157,7 +157,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     let timeout
     const debouncedHandler = () => {
       clearTimeout(timeout)
-      timeout = setTimeout(handleSelection, 200)
+      timeout = setTimeout(handleSelection, 800) // Longer delay so user can finish selecting
     }
 
     document.addEventListener('selectionchange', debouncedHandler)
@@ -235,17 +235,14 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     let messageToSend
 
     if (userComment && userComment.trim().toLowerCase().startsWith('@lava')) {
-      // @lava mode: Format as direct question with context
+      // @lava mode: Send FULL text (not abbreviated) so Lava has complete context
       const question = userComment.trim().substring(5).trim() // Remove '@lava' prefix
       const sectionRef = selectionPosition.sectionId
         ? `section #${selectionPosition.sectionId}`
         : 'selected text'
 
-      const abbreviatedText = selectedText.length > 100
-        ? selectedText.substring(0, 100).trim() + '...'
-        : selectedText
-
-      messageToSend = `@lava regarding ${sectionRef}: "${abbreviatedText}" - ${question}`
+      // Use FULL selectedText for @lava, not abbreviated
+      messageToSend = `@lava regarding ${sectionRef}: "${selectedText}" - ${question}`
     } else if (userComment) {
       // Team discussion mode: Show abbreviated reference + comment
       messageToSend = `${abbreviatedRef}\n\n${userComment}`
@@ -832,6 +829,13 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
                   width: '300px'
                 }}
               >
+                {/* Show preview of selected text */}
+                <div className="mb-2 p-2 bg-blue-50 rounded text-xs text-gray-700 max-h-20 overflow-y-auto border border-blue-200">
+                  <div className="font-semibold text-blue-700 mb-1">
+                    Selected text {selectionPosition.sectionId && `from #${selectionPosition.sectionId}`}:
+                  </div>
+                  <div className="italic">"{selectedText.substring(0, 150)}{selectedText.length > 150 ? '...' : ''}"</div>
+                </div>
                 <input
                   ref={referenceInputRef}
                   type="text"

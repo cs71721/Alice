@@ -241,16 +241,20 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     recordActivity()
   }, [inputText, recordActivity])
 
-  // Parse message text to make version numbers and section references clickable
+  // Parse message text to make version numbers, section references, and [see more] clickable
   const renderMessageText = (text) => {
     if (!text) return text
 
     // First truncate URLs
     const truncated = truncateUrl(text)
 
-    // Split by both version pattern and section reference pattern
-    // Pattern captures: (v\d+) for versions and (#[\w-]+) for section IDs
-    const parts = truncated.split(/(v\d+|#[\w-]+)/gi)
+    // Extract section ID from "Referenced from #section-name:" pattern for [see more] links
+    const sectionRefMatch = truncated.match(/Referenced from #([\w-]+):/)
+    const contextSectionId = sectionRefMatch ? sectionRefMatch[1] : null
+
+    // Split by version pattern, section reference pattern, and [see more]
+    // Pattern captures: (v\d+) for versions, (#[\w-]+) for section IDs, (\[see more\]) for see more links
+    const parts = truncated.split(/(v\d+|#[\w-]+|\[see more\])/gi)
 
     return parts.map((part, index) => {
       // Check for version number
@@ -294,6 +298,22 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
               onSectionClick?.(sectionId)
             }}
             title={`Click to jump to section "${sectionId}"`}
+          >
+            {part}
+          </span>
+        )
+      }
+
+      // Check for [see more] link
+      if (part === '[see more]' && contextSectionId) {
+        return (
+          <span
+            key={index}
+            className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline italic"
+            onClick={() => {
+              onSectionClick?.(contextSectionId)
+            }}
+            title="Click to view full text in document"
           >
             {part}
           </span>
