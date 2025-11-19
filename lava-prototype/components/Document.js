@@ -58,10 +58,10 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     resume,
     currentInterval
   } = useAdaptivePolling(fetchDocument, {
-    minInterval: 1000,      // 1 second when active
-    maxInterval: 15000,     // 15 seconds when very idle
-    idleThreshold: 60000,   // 1 minute before considered idle
-    veryIdleThreshold: 180000, // 3 minutes before very idle
+    minInterval: 5000,      // 5 seconds when active (reduced from 1s to save DB reads)
+    maxInterval: 30000,     // 30 seconds when very idle (increased from 15s)
+    idleThreshold: 15000,   // 15 seconds before considered idle (faster transition)
+    veryIdleThreshold: 60000, // 1 minute before very idle (faster transition)
   })
 
   // Pause polling during editing, resume after save

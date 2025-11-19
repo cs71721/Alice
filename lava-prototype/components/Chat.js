@@ -238,10 +238,10 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     forceRefresh,
     currentInterval
   } = useAdaptivePolling(fetchMessages, {
-    minInterval: 1000,      // 1 second when active
-    maxInterval: 10000,     // 10 seconds when very idle
-    idleThreshold: 30000,   // 30 seconds before considered idle
-    veryIdleThreshold: 120000, // 2 minutes before very idle
+    minInterval: 5000,      // 5 seconds when active (reduced from 1s to save DB reads)
+    maxInterval: 30000,     // 30 seconds when very idle (increased from 10s)
+    idleThreshold: 15000,   // 15 seconds before considered idle (faster transition)
+    veryIdleThreshold: 60000, // 1 minute before very idle (faster transition)
   })
 
   // Track user activity - typing
