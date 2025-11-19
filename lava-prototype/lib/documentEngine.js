@@ -186,82 +186,48 @@ export class DocumentEngine {
   }
 
   /**
-   * Use Claude 3.5 Haiku for fast, cheap intent detection
+   * Use Claude Haiku for fast, cheap intent detection
    */
   async detectIntent(command, chatHistory) {
-    // HARD RULES: Override with explicit keywords (more reliable than AI classification)
-    const commandLower = command.toLowerCase();
-
-    // If user explicitly uses edit/change/modify/rewrite keywords, go straight to EDIT
-    const editKeywords = [
-      'edit',
-      'change it',
-      'modify',
-      'rewrite',
-      'apply it',
-      'apply the',
-      'go ahead',
-      'do it',
-      'make that change',
-      'update',
-      'fix it'
-    ];
-
-    const hasEditKeyword = editKeywords.some(keyword => commandLower.includes(keyword));
-
-    // If CONTEXT: is present, user has highlighted text to modify - definitely EDIT
-    const hasContext = command.includes('CONTEXT:');
-
-    if (hasEditKeyword || hasContext) {
-      return {
-        role: 'EDIT',
-        reasoning: 'Command contains explicit edit keyword or highlighted text context'
-      };
-    }
-
-    // If command starts with "write" or "add" or "create", it's CREATE
-    const createKeywords = ['write a', 'write an', 'add a', 'add an', 'create a', 'create an', 'generate'];
-    if (createKeywords.some(keyword => commandLower.startsWith(keyword))) {
-      return {
-        role: 'CREATE',
-        reasoning: 'Command explicitly requests creating new content'
-      };
-    }
-
-    // Otherwise, use AI classification for ambiguous cases
     const recentContext = chatHistory.slice(-5).map(m =>
       `${m.nickname}: ${m.text}`
     ).join('\n');
+
+    // Check if user highlighted text (CONTEXT: marker)
+    const hasHighlightedText = command.includes('CONTEXT:');
 
     const response = await callClaudeHaiku({
       messages: [
         {
           role: 'system',
-          content: `Determine which role is needed for this command.
+          content: `You are an intent classifier. Your job is to determine what the user wants to do with their document.
 
-The three roles are:
-EDIT: Modify, change, rewrite, or update EXISTING document text. Use when user wants to:
-  - Change wording, tone, or style of existing text
-  - Make text shorter, longer, clearer, more concise
-  - Fix formatting, grammar, or structure
-  - Rewrite, revise, or rephrase existing content
-  - Apply ANY modification to the document
-  - Commands like: "edit", "change", "make it X", "rewrite", "fix", "shorten", "simplify"
+The three modes are:
 
-CREATE: Add NEW content that doesn't exist yet. Use when user wants to:
-  - Write a new section, paragraph, or chapter
-  - Add something new to the document
-  - Generate content from scratch
-  - Commands like: "write", "add", "create", "generate new"
+EDIT: User wants to MODIFY or CHANGE the document
+- Asking to change, rewrite, improve, shorten, expand, fix existing text
+- Asking questions about text they've highlighted (they want feedback before editing)
+- Affirmative responses after suggestions ("yes", "go ahead", "do it", "sounds good", "apply it")
+- ANY request to modify the document in any way
 
-CHAT: Discuss without modifying the document. Use ONLY when user wants to:
-  - Ask a question about something
-  - Get opinions or suggestions WITHOUT applying them
-  - Have a conversation
-  - Commands like: "what do you think?", "does this make sense?", "tell me about"
-  - BUT if they follow up with "yes, apply it" or "edit it", that becomes EDIT
+CREATE: User wants to ADD NEW content
+- Writing new sections, paragraphs, chapters
+- Adding content that doesn't exist yet
+- Generating new material
 
-CRITICAL: If the user wants to change the document in ANY way, use EDIT. Even if they're asking a question first, if they want changes applied, it's EDIT.`
+CHAT: User wants to DISCUSS without changing anything
+- Pure questions with no editing intent ("what is this about?", "explain X to me")
+- Asking for opinions without planning to change anything
+- General conversation
+
+KEY DECISION RULES:
+1. If command contains "CONTEXT:" → User highlighted text → They want to modify it → EDIT
+2. If previous message suggested an edit and user says "yes"/"sure"/"go ahead"/"do it" → EDIT
+3. If user asks about highlighted text (even just "thoughts?") → They want feedback to edit → EDIT
+4. If in doubt between CHAT and EDIT → Choose EDIT (better to attempt edit than refuse)
+5. Only use CHAT if user clearly just wants to talk with no document changes intended
+
+Focus on USER INTENT, not the exact words. Understand conversational context.`
         },
         {
           role: 'user',
@@ -269,16 +235,17 @@ CRITICAL: If the user wants to change the document in ANY way, use EDIT. Even if
 ${recentContext}
 
 Current command: "${command}"
+${hasHighlightedText ? '\n⚠️ IMPORTANT: User has highlighted specific text in the document (CONTEXT: marker present)' : ''}
 
 Respond with JSON only:
 {
   "role": "EDIT" or "CREATE" or "CHAT",
-  "reasoning": "brief explanation of why you chose this role"
+  "reasoning": "brief explanation"
 }`
         }
       ],
-      temperature: 0.3,  // Low temperature for consistent classification
-      max_tokens: 200    // Increased for Claude JSON responses
+      temperature: 0.1,  // Very low for consistent classification
+      max_tokens: 200
     });
 
     try {
