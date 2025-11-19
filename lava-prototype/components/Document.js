@@ -820,6 +820,16 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
                       className="text-blue-600 underline hover:text-blue-800"
                     />
                   ),
+                  strong: ({node, children}) => (
+                    <strong style={{userSelect: 'text', cursor: 'text', display: 'inline', padding: 0, margin: 0}}>
+                      {children}
+                    </strong>
+                  ),
+                  em: ({node, children}) => (
+                    <em style={{userSelect: 'text', cursor: 'text', display: 'inline', padding: 0, margin: 0}}>
+                      {children}
+                    </em>
+                  ),
                   h1: ({children}) => {
                     const id = generateHeaderId(String(children))
                     return <h1 id={id} className="group relative">
