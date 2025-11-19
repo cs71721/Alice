@@ -136,18 +136,11 @@ export async function POST(request) {
       return NextResponse.json({ message })
     }
 
-    // Handle @version or @v commands
+    // Handle @version or @v commands (now handled client-side by showing in document pane)
+    // Just consume the command silently without adding to chat
     const versionMatch = text.match(/^@(?:version|v)\s+(\d+)$/i)
     if (versionMatch) {
-      const versionNum = parseInt(versionMatch[1], 10)
-      const versionData = await getVersion(versionNum)
-
-      if (!versionData) {
-        await addMessage('System', `❌ Version ${versionNum} not found`)
-      } else {
-        await addMessage('System', `📄 Version ${versionNum}:\nEditor: ${versionData.lastEditor}\nChange: ${versionData.changeSummary}\n\nFull content:\n\n${versionData.content}`)
-      }
-
+      // Version viewing is now handled client-side
       return NextResponse.json({ message })
     }
 
