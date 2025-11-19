@@ -2,8 +2,6 @@
 
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
-import { saveAs } from 'file-saver'
-import { renderToStaticMarkup } from 'react-dom/server'
 
 export default function Document({ onDocumentChange, nickname }) {
   const [document, setDocument] = useState(null)
@@ -248,18 +246,56 @@ export default function Document({ onDocumentChange, nickname }) {
   }
 
   // Download functions
-  const downloadMarkdown = () => {
-    const blob = new Blob([document.content], { type: 'text/markdown;charset=utf-8' })
-    saveAs(blob, 'document.md')
-    setShowDownloadMenu(false)
+  const downloadMarkdown = async () => {
+    try {
+      const { saveAs } = await import('file-saver')
+      const blob = new Blob([document.content], { type: 'text/markdown;charset=utf-8' })
+      saveAs(blob, 'document.md')
+      setShowDownloadMenu(false)
+    } catch (error) {
+      console.error('Error downloading file:', error)
+      alert('Error downloading file. Please try again.')
+    }
   }
 
-  const downloadHTML = () => {
-    const htmlContent = renderToStaticMarkup(
-      <ReactMarkdown>{document.content}</ReactMarkdown>
-    )
+  const downloadHTML = async () => {
+    try {
+      const { saveAs } = await import('file-saver')
 
-    const html = `<!DOCTYPE html>
+      // Simple markdown to HTML conversion
+      let htmlContent = document.content
+        // Headers
+        .replace(/^### (.*$)/gim, '<h3>$1</h3>')
+        .replace(/^## (.*$)/gim, '<h2>$1</h2>')
+        .replace(/^# (.*$)/gim, '<h1>$1</h1>')
+        // Bold
+        .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+        // Italic
+        .replace(/\*(.+?)\*/g, '<em>$1</em>')
+        // Links
+        .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+        // Code blocks
+        .replace(/```([^`]+)```/g, '<pre><code>$1</code></pre>')
+        // Inline code
+        .replace(/`([^`]+)`/g, '<code>$1</code>')
+        // Lists
+        .replace(/^\* (.+)/gim, '<li>$1</li>')
+        .replace(/^- (.+)/gim, '<li>$1</li>')
+        // Line breaks
+        .replace(/\n\n/g, '</p><p>')
+        // Blockquotes
+        .replace(/^> (.+)/gim, '<blockquote>$1</blockquote>')
+
+      // Wrap in paragraph tags
+      htmlContent = '<p>' + htmlContent + '</p>'
+
+      // Clean up multiple closing/opening p tags
+      htmlContent = htmlContent.replace(/<\/p><p>/g, '</p>\n<p>')
+
+      // Wrap lists in ul tags
+      htmlContent = htmlContent.replace(/(<li>.*<\/li>)/s, '<ul>$1</ul>')
+
+      const html = `<!DOCTYPE html>
 <html>
 <head>
   <meta charset="utf-8">
@@ -328,9 +364,13 @@ export default function Document({ onDocumentChange, nickname }) {
 </body>
 </html>`
 
-    const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-    saveAs(blob, 'document.html')
-    setShowDownloadMenu(false)
+      const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
+      saveAs(blob, 'document.html')
+      setShowDownloadMenu(false)
+    } catch (error) {
+      console.error('Error downloading file:', error)
+      alert('Error downloading file. Please try again.')
+    }
   }
 
   if (!document) {

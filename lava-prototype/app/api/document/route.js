@@ -94,36 +94,61 @@ function generateEditSummary(oldContent, newContent) {
 
   for (const part of lineDiff) {
     if (part.removed) {
-      // Split and filter to get non-empty lines
-      const lines = part.value.split('\n').filter(l => l.length > 0)
-      removedLines.push(...lines)
+      // Split but DON'T filter empty lines - we need to see the actual structure
+      const lines = part.value.split('\n')
+      // Only add non-empty lines to our analysis
+      removedLines.push(...lines.filter(l => l.trim().length > 0))
     } else if (part.added) {
-      const lines = part.value.split('\n').filter(l => l.length > 0)
-      addedLines.push(...lines)
+      const lines = part.value.split('\n')
+      // Only add non-empty lines to our analysis
+      addedLines.push(...lines.filter(l => l.trim().length > 0))
     }
   }
 
   // Check for title/header changes first (most specific)
   if (removedLines.length === 1 && addedLines.length === 1) {
-    const oldLine = removedLines[0]
-    const newLine = addedLines[0]
+    const oldLine = removedLines[0].trim()
+    const newLine = addedLines[0].trim()
 
-    // Both are headers of same level
+    // Both are headers (check various header patterns)
     if (oldLine.match(/^#+\s/) && newLine.match(/^#+\s/)) {
       const oldLevel = oldLine.match(/^#+/)[0]
       const newLevel = newLine.match(/^#+/)[0]
 
       if (oldLevel === newLevel) {
+        const oldTitle = oldLine.replace(/^#+\s*/, '').trim()
         const newTitle = newLine.replace(/^#+\s*/, '').trim()
         const headerType = oldLevel.length === 1 ? 'title' :
-                          oldLevel.length === 2 ? 'section' : 'subsection'
+                          oldLevel.length === 2 ? 'section' :
+                          oldLevel.length === 3 ? 'subsection' : 'header'
+
+        // Show what changed from and to
+        if (oldTitle && newTitle) {
+          return `Changed ${headerType} from "${oldTitle}" to "${newTitle}"`
+        }
         return `Changed ${headerType} to "${newTitle}"`
+      } else {
+        // Header level changed
+        const newTitle = newLine.replace(/^#+\s*/, '').trim()
+        return `Changed to H${newLevel.length}: "${newTitle}"`
       }
     }
 
     // Check for other single-line changes
     if (oldLine.startsWith('- ') && newLine.startsWith('- ')) {
-      return `Modified list item`
+      const oldItem = oldLine.substring(2).trim()
+      const newItem = newLine.substring(2).trim()
+      return `Changed list item to "${newItem}"`
+    }
+
+    // Check for regular text line changes
+    if (!oldLine.startsWith('#') && !newLine.startsWith('#')) {
+      // Regular text changed
+      if (newLine.length < 50) {
+        return `Changed to "${newLine}"`
+      } else {
+        return `Modified paragraph`
+      }
     }
   }
 
@@ -167,17 +192,40 @@ function generateEditSummary(oldContent, newContent) {
     const newLines = newContent.split('\n')
 
     for (let i = 0; i < Math.min(oldLines.length, newLines.length); i++) {
-      if (oldLines[i] !== newLines[i]) {
+      if (oldLines[i].trim() !== newLines[i].trim()) {
         // Check if both are headers
         if (oldLines[i].match(/^#+\s/) && newLines[i].match(/^#+\s/)) {
+          const oldTitle = oldLines[i].replace(/^#+\s*/, '').trim()
           const newTitle = newLines[i].replace(/^#+\s*/, '').trim()
-          return `Changed title to "${newTitle}"`
+          const level = oldLines[i].match(/^#+/)[0].length
+          const headerType = level === 1 ? 'title' :
+                            level === 2 ? 'section' :
+                            level === 3 ? 'subsection' : 'header'
+          return `Changed ${headerType} from "${oldTitle}" to "${newTitle}"`
+        }
+        // Check if line became a header
+        if (!oldLines[i].match(/^#+\s/) && newLines[i].match(/^#+\s/)) {
+          const newTitle = newLines[i].replace(/^#+\s*/, '').trim()
+          return `Converted to header: "${newTitle}"`
+        }
+        // Check if header became regular text
+        if (oldLines[i].match(/^#+\s/) && !newLines[i].match(/^#+\s/)) {
+          return `Converted header to regular text`
         }
         break
       }
     }
 
-    return `Modified content (${addedLines.length} added, ${removedLines.length} removed)`
+    // Try to be more descriptive based on what was changed
+    if (addedLines.length === 1 && removedLines.length === 1) {
+      return `Modified text`
+    } else if (addedLines.length > removedLines.length) {
+      return `Expanded content (${addedLines.length - removedLines.length} lines added)`
+    } else if (removedLines.length > addedLines.length) {
+      return `Reduced content (${removedLines.length - addedLines.length} lines removed)`
+    } else {
+      return `Edited ${addedLines.length} lines`
+    }
   }
 
   // Check character count changes as final fallback
