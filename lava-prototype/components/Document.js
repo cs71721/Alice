@@ -14,6 +14,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
   const [selectedText, setSelectedText] = useState(null)
   const [selectionPosition, setSelectionPosition] = useState(null)
   const [referenceInput, setReferenceInput] = useState('')
+  const [savedRange, setSavedRange] = useState(null) // Save the Range object to restore selection
   const prevContentRef = useRef('')
   const textareaRef = useRef(null)
   const downloadRef = useRef(null)
@@ -121,6 +122,9 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
         const range = selection.getRangeAt(0)
         const rect = range.getBoundingClientRect()
 
+        // Save the range so we can restore the selection later
+        setSavedRange(range.cloneRange())
+
         // Look for the nearest header above the selection
         let nearestHeader = null
         let currentNode = selection.anchorNode
@@ -166,6 +170,31 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
       clearTimeout(timeout)
     }
   }, [isEditing, recordActivity, selectedText])
+
+  // Restore selection to keep blue highlight visible (like Gemini)
+  useEffect(() => {
+    if (savedRange && selectedText) {
+      // Restore the selection after a brief delay to ensure the input has focused
+      const restoreSelection = () => {
+        try {
+          const selection = window.getSelection()
+          selection.removeAllRanges()
+          selection.addRange(savedRange)
+        } catch (error) {
+          // Range might be invalid if DOM changed
+          console.warn('Could not restore selection:', error)
+        }
+      }
+
+      // Restore immediately and also on focus events
+      restoreSelection()
+
+      // Also restore when user interacts with the input
+      const timer = setInterval(restoreSelection, 100)
+
+      return () => clearInterval(timer)
+    }
+  }, [savedRange, selectedText])
 
   // Handle scrolling to section when requested from chat
   useEffect(() => {
@@ -257,6 +286,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     setReferenceInput('')
     setSelectedText(null)
     setSelectionPosition(null)
+    setSavedRange(null)
     window.getSelection().removeAllRanges()
   }
 
@@ -829,13 +859,6 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
                   width: '300px'
                 }}
               >
-                {/* Show preview of selected text */}
-                <div className="mb-2 p-2 bg-blue-50 rounded text-xs text-gray-700 max-h-20 overflow-y-auto border border-blue-200">
-                  <div className="font-semibold text-blue-700 mb-1">
-                    Selected text {selectionPosition.sectionId && `from #${selectionPosition.sectionId}`}:
-                  </div>
-                  <div className="italic">"{selectedText.substring(0, 150)}{selectedText.length > 150 ? '...' : ''}"</div>
-                </div>
                 <input
                   ref={referenceInputRef}
                   type="text"
@@ -858,6 +881,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
                       setSelectedText(null)
                       setSelectionPosition(null)
                       setReferenceInput('')
+                      setSavedRange(null)
                       window.getSelection().removeAllRanges()
                     }}
                     className="px-3 py-1 text-sm text-gray-600 hover:text-gray-800 transition-colors"
