@@ -26,3 +26,6 @@ Thumbs.db
 *.swp
 *.swo
 server/intake_sessions.db
+
+# Separate projects
+Nadia_website/
