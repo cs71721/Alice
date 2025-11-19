@@ -10,6 +10,7 @@ export default function Home() {
   const [hasUnseenDocChanges, setHasUnseenDocChanges] = useState(false)
   const [hasUnseenChatActivity, setHasUnseenChatActivity] = useState(false)
   const [sectionReference, setSectionReference] = useState(null)
+  const [viewingVersion, setViewingVersion] = useState(null) // {version, content, lastEditor, changeSummary}
 
   const handleDocumentChange = () => {
     if (activeTab === 'chat') {
@@ -27,6 +28,16 @@ export default function Home() {
     // Switch to chat tab and pass the reference
     setSectionReference(reference)
     switchToTab('chat')
+  }
+
+  const handleVersionView = (versionData) => {
+    // Switch to document tab and show the version
+    setViewingVersion(versionData)
+    switchToTab('document')
+  }
+
+  const handleBackToCurrent = () => {
+    setViewingVersion(null)
   }
 
   const switchToTab = (tab) => {
@@ -84,6 +95,7 @@ export default function Home() {
             onChatActivity={handleChatActivity}
             sectionReference={sectionReference}
             onSectionReferenceConsumed={() => setSectionReference(null)}
+            onVersionView={handleVersionView}
           />
         </div>
 
@@ -92,6 +104,8 @@ export default function Home() {
             onDocumentChange={handleDocumentChange}
             nickname={nickname}
             onSectionReference={handleSectionReference}
+            viewingVersion={viewingVersion}
+            onBackToCurrent={handleBackToCurrent}
           />
         </div>
       </div>

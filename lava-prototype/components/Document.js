@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useAdaptivePolling } from '@/hooks/useAdaptivePolling'
 
-export default function Document({ onDocumentChange, nickname, onSectionReference }) {
+export default function Document({ onDocumentChange, nickname, onSectionReference, viewingVersion, onBackToCurrent }) {
   const [doc, setDoc] = useState(null)
   const [isHighlighted, setIsHighlighted] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -252,6 +252,34 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
       alert('Error saving changes. Please try again.')
     } finally {
       setIsSaving(false)
+    }
+  }
+
+  const handleRestore = async () => {
+    if (!viewingVersion || !nickname) return
+
+    const confirmed = confirm(`Restore to v${viewingVersion.version}?\n\nThis will create a new version with the content from v${viewingVersion.version}.`)
+    if (!confirmed) return
+
+    try {
+      const response = await fetch('/api/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          nickname,
+          text: `@restore ${viewingVersion.version}`
+        }),
+      })
+
+      if (response.ok) {
+        // Wait for confirmation message, then go back to current
+        setTimeout(() => {
+          onBackToCurrent?.()
+        }, 1000)
+      }
+    } catch (error) {
+      console.error('Error restoring version:', error)
+      alert('Failed to restore version. Please try again.')
     }
   }
 
@@ -512,19 +540,51 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     )
   }
 
+  // Determine what content to display
+  const displayContent = viewingVersion ? viewingVersion.content : doc.content
+  const displayVersion = viewingVersion ? viewingVersion.version : doc.version
+  const isViewingOldVersion = !!viewingVersion
+
   return (
     <div className="flex flex-col h-full bg-white">
+      {/* Version viewing banner */}
+      {isViewingOldVersion && (
+        <div className="bg-blue-50 border-b-2 border-blue-200 px-4 md:px-6 py-3 flex justify-between items-center">
+          <div className="flex items-center gap-2">
+            <span className="text-blue-600 font-semibold">📄 Viewing v{viewingVersion.version}</span>
+            <span className="text-sm text-gray-600">
+              by {viewingVersion.lastEditor} - {viewingVersion.changeSummary}
+            </span>
+          </div>
+          <div className="flex gap-2">
+            <button
+              onClick={onBackToCurrent}
+              className="px-3 py-1 text-sm bg-white text-gray-700 rounded border border-gray-300 hover:bg-gray-50"
+            >
+              Back to Current
+            </button>
+            <button
+              onClick={handleRestore}
+              className="px-3 py-1 text-sm bg-blue-600 text-white rounded hover:bg-blue-700"
+            >
+              Restore this version
+            </button>
+          </div>
+        </div>
+      )}
+
       <div className="border-b border-gray-200 px-4 md:px-6 py-3 flex justify-between items-start">
         <div className="flex-1">
           <h2 className="font-semibold text-gray-900">
-            Document {doc.version && `v${doc.version}`}
+            Document {displayVersion && `v${displayVersion}`}
+            {isViewingOldVersion && <span className="ml-2 text-sm text-gray-500">(read-only)</span>}
           </h2>
           <p className="text-xs text-gray-500 mt-1">
-            Last modified: {new Date(doc.lastModified).toLocaleString()}
+            Last modified: {new Date(viewingVersion?.lastModified || doc.lastModified).toLocaleString()}
           </p>
         </div>
         <div className="flex gap-2">
-          {isEditing ? (
+          {isViewingOldVersion ? null : isEditing ? (
             <>
               <button
                 onClick={handleSave}
@@ -669,7 +729,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
                   }
                 }}
               >
-                {doc.content}
+                {displayContent}
               </ReactMarkdown>
             </div>
 

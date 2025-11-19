@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAdaptivePolling } from '@/hooks/useAdaptivePolling'
 
-export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onChatActivity, sectionReference, onSectionReferenceConsumed }) {
+export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onChatActivity, sectionReference, onSectionReferenceConsumed, onVersionView }) {
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState('')
   const [isNicknameSet, setIsNicknameSet] = useState(false)
@@ -262,9 +262,19 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           <span
             key={index}
             className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
-            onClick={() => {
-              // Directly send the version command
-              sendMessage(`@v${versionNum}`)
+            onClick={async () => {
+              // Fetch version data and display in document pane
+              try {
+                const response = await fetch(`/api/version/${versionNum}`)
+                if (response.ok) {
+                  const versionData = await response.json()
+                  onVersionView?.(versionData)
+                } else {
+                  console.error('Failed to fetch version:', response.status)
+                }
+              } catch (error) {
+                console.error('Error fetching version:', error)
+              }
             }}
             title={`Click to view version ${versionNum}`}
           >
