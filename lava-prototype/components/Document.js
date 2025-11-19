@@ -6,7 +6,6 @@ import { useAdaptivePolling } from '@/hooks/useAdaptivePolling'
 
 export default function Document({ onDocumentChange, nickname, onSectionReference }) {
   const [doc, setDoc] = useState(null)
-  const [prevContent, setPrevContent] = useState('')
   const [isHighlighted, setIsHighlighted] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
   const [editContent, setEditContent] = useState('')
@@ -14,6 +13,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
   const [selectedText, setSelectedText] = useState(null)
   const [selectionPosition, setSelectionPosition] = useState(null)
+  const prevContentRef = useRef('')
   const textareaRef = useRef(null)
   const downloadRef = useRef(null)
   const documentRef = useRef(null)
@@ -25,14 +25,16 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
       const data = await response.json()
 
       if (data.document) {
-        if (data.document.content !== prevContent && prevContent !== '') {
+        // Check if content changed using ref
+        if (data.document.content !== prevContentRef.current && prevContentRef.current !== '') {
           setIsHighlighted(true)
           setTimeout(() => setIsHighlighted(false), 3000)
 
           onDocumentChange?.()
         }
 
-        setPrevContent(data.document.content)
+        // Update the ref with new content
+        prevContentRef.current = data.document.content
         setDoc(data.document)
 
         // Update edit content if not currently editing
@@ -43,7 +45,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     } catch (error) {
       console.error('Error fetching document:', error)
     }
-  }, [prevContent, onDocumentChange, isEditing])
+  }, [onDocumentChange, isEditing])
 
   // Use adaptive polling hook
   const {
@@ -231,7 +233,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
           const data = await docResponse.json()
           if (data.document) {
             setDoc(data.document)
-            setPrevContent(data.document.content)
+            prevContentRef.current = data.document.content
             setEditContent(data.document.content)
           }
         }
