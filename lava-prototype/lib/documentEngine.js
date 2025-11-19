@@ -28,14 +28,19 @@ export class DocumentEngine {
 
     console.log(`🎯 Detected intent: ${intent.role} - "${intent.reasoning}"`);
 
-    // Route to appropriate handler with role-specific prompts
+    // Route to appropriate handler with role-specific prompts AND context
+    // Each handler gets appropriate amount of context based on intent
     switch(intent.role) {
       case 'EDIT':
-        return await this.handleEdit(userCommand, intent);
+        // Edits need less context (last 10-20 messages for references)
+        return await this.handleEdit(userCommand, intent, chatHistory.slice(-20));
       case 'CREATE':
-        return await this.handleCreate(userCommand, intent);
+        // Creation needs medium context (last 30-50 messages for style/tone)
+        return await this.handleCreate(userCommand, intent, chatHistory.slice(-50));
       case 'CHAT':
-        return await this.handleChat(userCommand, intent);
+        // Chat might need full context for "summarize everything" type requests
+        // But cap at 100 for cost/privacy
+        return await this.handleChat(userCommand, intent, chatHistory.slice(-100));
       default:
         return await this.handleUnclear(userCommand);
     }
@@ -90,7 +95,12 @@ Respond with JSON only:
   /**
    * EDIT: Precise mechanical changes
    */
-  async handleEdit(command, intent) {
+  async handleEdit(command, intent, chatHistory = []) {
+    // Format recent chat for context (might reference "that", "the above", etc.)
+    const chatContext = chatHistory.length > 0
+      ? `\n\nRecent conversation for context:\n${chatHistory.map(m => `${m.nickname}: ${m.text}`).join('\n')}\n`
+      : '';
+
     const response = await callGPT4({
       messages: [
         {
@@ -102,20 +112,21 @@ Your job: Execute the EXACT edit requested. Nothing more, nothing less.
 - Move/delete text precisely
 - Do not add creative flourishes
 - Do not explain your changes
+- Use chat context to understand references like "that text" or "the paragraph we discussed"
 - Return ONLY the edited document`
         },
         {
           role: 'user',
           content: `Document to edit:
 ${this.document}
-
+${chatContext}
 Command: ${command}
 
 Execute this edit precisely and return the complete edited document.`
         }
       ],
       temperature: 0.1,  // Very low for mechanical precision
-      max_tokens: 2000
+      max_tokens: 4000  // Increased for larger documents
     });
 
     this.saveToHistory();
@@ -132,7 +143,12 @@ Execute this edit precisely and return the complete edited document.`
   /**
    * CREATE: Generate new content
    */
-  async handleCreate(command, intent) {
+  async handleCreate(command, intent, chatHistory = []) {
+    // Format chat history - important for understanding what to write about
+    const chatContext = chatHistory.length > 0
+      ? `\n\nConversation context (to understand what has been discussed):\n${chatHistory.map(m => `${m.nickname}: ${m.text}`).join('\n')}\n`
+      : '';
+
     const response = await callGPT4({
       messages: [
         {
@@ -143,13 +159,14 @@ Your job: Generate high-quality new content based on the request.
 - Write engaging, well-structured content
 - Match the tone and style of the existing document
 - Be creative but relevant
+- Use the conversation context to understand what topics have been discussed
 - Add the new content to the document appropriately`
         },
         {
           role: 'user',
           content: `Current document:
 ${this.document}
-
+${chatContext}
 Request: ${command}
 
 Generate the requested content and return the complete document with your additions.`
@@ -173,8 +190,9 @@ Generate the requested content and return the complete document with your additi
   /**
    * CHAT: Conversational responses
    */
-  async handleChat(command, intent) {
-    const recentChat = this.chatContext.slice(-10).join('\n');
+  async handleChat(command, intent, chatHistory = []) {
+    // Use actual chatHistory instead of broken this.chatContext
+    const conversationContext = chatHistory.map(m => `${m.nickname}: ${m.text}`).join('\n');
 
     const response = await callGPT4({
       messages: [
@@ -187,15 +205,16 @@ Your job: Have a natural, helpful conversation.
 - Provide opinions and suggestions
 - Engage naturally, not mechanically
 - Reference the document context when relevant
+- Use the full conversation history to maintain context
 - Do NOT edit the document unless explicitly asked`
         },
         {
           role: 'user',
           content: `Document context:
-${this.document.substring(0, 500)}...
+${this.document.substring(0, 1000)}...
 
-Recent conversation:
-${recentChat}
+Conversation history:
+${conversationContext}
 
 User asks: ${command}
 
@@ -203,7 +222,7 @@ Respond conversationally.`
         }
       ],
       temperature: 0.5,  // Balanced for natural conversation
-      max_tokens: 500
+      max_tokens: 1000  // Increased for more detailed responses
     });
 
     // Don't modify document for chat
