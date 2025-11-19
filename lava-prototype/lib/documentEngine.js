@@ -189,6 +189,46 @@ export class DocumentEngine {
    * Use Claude 3.5 Haiku for fast, cheap intent detection
    */
   async detectIntent(command, chatHistory) {
+    // HARD RULES: Override with explicit keywords (more reliable than AI classification)
+    const commandLower = command.toLowerCase();
+
+    // If user explicitly uses edit/change/modify/rewrite keywords, go straight to EDIT
+    const editKeywords = [
+      'edit',
+      'change it',
+      'modify',
+      'rewrite',
+      'apply it',
+      'apply the',
+      'go ahead',
+      'do it',
+      'make that change',
+      'update',
+      'fix it'
+    ];
+
+    const hasEditKeyword = editKeywords.some(keyword => commandLower.includes(keyword));
+
+    // If CONTEXT: is present, user has highlighted text to modify - definitely EDIT
+    const hasContext = command.includes('CONTEXT:');
+
+    if (hasEditKeyword || hasContext) {
+      return {
+        role: 'EDIT',
+        reasoning: 'Command contains explicit edit keyword or highlighted text context'
+      };
+    }
+
+    // If command starts with "write" or "add" or "create", it's CREATE
+    const createKeywords = ['write a', 'write an', 'add a', 'add an', 'create a', 'create an', 'generate'];
+    if (createKeywords.some(keyword => commandLower.startsWith(keyword))) {
+      return {
+        role: 'CREATE',
+        reasoning: 'Command explicitly requests creating new content'
+      };
+    }
+
+    // Otherwise, use AI classification for ambiguous cases
     const recentContext = chatHistory.slice(-5).map(m =>
       `${m.nickname}: ${m.text}`
     ).join('\n');
