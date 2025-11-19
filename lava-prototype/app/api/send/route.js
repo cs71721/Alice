@@ -158,12 +158,12 @@ export async function POST(request) {
         const contextMessages = getAdaptiveContext(chatHistory, instruction, oldContent)
 
         // === DIAGNOSTIC LOGGING (server-side only) ===
-        console.log('=== LAVA CONTEXT CHECK ===')
-        console.log('Current command:', instruction)
-        console.log('Total chat history:', chatHistory ? chatHistory.length + ' messages' : 'NO')
-        console.log('Context being sent:', contextMessages.length + ' messages')
-        console.log('========================')
-        // === END DIAGNOSTIC LOGGING ===
+        console.log('=== LAVA PROCESSING ===')
+        console.log('Command:', instruction)
+        console.log('Total history:', chatHistory ? chatHistory.length + ' messages' : 'NO')
+        console.log('Context sent:', contextMessages.length + ' messages')
+        console.log('Is editing command?', isEditingCommand(instruction))
+        console.log('=======================')
 
         // Save current version as previous BEFORE making changes
         await kv.set('document-previous', oldContent)

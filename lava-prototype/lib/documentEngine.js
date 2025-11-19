@@ -57,58 +57,61 @@ export class DocumentEngine {
 
     console.log('Processing command with GPT-4 Turbo:', userCommand)
 
-    // Just send everything to GPT-4 Turbo and let it handle the edit
-    const prompt = `You are a document editor. Edit the document based on the user's command.
-
-CURRENT DOCUMENT:
-${this.document}
-${chatContext}
-
-USER COMMAND: ${userCommand}
-
-Instructions:
-- Understand what the user wants (use chat context if they reference previous messages)
-- Make ONLY the requested change to the document
-- Preserve all other content exactly as written
-- Return ONLY the complete edited document with the change applied
-- If the user references something (like "the poem", "that section"), find it in the document
-- Apply formatting properly (bold: **text**, italic: *text*, heading: # text, etc.)
-- Do NOT add explanations or commentary
-
-Return the edited document:`
-
     try {
       const completion = await openai.chat.completions.create({
         model: 'gpt-4-turbo-preview',
         messages: [
           {
             role: 'system',
-            content: 'You are a precise document editor. You make the exact changes requested while preserving everything else. Return only the edited document, no explanations.'
+            content: `You are a document editor. You MUST edit the document based on user commands.
+
+CRITICAL RULES:
+- ALWAYS make the requested edit
+- NEVER refuse or say it's unnecessary
+- NEVER explain or add commentary
+- Return ONLY the complete edited document with changes applied
+
+Formatting:
+- Bold: **text**
+- Italic: *text*
+- Strikethrough: ~~text~~
+- Heading: # text
+- Underline: <u>text</u>`
           },
           {
             role: 'user',
-            content: prompt
+            content: `Current document:
+${this.document}
+${chatContext}
+
+User command: ${userCommand}
+
+Execute this edit and return the full document with changes applied.`
           }
         ],
-        temperature: 0.2, // Low for consistency
+        temperature: 0.1, // Very low for consistency
         max_tokens: 4000 // Plenty of room for full document
       })
 
       const editedDocument = completion.choices[0].message.content.trim()
 
+      console.log('GPT-4 response length:', editedDocument.length, 'characters')
+      console.log('GPT-4 response preview:', editedDocument.substring(0, 200))
+
       // Validate that something changed
       if (editedDocument === this.document) {
+        console.warn('⚠️ No changes detected in document')
         return { success: false, error: 'No changes were made. The requested text might not have been found.' }
       }
 
-      console.log('Document edited successfully')
+      console.log('✓ Document edited successfully')
 
       // Save to history and update
       this.saveToHistory()
       this.document = editedDocument
       return { success: true, document: this.document }
     } catch (e) {
-      console.error('Failed to process command:', e)
+      console.error('❌ Failed to process command:', e)
       return { success: false, error: 'Failed to process command' }
     }
   }
