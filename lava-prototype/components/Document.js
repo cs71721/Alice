@@ -146,7 +146,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
         setSelectedText(text)
         setSelectionPosition({
           x: rect.left + rect.width / 2,
-          y: rect.top - 10,
+          y: rect.bottom, // Store bottom of selection, not top
           sectionId: nearestHeader?.id || null,
           sectionText: nearestHeader?.textContent || null
         })
@@ -882,7 +882,7 @@ ${selectedText}
                 className="fixed z-50 bg-white border-2 border-blue-600 rounded-lg shadow-xl p-3"
                 style={{
                   left: `${Math.min(Math.max(selectionPosition.x - 150, 10), window.innerWidth - 310)}px`,
-                  top: `${Math.max(selectionPosition.y + 10, 10)}px`,
+                  top: `${selectionPosition.y + 15}px`, // 15px below the selection
                   width: '300px'
                 }}
               >
