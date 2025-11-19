@@ -173,12 +173,15 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
 
   // Restore selection to keep blue highlight visible (like Gemini)
   useEffect(() => {
-    if (savedRange && selectedText) {
+    if (savedRange && selectedText && referenceInputRef.current) {
+      // Only restore when the input box is actually rendered and focused
       const restoreSelection = () => {
         try {
           const selection = window.getSelection()
-          // Only restore if selection was cleared
-          if (selection.rangeCount === 0 || selection.toString().trim() === '') {
+          // Only restore if selection was cleared AND input has focus
+          const inputHasFocus = document.activeElement === referenceInputRef.current
+
+          if (inputHasFocus && (selection.rangeCount === 0 || selection.toString().trim() === '')) {
             selection.removeAllRanges()
             selection.addRange(savedRange)
           }
@@ -188,22 +191,23 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
         }
       }
 
-      // Restore immediately
-      restoreSelection()
+      // Restore on input focus
+      const handleInputFocus = () => {
+        setTimeout(restoreSelection, 10)
+      }
 
-      // Keep restoring aggressively while input is open
-      const timer = setInterval(restoreSelection, 50) // More frequent: every 50ms
+      if (referenceInputRef.current) {
+        referenceInputRef.current.addEventListener('focus', handleInputFocus)
+      }
 
-      // Also restore on any document interaction
-      document.addEventListener('selectionchange', restoreSelection)
-      document.addEventListener('mousedown', restoreSelection)
-      document.addEventListener('focus', restoreSelection, true)
+      // Keep restoring while typing
+      const timer = setInterval(restoreSelection, 100)
 
       return () => {
         clearInterval(timer)
-        document.removeEventListener('selectionchange', restoreSelection)
-        document.removeEventListener('mousedown', restoreSelection)
-        document.removeEventListener('focus', restoreSelection, true)
+        if (referenceInputRef.current) {
+          referenceInputRef.current.removeEventListener('focus', handleInputFocus)
+        }
       }
     }
   }, [savedRange, selectedText])
