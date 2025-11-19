@@ -1,27 +1,24 @@
-// Lazy-load tiktoken to avoid WASM loading issues in serverless environments
+// Import tiktoken with proper WASM handling (configured in next.config.js)
+import { encoding_for_model } from 'tiktoken'
+
 // Cache the encoder for performance
 let encoder = null
-let tiktokenLoadAttempted = false
-let tiktokenAvailable = false
+let encoderInitialized = false
 
 /**
  * Get the tiktoken encoder for GPT-4
  * Uses cl100k_base encoding which is used by GPT-4
  */
 function getEncoder() {
-  if (!tiktokenLoadAttempted) {
-    tiktokenLoadAttempted = true
+  if (!encoderInitialized) {
+    encoderInitialized = true
     try {
-      // Dynamically import tiktoken only when needed
-      const { encoding_for_model } = require('tiktoken')
       // GPT-4 uses cl100k_base encoding
       encoder = encoding_for_model('gpt-4-turbo')
-      tiktokenAvailable = true
       console.log('✓ Tiktoken loaded successfully')
     } catch (error) {
-      console.warn('⚠️ Tiktoken not available (WASM issue in serverless?), using fallback estimation:', error.message)
+      console.warn('⚠️ Tiktoken failed to load, using fallback estimation:', error.message)
       encoder = null
-      tiktokenAvailable = false
     }
   }
   return encoder
