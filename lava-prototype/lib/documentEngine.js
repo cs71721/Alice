@@ -1,4 +1,5 @@
 import OpenAI from 'openai'
+import Anthropic from '@anthropic-ai/sdk'
 
 // Initialize OpenAI client only if API key is available
 let openai = null
@@ -7,7 +8,17 @@ if (process.env.OPENAI_API_KEY) {
     apiKey: process.env.OPENAI_API_KEY,
   })
 } else {
-  console.warn('[WARNING] OPENAI_API_KEY not found. @lava commands will not work.')
+  console.warn('[WARNING] OPENAI_API_KEY not found. OpenAI models will not work.')
+}
+
+// Initialize Anthropic client only if API key is available
+let anthropic = null
+if (process.env.ANTHROPIC_API_KEY) {
+  anthropic = new Anthropic({
+    apiKey: process.env.ANTHROPIC_API_KEY,
+  })
+} else {
+  console.warn('[WARNING] ANTHROPIC_API_KEY not found. Claude models will not work.')
 }
 
 async function callGPT4(config) {
@@ -19,6 +30,57 @@ async function callGPT4(config) {
     ...config
   })
   return completion.choices[0].message.content.trim()
+}
+
+async function callGPT4o(config) {
+  if (!openai) {
+    throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.')
+  }
+  const completion = await openai.chat.completions.create({
+    model: 'gpt-4o',
+    ...config
+  })
+  return completion.choices[0].message.content.trim()
+}
+
+async function callClaudeSonnet(config) {
+  if (!anthropic) {
+    throw new Error('Anthropic API key not configured. Please set ANTHROPIC_API_KEY environment variable.')
+  }
+
+  // Convert OpenAI message format to Claude format
+  const systemMessage = config.messages.find(m => m.role === 'system')
+  const userMessages = config.messages.filter(m => m.role !== 'system')
+
+  const response = await anthropic.messages.create({
+    model: 'claude-3-5-sonnet-20241022',
+    max_tokens: config.max_tokens || 4096,
+    temperature: config.temperature || 0.7,
+    system: systemMessage ? systemMessage.content : undefined,
+    messages: userMessages
+  })
+
+  return response.content[0].text.trim()
+}
+
+async function callClaudeHaiku(config) {
+  if (!anthropic) {
+    throw new Error('Anthropic API key not configured. Please set ANTHROPIC_API_KEY environment variable.')
+  }
+
+  // Convert OpenAI message format to Claude format
+  const systemMessage = config.messages.find(m => m.role === 'system')
+  const userMessages = config.messages.filter(m => m.role !== 'system')
+
+  const response = await anthropic.messages.create({
+    model: 'claude-3-5-haiku-20241022',
+    max_tokens: config.max_tokens || 1024,
+    temperature: config.temperature || 0.3,
+    system: systemMessage ? systemMessage.content : undefined,
+    messages: userMessages
+  })
+
+  return response.content[0].text.trim()
 }
 
 export class DocumentEngine {
@@ -124,14 +186,14 @@ export class DocumentEngine {
   }
 
   /**
-   * Let GPT-4 detect intent naturally - no hard-coded keywords
+   * Use Claude 3.5 Haiku for fast, cheap intent detection
    */
   async detectIntent(command, chatHistory) {
     const recentContext = chatHistory.slice(-5).map(m =>
       `${m.nickname}: ${m.text}`
     ).join('\n');
 
-    const response = await callGPT4({
+    const response = await callClaudeHaiku({
       messages: [
         {
           role: 'system',
@@ -159,7 +221,7 @@ Respond with JSON only:
         }
       ],
       temperature: 0.3,  // Low temperature for consistent classification
-      max_tokens: 100
+      max_tokens: 200    // Increased for Claude JSON responses
     });
 
     try {
@@ -185,7 +247,7 @@ Respond with JSON only:
         ).join('\n\n')}\n`
       : '';
 
-    const response = await callGPT4({
+    const response = await callGPT4o({
       messages: [
         {
           role: 'system',
@@ -211,7 +273,7 @@ Execute this edit precisely and return the complete edited document.`
         }
       ],
       temperature: 0.1,  // Very low for mechanical precision
-      max_tokens: 4000  // Increased for larger documents
+      max_tokens: 8192  // Increased for GPT-4o capacity
     });
 
     this.saveToHistory();
@@ -241,7 +303,7 @@ Execute this edit precisely and return the complete edited document.`
         ).join('\n\n')}\n`
       : '';
 
-    const response = await callGPT4({
+    const response = await callClaudeSonnet({
       messages: [
         {
           role: 'system',
@@ -266,7 +328,7 @@ Generate the requested content and return the complete document with your additi
         }
       ],
       temperature: 0.7,  // Higher for creativity
-      max_tokens: 4096
+      max_tokens: 8192   // Increased for Claude Sonnet capacity
     });
 
     this.saveToHistory();
@@ -294,7 +356,7 @@ Generate the requested content and return the complete document with your additi
         ).join('\n\n')}\n`
       : '';
 
-    const response = await callGPT4({
+    const response = await callClaudeSonnet({
       messages: [
         {
           role: 'system',
@@ -323,7 +385,7 @@ Respond conversationally.`
         }
       ],
       temperature: 0.5,  // Balanced for natural conversation
-      max_tokens: 1000  // Increased for more detailed responses
+      max_tokens: 2048   // Increased for Claude's more detailed responses
     });
 
     // Don't modify document for chat

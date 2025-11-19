@@ -31,14 +31,14 @@ export function countMessageTokens(messages) {
 /**
  * Calculate available context budget for messages
  * @param {string} documentContent - The document content
- * @param {number} maxTotalTokens - Maximum total tokens (default: 128000 for GPT-4 Turbo)
- * @param {number} completionTokens - Reserved tokens for completion (default: 4000)
+ * @param {number} maxTotalTokens - Maximum total tokens (default: 200000 for Claude Sonnet 3.5)
+ * @param {number} completionTokens - Reserved tokens for completion (default: 8192)
  * @returns {number} Available tokens for context
  */
 export function calculateContextBudget(
   documentContent = '',
-  maxTotalTokens = 128000,
-  completionTokens = 4000
+  maxTotalTokens = 200000,  // Updated for Claude Sonnet 3.5 (200K context)
+  completionTokens = 8192    // Updated for larger completions
 ) {
   const SYSTEM_PROMPT_TOKENS = 1000 // Estimated system prompt size
   const documentTokens = countTokens(documentContent)
