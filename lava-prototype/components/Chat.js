@@ -59,41 +59,33 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
             key={index}
             className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
             onClick={async () => {
-              // Immediately fetch and display the version
+              // Send the version command to the server so it persists
               try {
-                const response = await fetch(`/api/document/version/${versionNum}`)
-                const data = await response.json()
+                // Add the command to messages immediately for visual feedback
+                const commandMessage = {
+                  id: Date.now(),
+                  nickname: nickname,
+                  text: `@v${versionNum}`,
+                  timestamp: Date.now(),
+                  optimistic: true
+                }
+                setMessages(prev => [...prev, commandMessage])
 
-                if (data.version) {
-                  const preview = data.version.content.substring(0, 500)
-                  const systemMessage = {
-                    id: Date.now(),
-                    nickname: 'System',
-                    text: `📄 Version ${versionNum}:\nEditor: ${data.version.lastEditor}\nChange: ${data.version.changeSummary}\n\nPreview:\n${preview}${data.version.content.length > 500 ? '...' : ''}\n\n💡 Type @restore ${versionNum} to restore this version`,
-                    timestamp: Date.now()
-                  }
-                  setMessages(prev => [...prev, systemMessage])
+                // Send to server
+                const response = await fetch('/api/send', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ nickname, text: `@v${versionNum}` }),
+                })
 
-                  // Scroll to bottom to show the version info
-                  setTimeout(() => scrollToBottom(true), 100)
-                } else {
-                  const errorMessage = {
-                    id: Date.now(),
-                    nickname: 'System',
-                    text: `❌ Version ${versionNum} not found`,
-                    timestamp: Date.now()
-                  }
-                  setMessages(prev => [...prev, errorMessage])
+                if (response.ok) {
+                  // Force refresh to get the server's response
+                  forceRefresh()
+                  // Scroll to bottom after a delay to show the version info
+                  setTimeout(() => scrollToBottom(true), 500)
                 }
               } catch (error) {
-                console.error('Error fetching version:', error)
-                const errorMessage = {
-                  id: Date.now(),
-                  nickname: 'System',
-                  text: `❌ Error fetching version ${versionNum}`,
-                  timestamp: Date.now()
-                }
-                setMessages(prev => [...prev, errorMessage])
+                console.error('Error viewing version:', error)
               }
             }}
             title={`Click to view version ${versionNum}`}
