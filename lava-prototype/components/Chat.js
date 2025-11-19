@@ -545,9 +545,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
                     style={{
                       wordWrap: 'break-word',
                       wordBreak: 'break-word',
-                      overflowWrap: 'break-word',
-                      maxHeight: '400px',
-                      overflowY: 'auto'
+                      overflowWrap: 'break-word'
                     }}
                   >
                     {renderMessageText(msg.text, msg.id)}
