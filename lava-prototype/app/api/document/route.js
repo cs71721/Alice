@@ -18,7 +18,7 @@ export async function GET() {
 
 export async function PUT(request) {
   try {
-    const { content } = await request.json()
+    const { content, expectedVersion } = await request.json()
 
     if (content === undefined) {
       return NextResponse.json(
@@ -31,6 +31,21 @@ export async function PUT(request) {
     const currentDoc = await getDocument()
     const oldContent = currentDoc.content
 
+    // CAS: Check version match if provided
+    if (expectedVersion !== undefined && currentDoc.version && currentDoc.version !== expectedVersion) {
+      return NextResponse.json(
+        {
+          error: 'Version conflict',
+          message: 'Document was modified by another user. Please refresh and try again.',
+          currentVersion: currentDoc.version,
+          expectedVersion,
+          lastEditor: currentDoc.lastEditor,
+          changeSummary: currentDoc.changeSummary
+        },
+        { status: 409 } // Conflict
+      )
+    }
+
     // Only proceed if content actually changed
     if (oldContent === content) {
       return NextResponse.json({ message: 'No changes detected' })
@@ -39,12 +54,15 @@ export async function PUT(request) {
     // Save previous version before updating
     await kv.set('document-previous', oldContent)
 
-    // Update the document
-    await updateDocument(content)
-
-    // Log the manual edit to chat
+    // Generate edit summary
     const editSummary = generateEditSummary(oldContent, content)
-    await addMessage('System', `📝 Manual edit: ${editSummary}`)
+
+    // Update the document with versioning metadata
+    await updateDocument(content, 'Manual Edit', editSummary)
+
+    // Log the manual edit to chat with version info
+    const updatedDoc = await getDocument()
+    await addMessage('System', `📝 Manual edit (v${updatedDoc.version}): ${editSummary}`)
 
     return NextResponse.json({
       message: 'Document updated successfully',

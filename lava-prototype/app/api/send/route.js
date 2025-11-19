@@ -2,6 +2,11 @@ import { NextResponse } from 'next/server'
 import { kv } from '@vercel/kv'
 import { addMessage, getDocument, updateDocument, getMessages } from '@/lib/kv'
 import { DocumentEngine } from '@/lib/documentEngine'
+import {
+  countMessageTokens,
+  calculateContextBudget,
+  truncateMessagesToFit
+} from '@/lib/tokenCounter'
 
 /**
  * Determine how much context is needed based on command type
@@ -32,27 +37,14 @@ function determineContextNeeded(command) {
   }
 }
 
-/**
- * Estimate token count for messages (rough approximation)
- * More conservative: 1 token ≈ 3 characters (accounts for tokenization overhead)
- */
-function estimateTokens(messages) {
-  const totalChars = messages.reduce((sum, msg) => sum + (msg.text?.length || 0) + (msg.nickname?.length || 0), 0)
-  return Math.ceil(totalChars / 3) // More conservative estimate
-}
+// Removed estimateTokens - now using tiktoken via countMessageTokens
 
 /**
  * Get adaptive chat context based on command and token limits
  * GPT-4 Turbo limit: 128,000 tokens total
- * Budget: generous room for everything - no aggressive truncation needed!
+ * Now uses tiktoken for accurate token counting
  */
 function getAdaptiveContext(chatHistory, command, documentContent = '') {
-  const MAX_TOTAL_TOKENS = 128000 // GPT-4 Turbo: 128K tokens!
-  const DOCUMENT_BUFFER = Math.ceil(documentContent.length / 3) + 500 // Document + formatting
-  const COMPLETION_TOKENS = 4000 // Restored to 4000 (plenty of room now)
-  const SYSTEM_PROMPT_TOKENS = 1000 // System instructions
-  const MAX_CONTEXT_TOKENS = MAX_TOTAL_TOKENS - DOCUMENT_BUFFER - COMPLETION_TOKENS - SYSTEM_PROMPT_TOKENS
-  // This will be ~122,000 tokens for context! (roughly 300-400 messages)
   const contextLevel = determineContextNeeded(command)
 
   let messagesToSend
@@ -69,25 +61,19 @@ function getAdaptiveContext(chatHistory, command, documentContent = '') {
       break
   }
 
+  // Calculate available token budget using tiktoken
+  const availableTokens = calculateContextBudget(documentContent)
+
   // Check token count and truncate if needed
-  let estimatedTokens = estimateTokens(messagesToSend)
+  const messageTokens = countMessageTokens(messagesToSend)
 
-  console.log(`📊 Token budget: MAX=${MAX_CONTEXT_TOKENS}, Document=${DOCUMENT_BUFFER}, Messages=${estimatedTokens}`)
+  console.log(`📊 Context level: ${contextLevel}, Messages: ${messagesToSend.length}, Tokens: ${messageTokens}`)
 
-  if (estimatedTokens > MAX_CONTEXT_TOKENS) {
-    console.log(`⚠️ Context too large (${estimatedTokens} tokens > ${MAX_CONTEXT_TOKENS}), truncating...`)
-
-    // Intelligently truncate: keep most recent messages
-    while (estimatedTokens > MAX_CONTEXT_TOKENS && messagesToSend.length > 3) {
-      // Remove from the middle (keep first few for context, last few for recency)
-      const removeIndex = Math.floor(messagesToSend.length / 2)
-      messagesToSend.splice(removeIndex, 1)
-      estimatedTokens = estimateTokens(messagesToSend)
-    }
-
-    console.log(`✓ Truncated to ${messagesToSend.length} messages (${estimatedTokens} tokens)`)
+  if (messageTokens > availableTokens) {
+    // Use intelligent truncation
+    messagesToSend = truncateMessagesToFit(messagesToSend, availableTokens)
   } else {
-    console.log(`✓ Sending ${messagesToSend.length} messages (${estimatedTokens} tokens) - level: ${contextLevel}`)
+    console.log(`✓ All ${messagesToSend.length} messages fit within budget (${messageTokens} tokens)`)
   }
 
   return messagesToSend
@@ -143,8 +129,12 @@ export async function POST(request) {
         if (result.success) {
           if (result.mode === 'EDIT' || result.mode === 'CREATE') {
             // Document was modified
-            await updateDocument(result.document)
-            await addMessage('Lava', result.message)
+            const changeSummary = result.mode === 'EDIT' ? 'Applied edits' : 'Generated new content'
+            await updateDocument(result.document, 'Lava', changeSummary)
+
+            // Include version in Lava's response
+            const updatedDoc = await getDocument()
+            await addMessage('Lava', `${result.message} (v${updatedDoc.version})`)
 
             return NextResponse.json({
               message,

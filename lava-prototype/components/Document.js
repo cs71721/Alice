@@ -72,10 +72,35 @@ export default function Document({ onDocumentChange }) {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ content: editContent }),
+        body: JSON.stringify({
+          content: editContent,
+          expectedVersion: document.version // CAS: send expected version
+        }),
       })
 
-      if (response.ok) {
+      if (response.status === 409) {
+        // Version conflict
+        const conflict = await response.json()
+        const shouldRefresh = confirm(
+          `Document was modified by ${conflict.lastEditor}.\n` +
+          `Their change: "${conflict.changeSummary}"\n\n` +
+          `Do you want to refresh and lose your changes?\n` +
+          `(Click Cancel to keep editing and manually merge)`
+        )
+
+        if (shouldRefresh) {
+          // Refresh and exit edit mode
+          setIsEditing(false)
+          const docResponse = await fetch('/api/document')
+          const data = await docResponse.json()
+          if (data.document) {
+            setDocument(data.document)
+            setPrevContent(data.document.content)
+            setEditContent(data.document.content)
+          }
+        }
+        // If user cancels, they stay in edit mode to manually merge
+      } else if (response.ok) {
         // Successfully saved - let the polling update the document
         setIsEditing(false)
         // Force immediate refresh
@@ -121,10 +146,15 @@ export default function Document({ onDocumentChange }) {
     <div className="flex flex-col h-full bg-white">
       <div className="border-b border-gray-200 px-4 md:px-6 py-3 flex justify-between items-start">
         <div className="flex-1">
-          <h2 className="font-semibold text-gray-900">Document</h2>
-          <p className="text-xs text-gray-500 mt-1">
-            Last modified: {new Date(document.lastModified).toLocaleString()}
-          </p>
+          <h2 className="font-semibold text-gray-900">
+            Document {document.version && `v${document.version}`}
+          </h2>
+          <div className="text-xs text-gray-500 mt-1 space-y-0.5">
+            <p>Last modified: {new Date(document.lastModified).toLocaleString()}</p>
+            {document.lastEditor && (
+              <p>Last editor: {document.lastEditor} {document.changeSummary && `• ${document.changeSummary}`}</p>
+            )}
+          </div>
         </div>
         <div className="flex gap-2">
           {isEditing ? (
