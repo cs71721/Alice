@@ -48,25 +48,15 @@ export default function Document({ onDocumentChange, nickname }) {
 
   // Close download menu when clicking outside
   useEffect(() => {
-    console.log('[DEBUG] Download menu useEffect triggered, showDownloadMenu:', showDownloadMenu)
-
     const handleClickOutside = (event) => {
-      console.log('[DEBUG] Click outside handler called')
       if (downloadRef.current && !downloadRef.current.contains(event.target)) {
-        console.log('[DEBUG] Click was outside, closing menu')
         setShowDownloadMenu(false)
       }
     }
 
     if (showDownloadMenu) {
-      console.log('[DEBUG] Adding mousedown listener to window.document')
-      console.log('[DEBUG] typeof window.document:', typeof window.document)
-
-      // Use window.document explicitly to avoid any shadowing issues
       window.document.addEventListener('mousedown', handleClickOutside)
-
       return () => {
-        console.log('[DEBUG] Removing mousedown listener from window.document')
         window.document.removeEventListener('mousedown', handleClickOutside)
       }
     }
@@ -257,47 +247,27 @@ export default function Document({ onDocumentChange, nickname }) {
 
   // Download functions
   const downloadMarkdown = () => {
-    console.log('[DEBUG] Starting downloadMarkdown')
-    console.log('[DEBUG] doc.content exists?', !!doc?.content)
-    console.log('[DEBUG] typeof window.document:', typeof window.document)
-    console.log('[DEBUG] typeof document:', typeof document)
-
     try {
       const blob = new Blob([doc.content], { type: 'text/markdown;charset=utf-8' })
-      console.log('[DEBUG] Blob created successfully')
-
       const url = URL.createObjectURL(blob)
-      console.log('[DEBUG] URL created:', url)
-
-      // Use window.document explicitly to avoid any confusion
       const link = window.document.createElement('a')
-      console.log('[DEBUG] Link element created:', link)
 
       link.href = url
       link.download = 'document.md'
 
       window.document.body.appendChild(link)
-      console.log('[DEBUG] Link appended to body')
-
       link.click()
-      console.log('[DEBUG] Link clicked')
-
       window.document.body.removeChild(link)
+
       URL.revokeObjectURL(url)
       setShowDownloadMenu(false)
-
-      console.log('[DEBUG] Download complete')
     } catch (error) {
-      console.error('[ERROR] Download failed:', error)
-      console.error('[ERROR] Error stack:', error.stack)
+      console.error('Download failed:', error)
       alert(`Error downloading file: ${error.message}`)
     }
   }
 
   const downloadHTML = () => {
-    console.log('[DEBUG] Starting downloadHTML')
-    console.log('[DEBUG] doc.content exists?', !!doc?.content)
-
     try {
       // Simple markdown to HTML conversion
       let htmlContent = doc.content
@@ -402,32 +372,20 @@ export default function Document({ onDocumentChange, nickname }) {
 </html>`
 
       const blob = new Blob([html], { type: 'text/html;charset=utf-8' })
-      console.log('[DEBUG] HTML Blob created successfully')
-
       const url = URL.createObjectURL(blob)
-      console.log('[DEBUG] HTML URL created:', url)
-
-      // Use window.document explicitly
       const link = window.document.createElement('a')
-      console.log('[DEBUG] HTML Link element created:', link)
 
       link.href = url
       link.download = 'document.html'
 
       window.document.body.appendChild(link)
-      console.log('[DEBUG] HTML Link appended to body')
-
       link.click()
-      console.log('[DEBUG] HTML Link clicked')
-
       window.document.body.removeChild(link)
+
       URL.revokeObjectURL(url)
       setShowDownloadMenu(false)
-
-      console.log('[DEBUG] HTML Download complete')
     } catch (error) {
-      console.error('[ERROR] HTML Download failed:', error)
-      console.error('[ERROR] HTML Error stack:', error.stack)
+      console.error('HTML download failed:', error)
       alert(`Error downloading HTML file: ${error.message}`)
     }
   }
