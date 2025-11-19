@@ -173,15 +173,13 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
 
   // Restore selection to keep blue highlight visible (like Gemini)
   useEffect(() => {
-    if (savedRange && selectedText && referenceInputRef.current) {
-      // Only restore when the input box is actually rendered and focused
+    if (savedRange && selectedText) {
+      // Restore selection once when box appears
       const restoreSelection = () => {
         try {
           const selection = window.getSelection()
-          // Only restore if selection was cleared AND input has focus
-          const inputHasFocus = document.activeElement === referenceInputRef.current
-
-          if (inputHasFocus && (selection.rangeCount === 0 || selection.toString().trim() === '')) {
+          // Only restore if selection was cleared
+          if (selection.rangeCount === 0 || selection.toString().trim() === '') {
             selection.removeAllRanges()
             selection.addRange(savedRange)
           }
@@ -191,23 +189,21 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
         }
       }
 
-      // Restore on input focus
-      const handleInputFocus = () => {
-        setTimeout(restoreSelection, 10)
+      // Restore immediately when box appears
+      setTimeout(restoreSelection, 10)
+
+      // Restore on window blur/focus (when user switches tabs/windows)
+      const handleWindowFocus = () => {
+        // Don't restore if user is actively typing in the input
+        if (referenceInputRef.current && document.activeElement !== referenceInputRef.current) {
+          restoreSelection()
+        }
       }
 
-      if (referenceInputRef.current) {
-        referenceInputRef.current.addEventListener('focus', handleInputFocus)
-      }
-
-      // Keep restoring while typing
-      const timer = setInterval(restoreSelection, 100)
+      window.addEventListener('focus', handleWindowFocus)
 
       return () => {
-        clearInterval(timer)
-        if (referenceInputRef.current) {
-          referenceInputRef.current.removeEventListener('focus', handleInputFocus)
-        }
+        window.removeEventListener('focus', handleWindowFocus)
       }
     }
   }, [savedRange, selectedText])
