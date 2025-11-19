@@ -53,7 +53,7 @@ async function callClaudeSonnet(config) {
   const userMessages = config.messages.filter(m => m.role !== 'system')
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-sonnet-20241022',
+    model: 'claude-sonnet-4-5-20250929',
     max_tokens: config.max_tokens || 4096,
     temperature: config.temperature || 0.7,
     system: systemMessage ? systemMessage.content : undefined,
@@ -73,7 +73,7 @@ async function callClaudeHaiku(config) {
   const userMessages = config.messages.filter(m => m.role !== 'system')
 
   const response = await anthropic.messages.create({
-    model: 'claude-3-5-haiku-20241022',
+    model: 'claude-haiku-4-5-20251001',
     max_tokens: config.max_tokens || 1024,
     temperature: config.temperature || 0.3,
     system: systemMessage ? systemMessage.content : undefined,
