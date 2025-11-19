@@ -234,19 +234,26 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     }
   }, [scrollToSection, isEditing, onScrollComplete])
 
-  // Smart truncation for long quotes (Option C)
+  // Smart truncation for long quotes with full text embedded
   const createAbbreviatedReference = (text, sectionId) => {
     const maxLength = 100
     let abbreviated = text
 
     if (text.length > maxLength) {
       abbreviated = text.substring(0, maxLength).trim() + '...'
-    }
-
-    if (sectionId) {
-      return `Referenced from #${sectionId}:\n"${abbreviated} [see more]"`
+      // Include full text in special format for expansion
+      if (sectionId) {
+        return `Referenced from #${sectionId}:\n"${abbreviated}" [see more]<!--FULLTEXT:${text}-->`
+      } else {
+        return `"${abbreviated}" [see more]<!--FULLTEXT:${text}-->`
+      }
     } else {
-      return `"${abbreviated} [see more]"`
+      // No truncation needed, don't show [see more]
+      if (sectionId) {
+        return `Referenced from #${sectionId}:\n"${text}"`
+      } else {
+        return `"${text}"`
+      }
     }
   }
 

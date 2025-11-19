@@ -12,6 +12,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   const [showNewMessages, setShowNewMessages] = useState(false)
   const [unreadCount, setUnreadCount] = useState(0)
   const [isSending, setIsSending] = useState(false)
+  const [expandedMessages, setExpandedMessages] = useState({})
   
   const messagesEndRef = useRef(null)
   const scrollContainerRef = useRef(null)
@@ -249,19 +250,42 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   }, [inputText, recordActivity])
 
   // Parse message text to make version numbers, section references, and [see more] clickable
-  const renderMessageText = (text) => {
+  const renderMessageText = (text, messageId) => {
     if (!text) return text
 
     // First truncate URLs
     const truncated = truncateUrl(text)
 
-    // Extract section ID from "Referenced from #section-name:" pattern for [see more] links
-    const sectionRefMatch = truncated.match(/Referenced from #([\w-]+):/)
+    // Extract full text from embedded HTML comment if present
+    const fullTextMatch = truncated.match(/<!--FULLTEXT:(.+?)-->/)
+    const fullText = fullTextMatch ? fullTextMatch[1] : null
+
+    // Remove the HTML comment from display (keep it hidden)
+    const displayText = fullText ? truncated.replace(/<!--FULLTEXT:.+?-->/, '') : truncated
+
+    // Check if this message is expanded
+    const isExpanded = expandedMessages[messageId]
+
+    // If expanded and we have full text, replace the abbreviated version
+    let textToRender = displayText
+    if (isExpanded && fullText) {
+      // Find the abbreviated text pattern (ends with "..." [see more])
+      const abbreviatedMatch = displayText.match(/"(.+?)\.\.\." \[see more\]/)
+      if (abbreviatedMatch) {
+        // Replace abbreviated portion with full text
+        const beforeQuote = displayText.substring(0, displayText.indexOf('"'))
+        const afterSeeMore = displayText.substring(displayText.indexOf('[see more]') + '[see more]'.length)
+        textToRender = `${beforeQuote}"${fullText}" [see less]${afterSeeMore}`
+      }
+    }
+
+    // Extract section ID from "Referenced from #section-name:" pattern
+    const sectionRefMatch = textToRender.match(/Referenced from #([\w-]+):/)
     const contextSectionId = sectionRefMatch ? sectionRefMatch[1] : null
 
-    // Split by version pattern, section reference pattern, and [see more]
-    // Pattern captures: (v\d+) for versions, (#[\w-]+) for section IDs, (\[see more\]) for see more links
-    const parts = truncated.split(/(v\d+|#[\w-]+|\[see more\])/gi)
+    // Split by version pattern, section reference pattern, [see more], and [see less]
+    // Pattern captures: (v\d+) for versions, (#[\w-]+) for section IDs, (\[see more\]) and (\[see less\])
+    const parts = textToRender.split(/(v\d+|#[\w-]+|\[see more\]|\[see less\])/gi)
 
     return parts.map((part, index) => {
       // Check for version number
@@ -311,16 +335,39 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         )
       }
 
-      // Check for [see more] link
-      if (part === '[see more]' && contextSectionId) {
+      // Check for [see more] link - now always clickable if we have full text
+      if (part === '[see more]') {
         return (
           <span
             key={index}
             className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline italic"
             onClick={() => {
-              onSectionClick?.(contextSectionId)
+              if (fullText) {
+                // Expand inline by toggling state
+                setExpandedMessages(prev => ({ ...prev, [messageId]: true }))
+              } else if (contextSectionId) {
+                // Fallback to jumping to section if no embedded full text
+                onSectionClick?.(contextSectionId)
+              }
             }}
-            title="Click to view full text in document"
+            title={fullText ? "Click to expand full text" : "Click to view in document"}
+          >
+            {part}
+          </span>
+        )
+      }
+
+      // Check for [see less] link
+      if (part === '[see less]') {
+        return (
+          <span
+            key={index}
+            className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline italic"
+            onClick={() => {
+              // Collapse back to abbreviated
+              setExpandedMessages(prev => ({ ...prev, [messageId]: false }))
+            }}
+            title="Click to collapse text"
           >
             {part}
           </span>
@@ -502,7 +549,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
                       overflowY: 'auto'
                     }}
                   >
-                    {renderMessageText(msg.text)}
+                    {renderMessageText(msg.text, msg.id)}
                   </div>
                 </>
               )}
