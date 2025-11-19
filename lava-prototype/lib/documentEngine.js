@@ -145,9 +145,15 @@ Return the edited document now:`
       const editedDocument = completion.choices[0].message.content.trim()
 
       console.log('GPT-4 response length:', editedDocument.length, 'characters')
-      console.log('GPT-4 response preview:', editedDocument.substring(0, 200))
+      console.log('GPT-4 FULL RESPONSE:', editedDocument)
 
       // Detect if GPT-4 refused to edit and returned an explanation instead
+      // Check if response looks like a refusal (not starting with typical document markers)
+      const documentMarkers = ['#', '**', '##', '*', '-', '•', '1.', 'Welcome', 'Lava', '```']
+      const startsLikeDocument = documentMarkers.some(marker =>
+        editedDocument.startsWith(marker)
+      )
+
       const refusalPhrases = [
         'conversation context',
         'no document edit',
@@ -155,18 +161,46 @@ Return the edited document now:`
         'unable to edit',
         'refers to modifying',
         'not a document edit',
-        'this instruction'
+        'this instruction',
+        'therefore',
+        'not perform'
       ]
 
-      const isRefusal = refusalPhrases.some(phrase =>
+      const containsRefusalPhrase = refusalPhrases.some(phrase =>
         editedDocument.toLowerCase().includes(phrase)
-      ) && editedDocument.length < 500 // Refusals are usually short
+      )
+
+      // More aggressive refusal detection
+      const isRefusal = (
+        containsRefusalPhrase ||
+        (!startsLikeDocument && editedDocument.length < 1000) ||
+        editedDocument.toLowerCase().includes('instruction') ||
+        editedDocument.toLowerCase().includes('context')
+      )
 
       if (isRefusal) {
-        console.error('❌ GPT-4 REFUSED TO EDIT:', editedDocument)
+        console.error('❌ GPT-4 REFUSED TO EDIT. Response was:', editedDocument)
+
+        // Don't return the GPT-4 refusal to the user, return our own message
         return {
           success: false,
-          error: 'GPT-4 refused to edit. This is a bug - forcing retry...'
+          error: 'Failed to apply formatting. Please try rephrasing your command.'
+        }
+      }
+
+      // CRITICAL: Also check if the response is obviously not a document
+      // (to catch refusals that slip through)
+      const looksLikeDocument = (
+        editedDocument.includes('\n') ||  // Documents usually have line breaks
+        editedDocument.length > 100 ||    // Documents are usually longer
+        documentMarkers.some(marker => editedDocument.includes(marker))  // Has document markers
+      )
+
+      if (!looksLikeDocument) {
+        console.error('❌ Response does not look like a document:', editedDocument)
+        return {
+          success: false,
+          error: 'The AI returned an invalid response. Please try again.'
         }
       }
 
