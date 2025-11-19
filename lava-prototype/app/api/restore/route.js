@@ -23,8 +23,8 @@ export async function POST(request) {
     // Restore the version directly (browser already confirmed)
     const restoredDoc = await restoreVersion(versionNum, nickname)
 
-    // Add success message to chat
-    await addMessage('Lava', `✓ ${nickname} restored to v${versionNum}. This created v${restoredDoc.version}.`)
+    // Add message from the user who performed the action
+    await addMessage(nickname, `Restored to v${versionNum} (created v${restoredDoc.version})`)
 
     return NextResponse.json({
       success: true,

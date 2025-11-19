@@ -212,7 +212,7 @@ export async function POST(request) {
         try {
           const restoredDoc = await restoreVersion(pendingRestore.version, nickname)
           await kv.del('pending-restore')
-          await addMessage('Lava', `✓ ${nickname} restored to v${pendingRestore.version}. This created v${restoredDoc.version}.`)
+          await addMessage(nickname, `Restored to v${pendingRestore.version} (created v${restoredDoc.version})`)
 
           return NextResponse.json({
             message,
@@ -226,29 +226,7 @@ export async function POST(request) {
       return NextResponse.json({ message })
     }
 
-    // Handle @undo command (quick restore to previous version)
-    if (trimmedText === '@undo') {
-      const currentDoc = await getDocument()
-      const previousVersion = currentDoc.version - 1
-
-      if (previousVersion < 1) {
-        await addMessage('Lava', '❌ No previous version to restore')
-      } else {
-        try {
-          const restoredDoc = await restoreVersion(previousVersion, nickname)
-          await addMessage('Lava', `✓ ${nickname} undid the last change. Restored to v${previousVersion}. This created v${restoredDoc.version}.`)
-
-          return NextResponse.json({
-            message,
-            documentUpdated: true
-          })
-        } catch (error) {
-          await addMessage('Lava', `❌ Failed to undo: ${error.message}`)
-        }
-      }
-
-      return NextResponse.json({ message })
-    }
+    // @undo command removed - use version viewing and restore button instead
 
     // Original @lava command handling
     const lavaMatch = text.match(/@lava\s+([\s\S]+)/i)
