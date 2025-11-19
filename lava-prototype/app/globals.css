@@ -39,6 +39,10 @@ html, body {
   word-break: break-word;
   overflow-wrap: break-word;
   max-width: 100%;
+  max-height: 400px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  -webkit-overflow-scrolling: touch;
 }
 
 /* Messages list */

@@ -486,11 +486,13 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
                     </span>
                   </div>
                   <div
-                    className={'text-base mt-1 w-full max-w-full ' + (msg.nickname === 'System' ? 'text-gray-500 italic' : isMention ? 'text-gray-900 bg-yellow-50 px-2 py-1 rounded' : 'text-gray-900')}
+                    className={'text-base mt-1 w-full max-w-full message ' + (msg.nickname === 'System' ? 'text-gray-500 italic' : isMention ? 'text-gray-900 bg-yellow-50 px-2 py-1 rounded' : 'text-gray-900')}
                     style={{
                       wordWrap: 'break-word',
                       wordBreak: 'break-word',
-                      overflowWrap: 'break-word'
+                      overflowWrap: 'break-word',
+                      maxHeight: '400px',
+                      overflowY: 'auto'
                     }}
                   >
                     {renderMessageText(msg.text)}
