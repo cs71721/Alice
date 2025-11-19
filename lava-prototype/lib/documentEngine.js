@@ -48,6 +48,53 @@ export class DocumentEngine {
       return this.undo()
     }
 
+    // Preprocess confusing phrasings to be clearer for GPT-4
+    let processedCommand = userCommand
+
+    // Fix "change the font to strikethrough for X" → "apply strikethrough to X"
+    const fontPatterns = [
+      {
+        pattern: /change\s+the\s+font\s+to\s+strikethrough\s+for\s+["']?(.+?)["']?$/i,
+        replacement: 'apply strikethrough formatting to "$1"'
+      },
+      {
+        pattern: /change\s+the\s+font\s+to\s+bold\s+for\s+["']?(.+?)["']?$/i,
+        replacement: 'make "$1" bold'
+      },
+      {
+        pattern: /change\s+the\s+font\s+to\s+italic\s+for\s+["']?(.+?)["']?$/i,
+        replacement: 'make "$1" italic'
+      },
+      {
+        pattern: /change\s+font\s+to\s+(\w+)\s+for\s+["']?(.+?)["']?$/i,
+        replacement: 'apply $1 formatting to "$2"'
+      }
+    ]
+
+    for (const { pattern, replacement } of fontPatterns) {
+      if (pattern.test(processedCommand)) {
+        const originalCommand = processedCommand
+        processedCommand = processedCommand.replace(pattern, (match, ...groups) => {
+          // Clean up the target text - remove formatting symbols if present
+          let targetText = groups[groups.length - 1] || groups[0]
+          targetText = targetText
+            .replace(/^~~|~~$/g, '') // Remove strikethrough symbols
+            .replace(/^\*\*|\*\*$/g, '') // Remove bold symbols
+            .replace(/^\*|\*$/g, '') // Remove italic symbols
+            .replace(/^["']|["']$/g, '') // Remove quotes
+            .trim()
+
+          if (replacement.includes('$1') && replacement.includes('$2')) {
+            return replacement.replace('$1', groups[0]).replace('$2', targetText)
+          } else {
+            return replacement.replace('$1', targetText)
+          }
+        })
+        console.log('Preprocessed command:', originalCommand, '→', processedCommand)
+        break
+      }
+    }
+
     // Format recent chat context
     const chatContext = recentMessages.length > 0
       ? '\n\nRECENT CONVERSATION:\n' + recentMessages.slice(-10).map(msg =>
@@ -55,7 +102,7 @@ export class DocumentEngine {
         ).join('\n')
       : ''
 
-    console.log('Processing command with GPT-4 Turbo:', userCommand)
+    console.log('Processing command with GPT-4 Turbo:', processedCommand)
 
     try {
       const completion = await openai.chat.completions.create({
@@ -86,7 +133,7 @@ If you return anything other than the edited document, you have failed.`
 ${this.document}
 ${chatContext}
 
-EDIT COMMAND: ${userCommand}
+EDIT COMMAND: ${processedCommand}
 
 Return the edited document now:`
           }
