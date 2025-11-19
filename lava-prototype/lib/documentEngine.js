@@ -1,10 +1,19 @@
 import OpenAI from 'openai'
 
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-})
+// Initialize OpenAI client only if API key is available
+let openai = null
+if (process.env.OPENAI_API_KEY) {
+  openai = new OpenAI({
+    apiKey: process.env.OPENAI_API_KEY,
+  })
+} else {
+  console.warn('[WARNING] OPENAI_API_KEY not found. @lava commands will not work.')
+}
 
 async function callGPT4(config) {
+  if (!openai) {
+    throw new Error('OpenAI API key not configured. Please set OPENAI_API_KEY environment variable.')
+  }
   const completion = await openai.chat.completions.create({
     model: 'gpt-4-turbo-preview',
     ...config
