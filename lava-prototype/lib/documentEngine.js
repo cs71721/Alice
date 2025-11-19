@@ -253,18 +253,114 @@ JSON response:
   }
 
   /**
-   * EDIT: Precise mechanical changes
+   * EDIT: Two-phase approach - Creative improvement + Surgical replacement
    */
   async handleEdit(command, intent, chatHistory = [], sectionContext = null) {
-    // Format recent chat for context (might reference "that", "the above", etc.)
+    // Check if command has highlighted text context
+    const contextMatch = command.match(/CONTEXT: The user has highlighted this specific text to modify:\n"""\n([\s\S]+?)\n"""/);
+
+    if (contextMatch) {
+      // HIGHLIGHTED TEXT PATH: Extract-Improve-Replace
+      const highlightedText = contextMatch[1];
+      const instructionMatch = command.match(/IMPORTANT: Only apply "(.+?)" to the text shown above/);
+      const instruction = instructionMatch ? instructionMatch[1] : command.split('CONTEXT:')[0].trim();
+
+      // PHASE 1: Creatively improve the highlighted text (high temperature)
+      const improvedText = await this.improveTextCreatively(
+        highlightedText,
+        instruction,
+        chatHistory
+      );
+
+      // PHASE 2: Surgically replace in document (deterministic)
+      const updatedDocument = this.document.replace(highlightedText, improvedText);
+
+      // Verify replacement worked
+      if (updatedDocument === this.document) {
+        console.warn('Text replacement failed - text may have changed or not found exactly');
+        // Fallback: try fuzzy matching or return error
+        return {
+          success: false,
+          mode: 'EDIT',
+          message: '⚠️ Could not locate exact text in document. It may have been modified.'
+        };
+      }
+
+      this.saveToHistory();
+      this.document = updatedDocument;
+
+      return {
+        success: true,
+        document: this.document,
+        mode: 'EDIT',
+        message: '✓ Document updated'
+      };
+
+    } else {
+      // NO HIGHLIGHTED TEXT: General document editing
+      // Use original approach for commands without specific text selection
+      return await this.handleGeneralEdit(command, chatHistory, sectionContext);
+    }
+  }
+
+  /**
+   * PHASE 1: Creative text improvement (high temperature)
+   * Takes only the highlighted text and improves it according to instruction
+   */
+  async improveTextCreatively(highlightedText, instruction, chatHistory = []) {
     const chatContext = chatHistory.length > 0
-      ? `\n\nRecent conversation for context:\n${chatHistory.map(m => `${m.nickname}: ${m.text}`).join('\n')}\n`
+      ? `\n\nRecent conversation:\n${chatHistory.slice(-5).map(m => `${m.nickname}: ${m.text}`).join('\n')}\n`
       : '';
 
-    // Add section context if provided
+    const response = await callGPT4o({
+      messages: [
+        {
+          role: 'system',
+          content: `You are a creative text editor. Your job is to improve text according to user instructions.
+
+IMPORTANT RULES:
+- You receive ONLY the text to improve (not the full document)
+- Return ONLY the improved version of that text
+- Do not add explanations or commentary
+- Do not return the full document
+- Just return the rewritten text that will replace the original
+- Be creative, expressive, and thoughtful
+- Match the tone and style requested
+
+If asked for feedback first:
+- Provide 1-2 sentences of feedback
+- Then on a new line, return the improved text`
+        },
+        {
+          role: 'user',
+          content: `Text to improve:
+"""
+${highlightedText}
+"""
+${chatContext}
+User instruction: ${instruction}
+
+Return the improved text (and optionally brief feedback if they asked).`
+        }
+      ],
+      temperature: 0.7,  // HIGH for creativity and expressiveness
+      max_tokens: 2048
+    });
+
+    return response.trim();
+  }
+
+  /**
+   * Handle general edits without highlighted text (backward compatibility)
+   */
+  async handleGeneralEdit(command, chatHistory = [], sectionContext = null) {
+    const chatContext = chatHistory.length > 0
+      ? `\n\nRecent conversation:\n${chatHistory.map(m => `${m.nickname}: ${m.text}`).join('\n')}\n`
+      : '';
+
     const sectionInfo = sectionContext
-      ? `\n\nReferenced sections (pay special attention to these):\n${sectionContext.map(s =>
-          `Section "${s.sectionId}" (user highlighted: "${s.quotedText}"):\n${s.content}`
+      ? `\n\nReferenced sections:\n${sectionContext.map(s =>
+          `Section "${s.sectionId}":\n${s.content}`
         ).join('\n\n')}\n`
       : '';
 
@@ -272,45 +368,23 @@ JSON response:
       messages: [
         {
           role: 'system',
-          content: `You are a surgical document editor. When users highlight specific text, they want you to improve ONLY that portion.
+          content: `You are a document editor. Apply the requested changes to the document.
 
-CRITICAL: Find the exact text shown in triple quotes (""") and modify ONLY that text. Leave everything else unchanged.
-
-USER REQUEST TYPES:
-1. Asking for feedback ("do you like this?", "thoughts?")
-   → Provide brief feedback
-   → Then improve ONLY the highlighted portion
-
-2. Asking for changes ("make it more concise", "rewrite this")
-   → Modify ONLY the highlighted text
-   → Keep all surrounding text exactly as is
-
-3. Follow-up ("yes", "go ahead", "apply it")
-   → Apply changes to ONLY the previously highlighted portion
-
-EDITING RULES:
-- Locate the EXACT text in triple quotes (""") in the command
-- Apply changes ONLY to that specific text
-- Keep everything before and after it completely unchanged
-- Maintain proper spacing and flow between sections
-- Return the complete document with ONLY the targeted section modified
-
-Think step by step:
-1. Find the highlighted text in the document
-2. Modify only that portion according to the request
-3. Return full document with just that one section changed`
+- Make the changes requested
+- Return the complete edited document
+- Be precise and thoughtful`
         },
         {
           role: 'user',
-          content: `Document to edit:
+          content: `Document:
 ${this.document}
 ${chatContext}${sectionInfo}
-User request: ${command}
+Request: ${command}
 
-Remember: Change ONLY the text shown in triple quotes. Keep everything else identical.`
+Return the edited document.`
         }
       ],
-      temperature: 0.2,  // Lower for precision - we want surgical edits
+      temperature: 0.3,
       max_tokens: 8192
     });
 
