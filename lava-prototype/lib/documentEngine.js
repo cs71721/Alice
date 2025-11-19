@@ -5,9 +5,10 @@ const openai = new OpenAI({
 })
 
 /**
- * DocumentEngine: Hybrid AI+Code architecture for precise document editing
- * - GPT-4 parses user intent into structured operations
- * - Deterministic code executes the operations precisely
+ * DocumentEngine: GPT-4 Turbo powered document editing
+ * - Sends full document + command to GPT-4 Turbo
+ * - GPT-4 understands context and returns edited document directly
+ * - Simple, reliable, no complex parsing
  */
 export class DocumentEngine {
   constructor(initialDocument = '') {
