@@ -200,11 +200,28 @@ export class DocumentEngine {
           content: `Determine which role is needed for this command.
 
 The three roles are:
-EDIT: Mechanical changes to existing document text (formatting, moving, deleting, simple modifications)
-CREATE: Generate new content to add to the document (writing paragraphs, summaries, introductions)
-CHAT: Discuss, answer questions, provide opinions, have a conversation (not document-related)
+EDIT: Modify, change, rewrite, or update EXISTING document text. Use when user wants to:
+  - Change wording, tone, or style of existing text
+  - Make text shorter, longer, clearer, more concise
+  - Fix formatting, grammar, or structure
+  - Rewrite, revise, or rephrase existing content
+  - Apply ANY modification to the document
+  - Commands like: "edit", "change", "make it X", "rewrite", "fix", "shorten", "simplify"
 
-Analyze the user's command and context to determine intent.`
+CREATE: Add NEW content that doesn't exist yet. Use when user wants to:
+  - Write a new section, paragraph, or chapter
+  - Add something new to the document
+  - Generate content from scratch
+  - Commands like: "write", "add", "create", "generate new"
+
+CHAT: Discuss without modifying the document. Use ONLY when user wants to:
+  - Ask a question about something
+  - Get opinions or suggestions WITHOUT applying them
+  - Have a conversation
+  - Commands like: "what do you think?", "does this make sense?", "tell me about"
+  - BUT if they follow up with "yes, apply it" or "edit it", that becomes EDIT
+
+CRITICAL: If the user wants to change the document in ANY way, use EDIT. Even if they're asking a question first, if they want changes applied, it's EDIT.`
         },
         {
           role: 'user',
@@ -360,16 +377,17 @@ Generate the requested content and return the complete document with your additi
       messages: [
         {
           role: 'system',
-          content: `You are a helpful AI assistant engaged in conversation.
+          content: `You are a helpful AI assistant having a conversation about a document.
 
-Your job: Have a natural, helpful conversation.
+Your job: Answer questions and discuss the content naturally.
 - Answer questions thoughtfully
-- Provide opinions and suggestions
+- Provide opinions and suggestions when asked
 - Engage naturally, not mechanically
 - Reference the document context when relevant
-- Use the full conversation history to maintain context
-- If user references specific sections, focus your response on those areas
-- Do NOT edit the document unless explicitly asked`
+- Use conversation history to maintain context
+
+IMPORTANT: You are in CHAT mode - you CANNOT edit the document. You can only discuss and provide suggestions.
+If the user asks you to make changes, politely let them know they should use a command like "@lava edit..." or "@lava change..." to modify the document.`
         },
         {
           role: 'user',
