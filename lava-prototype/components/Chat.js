@@ -245,7 +245,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   }, [inputText, recordActivity])
 
   // Parse message text to make version numbers clickable
-  const renderMessageText = useCallback((text) => {
+  const renderMessageText = (text) => {
     if (!text) return text
 
     // First truncate URLs
@@ -262,35 +262,16 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           <span
             key={index}
             className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
-            onClick={async () => {
-              // Send the version command to the server so it persists
-              try {
-                // Add the command to messages immediately for visual feedback
-                const commandMessage = {
-                  id: Date.now(),
-                  nickname: nickname,
-                  text: `@v${versionNum}`,
-                  timestamp: Date.now(),
-                  optimistic: true
+            onClick={() => {
+              // Set the input text
+              setInputText(`@v${versionNum}`)
+              // Click the send button after React updates
+              setTimeout(() => {
+                const sendButton = document.querySelector('.send-button')
+                if (sendButton) {
+                  sendButton.click()
                 }
-                setMessages(prev => [...prev, commandMessage])
-
-                // Send to server
-                const response = await fetch('/api/send', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ nickname, text: `@v${versionNum}` }),
-                })
-
-                if (response.ok) {
-                  // Force refresh to get the server's response
-                  forceRefresh()
-                  // Scroll to bottom after a delay to show the version info
-                  setTimeout(() => scrollToBottom(true), 500)
-                }
-              } catch (error) {
-                console.error('Error viewing version:', error)
-              }
+              }, 100)
             }}
             title={`Click to view version ${versionNum}`}
           >
@@ -300,7 +281,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       }
       return part
     })
-  }, [nickname, forceRefresh, scrollToBottom])
+  }
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return
