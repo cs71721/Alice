@@ -4,11 +4,31 @@ A real-time collaborative document editor with chat and AI-powered editing capab
 
 ## Features
 
+### Core Features
 - **Split-screen interface**: Chat (40%) on the left, document (60%) on the right
-- **Real-time chat**: Messages update every second via polling
-- **AI-powered editing**: Use `@lava [instruction]` in chat to update the document
-- **Change highlighting**: Document changes are highlighted in yellow for 3 seconds
+- **Real-time updates**: Chat and document poll every second
 - **Simple username system**: Just enter a username to join
+- **Change highlighting**: Document changes are highlighted in yellow for 3 seconds
+
+### Document Editing
+- **Direct editing**: Click "Edit" button to modify document directly
+- **AI-powered editing**: Use `@lava [instruction]` for AI assistance
+- **Smart edit summaries**: See what changed (e.g., "Changed title to 'New Title'")
+- **Edit attribution**: All edits show who made them in chat
+- **Document versioning**: Track version numbers (v1, v2, etc.)
+
+### AI Capabilities
+- **Intent-based routing**: Three AI modes automatically selected
+  - **EDIT mode**: Precise document modifications
+  - **CREATE mode**: Generate new content
+  - **CHAT mode**: Answer questions without editing
+- **Context-aware**: AI understands chat history and references
+- **Token management**: Accurate GPT-4 token counting with tiktoken
+
+### Collaboration
+- **Conflict resolution**: CAS (Compare-And-Swap) prevents lost updates
+- **Audit trail**: All changes logged in chat with username and summary
+- **Version tracking**: See document version in header
 
 ## Tech Stack
 
@@ -72,11 +92,18 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 
 1. **Enter your username** to join the chat
 2. **Send messages** to communicate with other users
-3. **Use @lava commands** to update the document:
+3. **Edit the document** in two ways:
+   - **Direct editing**: Click "Edit" button, make changes, press Save (Cmd+S)
+   - **AI assistance**: Use `@lava [instruction]` in chat
+4. **@lava command examples**:
    - `@lava add a section about getting started`
-   - `@lava make the heading bigger`
+   - `@lava change the title to "Project Overview"`
    - `@lava fix spelling errors`
-4. **Watch the document update** with highlighted changes
+   - `@lava what do you think about this approach?` (chat without editing)
+5. **Watch changes in real-time**:
+   - Yellow highlighting shows recent changes
+   - Chat logs show who made edits and what changed
+   - Version number updates with each change
 
 ## Deployment to Vercel
 
@@ -93,23 +120,24 @@ Vercel will automatically:
 ## Project Structure
 
 ```
-Lava/
+lava-prototype/
 ├── app/
 │   ├── api/
 │   │   ├── messages/route.js   # GET messages
 │   │   ├── send/route.js       # POST new message + @lava handling
-│   │   └── document/route.js   # GET document
+│   │   └── document/route.js   # GET/PUT document with versioning
 │   ├── layout.js               # Root layout
 │   ├── page.js                 # Main page (split screen)
 │   └── globals.css             # Global styles
 ├── components/
-│   ├── Chat.js                 # Chat component with polling
-│   └── Document.js             # Document component with highlighting
+│   ├── Chat.js                 # Chat with polling and username entry
+│   └── Document.js             # Document viewer/editor with versioning
 ├── lib/
-│   ├── kv.js                   # Vercel KV utilities
-│   └── openai.js               # OpenAI integration
+│   ├── kv.js                   # Vercel KV utilities with versioning
+│   ├── documentEngine.js       # AI intent detection and routing
+│   └── tokenCounter.js         # Accurate GPT-4 token counting
 ├── .env.example                # Environment variables template
-├── package.json                # Dependencies
+├── package.json                # Dependencies (includes tiktoken, diff)
 ├── tailwind.config.js          # Tailwind configuration
 └── README.md                   # This file
 ```
@@ -128,10 +156,28 @@ When a message contains `@lava [instruction]`:
 
 1. The message is added to chat normally
 2. System detects the @lava pattern
-3. OpenAI API is called with current document + instruction
-4. Document is updated with AI-generated content
-5. System message confirms the update
-6. Document component highlights changed lines
+3. **DocumentEngine** determines intent:
+   - **EDIT**: Mechanical changes (formatting, moving text)
+   - **CREATE**: Generate new content (writing sections)
+   - **CHAT**: Answer questions without modifying document
+4. Appropriate GPT-4 handler is called with:
+   - Role-specific prompt and temperature
+   - Adaptive context (20-100 messages based on intent)
+   - Current document content
+5. For EDIT/CREATE: Document is updated with versioning
+6. Chat logs show: username, version, and semantic summary
+
+### Direct Editing
+
+When clicking the "Edit" button:
+
+1. Document switches to editable textarea mode
+2. User makes changes (supports Cmd+S to save, Escape to cancel)
+3. On save, system checks for version conflicts (CAS)
+4. If conflict: Shows who edited and offers refresh or manual merge
+5. If no conflict: Updates document with new version
+6. Chat logs: "Username: 📝 Manual edit (v3): Changed title to 'New Title'"
+7. Smart summaries detect what changed using diff library
 
 ### Change Highlighting
 
