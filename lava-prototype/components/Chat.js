@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { useAdaptivePolling } from '@/hooks/useAdaptivePolling'
 
-export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onChatActivity, sectionReference, onSectionReferenceConsumed, onVersionView }) {
+export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onChatActivity, sectionReference, onSectionReferenceConsumed, onVersionView, onSectionClick }) {
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState('')
   const [isNicknameSet, setIsNicknameSet] = useState(false)
@@ -104,12 +104,9 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   // Handle incoming section references
   useEffect(() => {
     if (sectionReference && isNicknameSet) {
-      // Add the reference to the input text
-      const prefix = inputText.trim() ? inputText + ' ' : ''
-      setInputText(prefix + `@lava regarding ${sectionReference}: `)
-
-      // Focus the textarea
-      setTimeout(() => textareaRef.current?.focus(), 100)
+      // Reference now comes pre-formatted from Document component
+      // Just send it directly as a message
+      sendMessage(sectionReference)
 
       // Mark reference as consumed
       onSectionReferenceConsumed?.()
@@ -244,17 +241,19 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     recordActivity()
   }, [inputText, recordActivity])
 
-  // Parse message text to make version numbers clickable
+  // Parse message text to make version numbers and section references clickable
   const renderMessageText = (text) => {
     if (!text) return text
 
     // First truncate URLs
     const truncated = truncateUrl(text)
 
-    // Split by version pattern (v followed by digits)
-    const parts = truncated.split(/(v\d+)/gi)
+    // Split by both version pattern and section reference pattern
+    // Pattern captures: (v\d+) for versions and (#[\w-]+) for section IDs
+    const parts = truncated.split(/(v\d+|#[\w-]+)/gi)
 
     return parts.map((part, index) => {
+      // Check for version number
       const versionMatch = part.match(/^v(\d+)$/i)
       if (versionMatch) {
         const versionNum = versionMatch[1]
@@ -282,6 +281,25 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           </span>
         )
       }
+
+      // Check for section reference
+      const sectionMatch = part.match(/^#([\w-]+)$/i)
+      if (sectionMatch) {
+        const sectionId = sectionMatch[1]
+        return (
+          <span
+            key={index}
+            className="cursor-pointer text-purple-600 hover:text-purple-800 hover:underline font-medium"
+            onClick={() => {
+              onSectionClick?.(sectionId)
+            }}
+            title={`Click to jump to section "${sectionId}"`}
+          >
+            {part}
+          </span>
+        )
+      }
+
       return part
     })
   }

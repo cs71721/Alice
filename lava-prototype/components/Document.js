@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
 import { useAdaptivePolling } from '@/hooks/useAdaptivePolling'
 
-export default function Document({ onDocumentChange, nickname, onSectionReference, viewingVersion, onBackToCurrent }) {
+export default function Document({ onDocumentChange, nickname, onSectionReference, viewingVersion, onBackToCurrent, scrollToSection, onScrollComplete }) {
   const [doc, setDoc] = useState(null)
   const [isHighlighted, setIsHighlighted] = useState(false)
   const [isEditing, setIsEditing] = useState(false)
@@ -166,6 +166,32 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     }
   }, [isEditing])
 
+  // Handle scrolling to section when requested from chat
+  useEffect(() => {
+    if (scrollToSection && !isEditing) {
+      const element = document.getElementById(scrollToSection)
+      if (element) {
+        // Smooth scroll to element
+        element.scrollIntoView({ behavior: 'smooth', block: 'center' })
+
+        // Add temporary highlight
+        element.style.backgroundColor = 'rgba(168, 85, 247, 0.2)' // purple-500 with opacity
+        element.style.transition = 'background-color 0.3s ease'
+
+        // Remove highlight after 2 seconds
+        setTimeout(() => {
+          element.style.backgroundColor = ''
+        }, 2000)
+
+        // Mark scroll as complete
+        onScrollComplete?.()
+      } else {
+        console.warn(`Section "${scrollToSection}" not found`)
+        onScrollComplete?.()
+      }
+    }
+  }, [scrollToSection, isEditing, onScrollComplete])
+
   // Smart truncation for long quotes (Option C)
   const createAbbreviatedReference = (text, sectionId) => {
     const maxLength = 100
@@ -204,10 +230,28 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
       userComment: userComment
     }
 
-    // Send reference with comment
-    const messageToSend = userComment
-      ? `${abbreviatedRef}\n\n${userComment}`
-      : abbreviatedRef
+    // Detect @lava mode vs team discussion mode
+    let messageToSend
+
+    if (userComment && userComment.trim().toLowerCase().startsWith('@lava')) {
+      // @lava mode: Format as direct question with context
+      const question = userComment.trim().substring(5).trim() // Remove '@lava' prefix
+      const sectionRef = selectionPosition.sectionId
+        ? `section #${selectionPosition.sectionId}`
+        : 'selected text'
+
+      const abbreviatedText = selectedText.length > 100
+        ? selectedText.substring(0, 100).trim() + '...'
+        : selectedText
+
+      messageToSend = `@lava regarding ${sectionRef}: "${abbreviatedText}" - ${question}`
+    } else if (userComment) {
+      // Team discussion mode: Show abbreviated reference + comment
+      messageToSend = `${abbreviatedRef}\n\n${userComment}`
+    } else {
+      // Just the reference
+      messageToSend = abbreviatedRef
+    }
 
     onSectionReference?.(messageToSend)
 

@@ -11,6 +11,7 @@ export default function Home() {
   const [hasUnseenChatActivity, setHasUnseenChatActivity] = useState(false)
   const [sectionReference, setSectionReference] = useState(null)
   const [viewingVersion, setViewingVersion] = useState(null) // {version, content, lastEditor, changeSummary}
+  const [scrollToSection, setScrollToSection] = useState(null) // Section ID to scroll to
 
   const handleDocumentChange = () => {
     if (activeTab === 'chat') {
@@ -38,6 +39,12 @@ export default function Home() {
 
   const handleBackToCurrent = () => {
     setViewingVersion(null)
+  }
+
+  const handleSectionClick = (sectionId) => {
+    // Switch to document tab and scroll to section
+    setScrollToSection(sectionId)
+    switchToTab('document')
   }
 
   const switchToTab = (tab) => {
@@ -96,6 +103,7 @@ export default function Home() {
             sectionReference={sectionReference}
             onSectionReferenceConsumed={() => setSectionReference(null)}
             onVersionView={handleVersionView}
+            onSectionClick={handleSectionClick}
           />
         </div>
 
@@ -106,6 +114,8 @@ export default function Home() {
             onSectionReference={handleSectionReference}
             viewingVersion={viewingVersion}
             onBackToCurrent={handleBackToCurrent}
+            scrollToSection={scrollToSection}
+            onScrollComplete={() => setScrollToSection(null)}
           />
         </div>
       </div>
