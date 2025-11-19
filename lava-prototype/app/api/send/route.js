@@ -132,7 +132,7 @@ export async function POST(request) {
         historyText += `  v${v.version}: ${v.lastEditor} - ${v.changeSummary} (${timeAgo})\n`
       }
 
-      await addMessage('System', historyText)
+      await addMessage('Lava', historyText)
       return NextResponse.json({ message })
     }
 
@@ -154,7 +154,7 @@ export async function POST(request) {
       const version2 = await getVersion(v2)
 
       if (!version1 || !version2) {
-        await addMessage('System', `❌ Version ${!version1 ? v1 : v2} not found`)
+        await addMessage('Lava', `❌ Version ${!version1 ? v1 : v2} not found`)
       } else {
         const diffs = Diff.diffLines(version1.content, version2.content)
         let diffText = `📊 Changes from v${v1} to v${v2}:\n`
@@ -173,7 +173,7 @@ export async function POST(request) {
         diffText += `  + ${additions} lines added\n`
         diffText += `  - ${deletions} lines removed\n`
 
-        await addMessage('System', diffText)
+        await addMessage('Lava', diffText)
       }
 
       return NextResponse.json({ message })
@@ -186,7 +186,7 @@ export async function POST(request) {
       const versionData = await getVersion(versionNum)
 
       if (!versionData) {
-        await addMessage('System', `❌ Version ${versionNum} not found`)
+        await addMessage('Lava', `❌ Version ${versionNum} not found`)
       } else {
         // Store pending restore in KV for confirmation
         await kv.set('pending-restore', {
@@ -195,30 +195,31 @@ export async function POST(request) {
           timestamp: Date.now()
         }, { ex: 60 }) // Expire after 60 seconds
 
-        await addMessage('System', `⚠️ This will restore to v${versionNum} (${versionData.lastEditor}'s version from ${getTimeAgo(versionData.lastModified)}).\nType '@confirm' to proceed or wait 60 seconds to cancel.`)
+        await addMessage('Lava', `⚠️ This will restore to v${versionNum} (${versionData.lastEditor}'s version from ${getTimeAgo(versionData.lastModified)}).\nReply with "yes" or "confirm" to proceed, or wait 60 seconds to cancel.`)
       }
 
       return NextResponse.json({ message })
     }
 
-    // Handle @confirm command
-    if (trimmedText === '@confirm') {
+    // Handle confirmation (natural language or @confirm)
+    const confirmations = ['yes', 'confirm', 'ok', 'proceed', 'go ahead', 'do it', '@confirm', 'yep', 'yeah', 'sure']
+    if (confirmations.includes(trimmedText)) {
       const pendingRestore = await kv.get('pending-restore')
 
       if (!pendingRestore) {
-        await addMessage('System', '❌ No pending restoration to confirm')
+        await addMessage('Lava', '❌ No pending restoration to confirm')
       } else {
         try {
           const restoredDoc = await restoreVersion(pendingRestore.version, nickname)
           await kv.del('pending-restore')
-          await addMessage('System', `✓ Restored to v${pendingRestore.version}. This created v${restoredDoc.version}.`)
+          await addMessage('Lava', `✓ Restored to v${pendingRestore.version}. This created v${restoredDoc.version}.`)
 
           return NextResponse.json({
             message,
             documentUpdated: true
           })
         } catch (error) {
-          await addMessage('System', `❌ Failed to restore: ${error.message}`)
+          await addMessage('Lava', `❌ Failed to restore: ${error.message}`)
         }
       }
 
@@ -231,18 +232,18 @@ export async function POST(request) {
       const previousVersion = currentDoc.version - 1
 
       if (previousVersion < 1) {
-        await addMessage('System', '❌ No previous version to restore')
+        await addMessage('Lava', '❌ No previous version to restore')
       } else {
         try {
           const restoredDoc = await restoreVersion(previousVersion, nickname)
-          await addMessage('System', `✓ Undone! Restored to v${previousVersion}. This created v${restoredDoc.version}.`)
+          await addMessage('Lava', `✓ Undone! Restored to v${previousVersion}. This created v${restoredDoc.version}.`)
 
           return NextResponse.json({
             message,
             documentUpdated: true
           })
         } catch (error) {
-          await addMessage('System', `❌ Failed to undo: ${error.message}`)
+          await addMessage('Lava', `❌ Failed to undo: ${error.message}`)
         }
       }
 
