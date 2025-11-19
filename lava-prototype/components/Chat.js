@@ -58,9 +58,43 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           <span
             key={index}
             className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
-            onClick={() => {
-              // Add @v command to input
-              setInputText(`@v${versionNum}`)
+            onClick={async () => {
+              // Immediately fetch and display the version
+              try {
+                const response = await fetch(`/api/document/version/${versionNum}`)
+                const data = await response.json()
+
+                if (data.version) {
+                  const preview = data.version.content.substring(0, 500)
+                  const systemMessage = {
+                    id: Date.now(),
+                    nickname: 'System',
+                    text: `📄 Version ${versionNum}:\nEditor: ${data.version.lastEditor}\nChange: ${data.version.changeSummary}\n\nPreview:\n${preview}${data.version.content.length > 500 ? '...' : ''}\n\n💡 Type @restore ${versionNum} to restore this version`,
+                    timestamp: Date.now()
+                  }
+                  setMessages(prev => [...prev, systemMessage])
+
+                  // Scroll to bottom to show the version info
+                  setTimeout(() => scrollToBottom(true), 100)
+                } else {
+                  const errorMessage = {
+                    id: Date.now(),
+                    nickname: 'System',
+                    text: `❌ Version ${versionNum} not found`,
+                    timestamp: Date.now()
+                  }
+                  setMessages(prev => [...prev, errorMessage])
+                }
+              } catch (error) {
+                console.error('Error fetching version:', error)
+                const errorMessage = {
+                  id: Date.now(),
+                  nickname: 'System',
+                  text: `❌ Error fetching version ${versionNum}`,
+                  timestamp: Date.now()
+                }
+                setMessages(prev => [...prev, errorMessage])
+              }
             }}
             title={`Click to view version ${versionNum}`}
           >
