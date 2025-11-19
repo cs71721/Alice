@@ -266,7 +266,7 @@ Generate the requested content and return the complete document with your additi
         }
       ],
       temperature: 0.7,  // Higher for creativity
-      max_tokens: 6000
+      max_tokens: 4096
     });
 
     this.saveToHistory();

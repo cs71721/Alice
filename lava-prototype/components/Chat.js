@@ -263,15 +263,8 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
             key={index}
             className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
             onClick={() => {
-              // Set the input text
-              setInputText(`@v${versionNum}`)
-              // Click the send button after React updates
-              setTimeout(() => {
-                const sendButton = document.querySelector('.send-button')
-                if (sendButton) {
-                  sendButton.click()
-                }
-              }, 100)
+              // Directly send the version command
+              sendMessage(`@v${versionNum}`)
             }}
             title={`Click to view version ${versionNum}`}
           >
@@ -313,12 +306,11 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     }
   }
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault()
-    if (!inputText.trim() || isSending) return
+  // Helper function to send a message programmatically
+  const sendMessage = async (messageText) => {
+    if (!messageText.trim() || isSending) return
 
     setIsSending(true)
-    const messageText = inputText.trim()
 
     // 1. IMMEDIATELY add optimistic message to UI
     const optimisticMessage = {
@@ -330,10 +322,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     }
     setMessages(prev => [...prev, optimisticMessage])
 
-    // 2. IMMEDIATELY clear input
-    setInputText('')
-
-    // 3. IMMEDIATELY scroll to bottom
+    // 2. IMMEDIATELY scroll to bottom
     userScrolled.current = false
     requestAnimationFrame(() => scrollToBottom(true))
 
@@ -367,6 +356,19 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       // Re-enable send button after a short delay
       setTimeout(() => setIsSending(false), 500)
     }
+  }
+
+  // Form submit handler that clears the input
+  const handleSendMessage = async (e) => {
+    e.preventDefault()
+    const messageText = inputText.trim()
+    if (!messageText) return
+
+    // Clear input first
+    setInputText('')
+
+    // Then send the message
+    await sendMessage(messageText)
   }
 
   if (!isNicknameSet) {
