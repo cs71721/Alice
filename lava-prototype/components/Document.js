@@ -146,7 +146,8 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
           sectionId: nearestHeader?.id || null,
           sectionText: nearestHeader?.textContent || null
         })
-      } else {
+      } else if (!selectedText) {
+        // Only clear if there wasn't already a selection (prevents input box from disappearing)
         setSelectedText(null)
         setSelectionPosition(null)
       }
@@ -164,7 +165,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
       document.removeEventListener('selectionchange', debouncedHandler)
       clearTimeout(timeout)
     }
-  }, [isEditing])
+  }, [isEditing, recordActivity, selectedText])
 
   // Handle scrolling to section when requested from chat
   useEffect(() => {
@@ -820,6 +821,10 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
             {selectedText && selectionPosition && (
               <form
                 onSubmit={handleReferenceSubmit}
+                onMouseDown={(e) => {
+                  // Prevent form from clearing the document text selection
+                  e.stopPropagation()
+                }}
                 className="fixed z-50 bg-white border-2 border-blue-600 rounded-lg shadow-xl p-3"
                 style={{
                   left: `${Math.min(Math.max(selectionPosition.x - 150, 10), window.innerWidth - 310)}px`,
