@@ -24,7 +24,7 @@ export async function POST(request) {
     const restoredDoc = await restoreVersion(versionNum, nickname)
 
     // Add success message to chat
-    await addMessage('Lava', `✓ Restored to v${versionNum}. This created v${restoredDoc.version}.`)
+    await addMessage('Lava', `✓ ${nickname} restored to v${versionNum}. This created v${restoredDoc.version}.`)
 
     return NextResponse.json({
       success: true,

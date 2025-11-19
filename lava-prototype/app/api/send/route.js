@@ -212,7 +212,7 @@ export async function POST(request) {
         try {
           const restoredDoc = await restoreVersion(pendingRestore.version, nickname)
           await kv.del('pending-restore')
-          await addMessage('Lava', `✓ Restored to v${pendingRestore.version}. This created v${restoredDoc.version}.`)
+          await addMessage('Lava', `✓ ${nickname} restored to v${pendingRestore.version}. This created v${restoredDoc.version}.`)
 
           return NextResponse.json({
             message,
@@ -236,7 +236,7 @@ export async function POST(request) {
       } else {
         try {
           const restoredDoc = await restoreVersion(previousVersion, nickname)
-          await addMessage('Lava', `✓ Undone! Restored to v${previousVersion}. This created v${restoredDoc.version}.`)
+          await addMessage('Lava', `✓ ${nickname} undid the last change. Restored to v${previousVersion}. This created v${restoredDoc.version}.`)
 
           return NextResponse.json({
             message,
