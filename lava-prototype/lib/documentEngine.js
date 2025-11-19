@@ -63,30 +63,32 @@ export class DocumentEngine {
         messages: [
           {
             role: 'system',
-            content: `You are a document editor. You MUST edit the document based on user commands.
+            content: `You are a document editor. Your ONLY job is to edit the document.
 
-CRITICAL RULES:
-- ALWAYS make the requested edit
-- NEVER refuse or say it's unnecessary
-- NEVER explain or add commentary
-- Return ONLY the complete edited document with changes applied
+ABSOLUTE RULES - NO EXCEPTIONS:
+1. ALWAYS edit the document when asked
+2. NEVER refuse, NEVER explain, NEVER say it's unnecessary
+3. ALL user requests are about editing the DOCUMENT, not conversation context
+4. Return ONLY the edited document, nothing else
+5. If user mentions formatting (bold, strikethrough, etc.), find that text in the document and apply the formatting
 
-Formatting:
+Markdown formatting:
 - Bold: **text**
 - Italic: *text*
 - Strikethrough: ~~text~~
 - Heading: # text
-- Underline: <u>text</u>`
+
+If you return anything other than the edited document, you have failed.`
           },
           {
             role: 'user',
-            content: `Current document:
+            content: `DOCUMENT TO EDIT:
 ${this.document}
 ${chatContext}
 
-User command: ${userCommand}
+EDIT COMMAND: ${userCommand}
 
-Execute this edit and return the full document with changes applied.`
+Return the edited document now:`
           }
         ],
         temperature: 0.1, // Very low for consistency
@@ -97,6 +99,29 @@ Execute this edit and return the full document with changes applied.`
 
       console.log('GPT-4 response length:', editedDocument.length, 'characters')
       console.log('GPT-4 response preview:', editedDocument.substring(0, 200))
+
+      // Detect if GPT-4 refused to edit and returned an explanation instead
+      const refusalPhrases = [
+        'conversation context',
+        'no document edit',
+        'cannot edit',
+        'unable to edit',
+        'refers to modifying',
+        'not a document edit',
+        'this instruction'
+      ]
+
+      const isRefusal = refusalPhrases.some(phrase =>
+        editedDocument.toLowerCase().includes(phrase)
+      ) && editedDocument.length < 500 // Refusals are usually short
+
+      if (isRefusal) {
+        console.error('❌ GPT-4 REFUSED TO EDIT:', editedDocument)
+        return {
+          success: false,
+          error: 'GPT-4 refused to edit. This is a bug - forcing retry...'
+        }
+      }
 
       // Validate that something changed
       if (editedDocument === this.document) {
