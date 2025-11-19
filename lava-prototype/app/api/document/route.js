@@ -88,93 +88,99 @@ function generateEditSummary(oldContent, newContent) {
   // Get line-by-line diff
   const lineDiff = Diff.diffLines(oldContent, newContent)
 
-  // Analyze what changed
-  const changes = []
-  let addedLines = 0
-  let removedLines = 0
-  let modifiedSections = []
+  // Track what was added and removed for analysis
+  const removedLines = []
+  const addedLines = []
 
   for (const part of lineDiff) {
-    if (part.added) {
-      const lines = part.value.split('\n').filter(l => l.trim())
-      addedLines += lines.length
-
-      // Detect what was added
-      for (const line of lines) {
-        if (line.startsWith('# ')) {
-          changes.push(`Added title: "${line.substring(2).trim()}"`)
-        } else if (line.startsWith('## ')) {
-          changes.push(`Added section: "${line.substring(3).trim()}"`)
-        } else if (line.startsWith('### ')) {
-          changes.push(`Added subsection: "${line.substring(4).trim()}"`)
-        } else if (line.startsWith('- ') || line.startsWith('* ')) {
-          if (!changes.some(c => c.includes('list item'))) {
-            changes.push('Added list items')
-          }
-        }
-      }
-    } else if (part.removed) {
-      const lines = part.value.split('\n').filter(l => l.trim())
-      removedLines += lines.length
-
-      // Detect what was removed
-      for (const line of lines) {
-        if (line.startsWith('# ')) {
-          const newTitle = findReplacementTitle(newContent, line)
-          if (newTitle) {
-            changes.push(`Changed title to "${newTitle}"`)
-          } else {
-            changes.push(`Removed title: "${line.substring(2).trim()}"`)
-          }
-        } else if (line.startsWith('## ')) {
-          changes.push(`Removed section: "${line.substring(3).trim()}"`)
-        }
-      }
+    if (part.removed) {
+      // Split and filter to get non-empty lines
+      const lines = part.value.split('\n').filter(l => l.length > 0)
+      removedLines.push(...lines)
+    } else if (part.added) {
+      const lines = part.value.split('\n').filter(l => l.length > 0)
+      addedLines.push(...lines)
     }
   }
 
-  // Generate summary based on detected changes
-  if (changes.length > 0) {
-    // Return the most significant change
-    return changes[0]
-  }
+  // Check for title/header changes first (most specific)
+  if (removedLines.length === 1 && addedLines.length === 1) {
+    const oldLine = removedLines[0]
+    const newLine = addedLines[0]
 
-  // Check for simple text changes
-  const wordDiff = Diff.diffWords(oldContent, newContent)
-  let changedWords = []
+    // Both are headers of same level
+    if (oldLine.match(/^#+\s/) && newLine.match(/^#+\s/)) {
+      const oldLevel = oldLine.match(/^#+/)[0]
+      const newLevel = newLine.match(/^#+/)[0]
 
-  for (const part of wordDiff) {
-    if (part.added && part.value.trim() && part.value.trim().split(/\s+/).length <= 5) {
-      changedWords.push(part.value.trim())
+      if (oldLevel === newLevel) {
+        const newTitle = newLine.replace(/^#+\s*/, '').trim()
+        const headerType = oldLevel.length === 1 ? 'title' :
+                          oldLevel.length === 2 ? 'section' : 'subsection'
+        return `Changed ${headerType} to "${newTitle}"`
+      }
+    }
+
+    // Check for other single-line changes
+    if (oldLine.startsWith('- ') && newLine.startsWith('- ')) {
+      return `Modified list item`
     }
   }
 
-  if (changedWords.length === 1 && changedWords[0].length < 50) {
-    // Check if it's a title/header change
+  // Check for additions only
+  if (removedLines.length === 0 && addedLines.length > 0) {
+    // Check what was added
+    for (const line of addedLines) {
+      if (line.startsWith('# ')) {
+        return `Added title: "${line.substring(2).trim()}"`
+      } else if (line.startsWith('## ')) {
+        return `Added section: "${line.substring(3).trim()}"`
+      } else if (line.startsWith('### ')) {
+        return `Added subsection: "${line.substring(4).trim()}"`
+      }
+    }
+
+    if (addedLines.some(l => l.startsWith('- ') || l.startsWith('* '))) {
+      return 'Added list items'
+    }
+
+    return `Added ${addedLines.length} line${addedLines.length === 1 ? '' : 's'}`
+  }
+
+  // Check for removals only
+  if (addedLines.length === 0 && removedLines.length > 0) {
+    for (const line of removedLines) {
+      if (line.startsWith('# ')) {
+        return `Removed title: "${line.substring(2).trim()}"`
+      } else if (line.startsWith('## ')) {
+        return `Removed section: "${line.substring(3).trim()}"`
+      }
+    }
+
+    return `Removed ${removedLines.length} line${removedLines.length === 1 ? '' : 's'}`
+  }
+
+  // Mixed changes
+  if (addedLines.length > 0 && removedLines.length > 0) {
+    // Try to detect if it's a title change by position
     const oldLines = oldContent.split('\n')
     const newLines = newContent.split('\n')
 
     for (let i = 0; i < Math.min(oldLines.length, newLines.length); i++) {
       if (oldLines[i] !== newLines[i]) {
-        if (oldLines[i].startsWith('#') && newLines[i].startsWith('#')) {
-          const oldTitle = oldLines[i].replace(/^#+\s*/, '').trim()
+        // Check if both are headers
+        if (oldLines[i].match(/^#+\s/) && newLines[i].match(/^#+\s/)) {
           const newTitle = newLines[i].replace(/^#+\s*/, '').trim()
           return `Changed title to "${newTitle}"`
         }
+        break
       }
     }
+
+    return `Modified content (${addedLines.length} added, ${removedLines.length} removed)`
   }
 
-  // Fallback to line-based summary
-  if (addedLines > 0 && removedLines === 0) {
-    return `Added ${addedLines} line${addedLines === 1 ? '' : 's'}`
-  } else if (removedLines > 0 && addedLines === 0) {
-    return `Removed ${removedLines} line${removedLines === 1 ? '' : 's'}`
-  } else if (addedLines > 0 && removedLines > 0) {
-    return `Modified content (${addedLines} added, ${removedLines} removed)`
-  }
-
-  // Check character count changes
+  // Check character count changes as final fallback
   const oldLength = oldContent.length
   const newLength = newContent.length
 
@@ -185,24 +191,6 @@ function generateEditSummary(oldContent, newContent) {
   }
 
   return 'Minor edits'
-}
-
-/**
- * Helper function to find if a removed title was replaced with a new one
- */
-function findReplacementTitle(newContent, oldTitle) {
-  const newLines = newContent.split('\n')
-  const oldLevel = oldTitle.match(/^#+/)[0].length
-
-  for (const line of newLines) {
-    if (line.startsWith('#'.repeat(oldLevel) + ' ')) {
-      const newTitle = line.substring(oldLevel + 1).trim()
-      if (newTitle !== oldTitle.substring(oldLevel + 1).trim()) {
-        return newTitle
-      }
-    }
-  }
-  return null
 }
 
 export const dynamic = 'force-dynamic'
