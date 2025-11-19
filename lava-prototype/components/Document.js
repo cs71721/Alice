@@ -150,6 +150,9 @@ export default function Document({ onDocumentChange, nickname }) {
           <h2 className="font-semibold text-gray-900">
             Document {document.version && `v${document.version}`}
           </h2>
+          <p className="text-xs text-gray-500 mt-1">
+            Last modified: {new Date(document.lastModified).toLocaleString()}
+          </p>
         </div>
         <div className="flex gap-2">
           {isEditing ? (
