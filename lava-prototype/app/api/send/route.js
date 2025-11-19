@@ -114,7 +114,11 @@ export async function POST(request) {
       )
     }
 
-    const message = await addMessage(nickname, text)
+    // Clean hidden metadata from message before storing in chat
+    // (metadata is used by backend but shouldn't be visible to users)
+    const cleanText = text.replace(/<!--FULLCONTEXT:.+?-->/s, '').replace(/<!--FULLTEXT:.+?-->/s, '').trim()
+
+    const message = await addMessage(nickname, cleanText)
 
     // Check for history commands first (simpler than @lava)
     const trimmedText = text.trim().toLowerCase()
@@ -231,7 +235,33 @@ export async function POST(request) {
     // Original @lava command handling
     const lavaMatch = text.match(/@lava\s+([\s\S]+)/i)
     if (lavaMatch) {
-      const instruction = lavaMatch[1]
+      let instruction = lavaMatch[1]
+
+      // Check for hidden FULLCONTEXT metadata (from highlighted text)
+      const fullContextMatch = instruction.match(/<!--FULLCONTEXT:(.+?)-->/s)
+      let selectedTextContext = null
+
+      if (fullContextMatch) {
+        try {
+          const contextData = JSON.parse(fullContextMatch[1])
+          selectedTextContext = contextData
+
+          // Remove the hidden metadata from the instruction before processing
+          instruction = instruction.replace(/<!--FULLCONTEXT:.+?-->/s, '').trim()
+
+          // Build the CONTEXT format that the engine expects
+          instruction = `${contextData.instruction}
+
+CONTEXT: The user has highlighted this specific text to modify:
+"""
+${contextData.selectedText}
+"""
+
+IMPORTANT: Only apply "${contextData.instruction}" to the text shown above. Do not modify any other part of the document.`
+        } catch (e) {
+          console.error('Failed to parse FULLCONTEXT:', e)
+        }
+      }
 
       try {
         // Fetch chat history and document

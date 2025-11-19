@@ -283,21 +283,19 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     let messageToSend
 
     if (userComment && userComment.trim().toLowerCase().startsWith('@lava')) {
-      // @lava mode: Send focused instruction with boundaries
+      // @lava mode: Show clean message to user with abbreviated reference
       const instruction = userComment.trim().substring(5).trim() // Remove '@lava' prefix
-      const sectionRef = selectionPosition.sectionId
-        ? `#${selectionPosition.sectionId}`
-        : 'selected text'
 
-      // Format instruction clearly for AI with the exact text to modify
-      messageToSend = `@lava ${instruction}
+      // User sees: "@lava [instruction]" + abbreviated reference (clean, concise)
+      messageToSend = `@lava ${instruction}\n\n${abbreviatedRef}`
 
-CONTEXT: The user has highlighted this specific text to modify:
-"""
-${selectedText}
-"""
-
-IMPORTANT: Only apply "${instruction}" to the text shown above. Do not modify any other part of the document.`
+      // Backend needs full context - add as hidden metadata in special format
+      // The backend will parse this and use it for the AI prompt
+      messageToSend += `\n\n<!--FULLCONTEXT:${JSON.stringify({
+        instruction: instruction,
+        selectedText: selectedText,
+        sectionId: selectionPosition.sectionId
+      })}-->`
     } else if (userComment) {
       // Team discussion mode: Show abbreviated reference + comment
       messageToSend = `${abbreviatedRef}\n\n${userComment}`

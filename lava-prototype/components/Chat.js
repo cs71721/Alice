@@ -260,8 +260,9 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     const fullTextMatch = truncated.match(/<!--FULLTEXT:(.+?)-->/)
     const fullText = fullTextMatch ? fullTextMatch[1] : null
 
-    // Remove the HTML comment from display (keep it hidden)
-    const displayText = fullText ? truncated.replace(/<!--FULLTEXT:.+?-->/, '') : truncated
+    // Remove all HTML comments from display (keep them hidden)
+    // This includes FULLTEXT (for [see more]) and FULLCONTEXT (backend metadata)
+    const displayText = truncated.replace(/<!--.+?-->/gs, '').trim()
 
     // Check if this message is expanded
     const isExpanded = expandedMessages[messageId]
