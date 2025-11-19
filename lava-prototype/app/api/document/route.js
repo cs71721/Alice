@@ -91,6 +91,14 @@ function generateEditSummary(oldContent, newContent) {
   // Track what was added and removed for analysis
   const removedLines = []
   const addedLines = []
+  let isFirstLine = false // Track if change is on first line (likely title)
+
+  // Check if the first non-empty line changed
+  const oldLines = oldContent.split('\n').filter(l => l.trim())
+  const newLines = newContent.split('\n').filter(l => l.trim())
+  if (oldLines.length > 0 && newLines.length > 0) {
+    isFirstLine = oldLines[0] !== newLines[0]
+  }
 
   for (const part of lineDiff) {
     if (part.removed) {
@@ -141,11 +149,34 @@ function generateEditSummary(oldContent, newContent) {
       return `Changed list item to "${newItem}"`
     }
 
+    // Check if it's bold text (often used as titles)
+    if (oldLine.startsWith('**') && oldLine.endsWith('**') &&
+        newLine.startsWith('**') && newLine.endsWith('**')) {
+      const oldTitle = oldLine.replace(/\*\*/g, '').trim()
+      const newTitle = newLine.replace(/\*\*/g, '').trim()
+      return `Changed title from "${oldTitle}" to "${newTitle}"`
+    }
+
+    // Check if text became bold (likely a title)
+    if (!oldLine.startsWith('**') && newLine.startsWith('**') && newLine.endsWith('**')) {
+      const newTitle = newLine.replace(/\*\*/g, '').trim()
+      return `Formatted as title: "${newTitle}"`
+    }
+
     // Check for regular text line changes
     if (!oldLine.startsWith('#') && !newLine.startsWith('#')) {
-      // Regular text changed
-      if (newLine.length < 50) {
-        return `Changed to "${newLine}"`
+      // Try to determine what this line is based on context
+      if (isFirstLine) {
+        // First line is usually the title
+        const oldText = oldLine.replace(/\*\*/g, '').trim()
+        const newText = newLine.replace(/\*\*/g, '').trim()
+        return `Changed title from "${oldText}" to "${newText}"`
+      } else if (newLine.length < 50) {
+        // Check if it looks like a title (all caps, short, etc)
+        if (newLine === newLine.toUpperCase() && newLine.length > 3) {
+          return `Changed title to "${newLine}"`
+        }
+        return `Changed text to "${newLine}"`
       } else {
         return `Modified paragraph`
       }
