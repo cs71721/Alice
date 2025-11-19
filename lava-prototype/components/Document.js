@@ -264,14 +264,25 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     let messageToSend
 
     if (userComment && userComment.trim().toLowerCase().startsWith('@lava')) {
-      // @lava mode: Send FULL text (not abbreviated) so Lava has complete context
-      const question = userComment.trim().substring(5).trim() // Remove '@lava' prefix
+      // @lava mode: Send focused instruction with boundaries
+      const instruction = userComment.trim().substring(5).trim() // Remove '@lava' prefix
       const sectionRef = selectionPosition.sectionId
-        ? `section #${selectionPosition.sectionId}`
+        ? `#${selectionPosition.sectionId}`
         : 'selected text'
 
-      // Use FULL selectedText for @lava, not abbreviated
-      messageToSend = `@lava regarding ${sectionRef}: "${selectedText}" - ${question}`
+      // Clean message format: shows what section, not the full text (already visible as highlighted)
+      // But includes full context for @lava API with clear boundaries
+      const preview = selectedText.length > 50 ? selectedText.substring(0, 50) + '...' : selectedText
+
+      messageToSend = `@lava Editing highlighted text from ${sectionRef}: "${preview}"
+
+Request: ${instruction}
+
+[Full context for AI]
+ONLY modify this exact highlighted text (do not change anything else):
+---START---
+${selectedText}
+---END---`
     } else if (userComment) {
       // Team discussion mode: Show abbreviated reference + comment
       messageToSend = `${abbreviatedRef}\n\n${userComment}`
