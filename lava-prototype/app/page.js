@@ -79,7 +79,7 @@ export default function Home() {
         </div>
 
         <div className={(activeTab === 'document' ? 'flex' : 'hidden') + ' md:flex md:w-[60%] w-full flex-col'}>
-          <Document onDocumentChange={handleDocumentChange} />
+          <Document onDocumentChange={handleDocumentChange} nickname={nickname} />
         </div>
       </div>
     </main>

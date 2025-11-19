@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import ReactMarkdown from 'react-markdown'
 
-export default function Document({ onDocumentChange }) {
+export default function Document({ onDocumentChange, nickname }) {
   const [document, setDocument] = useState(null)
   const [prevContent, setPrevContent] = useState('')
   const [isHighlighted, setIsHighlighted] = useState(false)
@@ -74,7 +74,8 @@ export default function Document({ onDocumentChange }) {
         },
         body: JSON.stringify({
           content: editContent,
-          expectedVersion: document.version // CAS: send expected version
+          expectedVersion: document.version, // CAS: send expected version
+          nickname: nickname || 'Unknown User' // Send the actual user's nickname
         }),
       })
 
