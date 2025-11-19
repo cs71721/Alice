@@ -28,14 +28,33 @@ export async function getDocument() {
 export async function updateDocument(content, editor = 'Lava', changeSummary = 'Document updated') {
   const currentDoc = await getDocument()
   const newVersion = (currentDoc?.version || 0) + 1
+  const timestamp = Date.now()
 
-  return await kv.set('document', {
+  // Save current version to history before updating
+  if (currentDoc && currentDoc.content) {
+    await saveVersion(currentDoc.version || 1, {
+      content: currentDoc.content,
+      lastModified: currentDoc.lastModified,
+      lastEditor: currentDoc.lastEditor,
+      changeSummary: currentDoc.changeSummary
+    })
+  }
+
+  // Update the main document
+  const newDoc = {
     content,
-    lastModified: Date.now(),
+    lastModified: timestamp,
     version: newVersion,
     lastEditor: editor,
     changeSummary
-  })
+  }
+
+  await kv.set('document', newDoc)
+
+  // Also save the new version to history
+  await saveVersion(newVersion, newDoc)
+
+  return newDoc
 }
 
 /**
@@ -50,21 +69,96 @@ export async function updateDocumentWithMetadata(content, editor, changeSummary)
 }
 
 /**
+ * Save a version to history
+ * @param {number} version - Version number
+ * @param {Object} data - Version data (content, editor, etc.)
+ */
+async function saveVersion(version, data) {
+  // Save the version data
+  await kv.set(`document-v${version}`, {
+    version,
+    content: data.content,
+    lastModified: data.lastModified,
+    lastEditor: data.lastEditor,
+    changeSummary: data.changeSummary
+  })
+
+  // Update the version index
+  const index = await kv.get('document-versions-index') || []
+  if (!index.includes(version)) {
+    index.push(version)
+    index.sort((a, b) => a - b) // Keep sorted
+
+    // Keep only last 100 versions
+    if (index.length > 100) {
+      const toDelete = index.shift()
+      await kv.del(`document-v${toDelete}`)
+    }
+
+    await kv.set('document-versions-index', index)
+  }
+}
+
+/**
+ * Get a specific version
+ * @param {number} version - Version number
+ * @returns {Object|null} Version data or null if not found
+ */
+export async function getVersion(version) {
+  return await kv.get(`document-v${version}`)
+}
+
+/**
+ * Get list of available versions
+ * @param {number} limit - Maximum number of versions to return
+ * @returns {Array} Array of version metadata
+ */
+export async function getVersions(limit = 20) {
+  const index = await kv.get('document-versions-index') || []
+  const versions = index.slice(-limit).reverse() // Most recent first
+
+  const versionList = []
+  for (const v of versions) {
+    const data = await kv.get(`document-v${v}`)
+    if (data) {
+      versionList.push({
+        version: v,
+        lastEditor: data.lastEditor,
+        changeSummary: data.changeSummary,
+        lastModified: data.lastModified
+      })
+    }
+  }
+
+  return versionList
+}
+
+/**
+ * Restore a specific version
+ * @param {number} version - Version to restore
+ * @param {string} restoredBy - Who is restoring
+ * @returns {Object} The restored document
+ */
+export async function restoreVersion(version, restoredBy = 'System') {
+  const versionData = await getVersion(version)
+  if (!versionData) {
+    throw new Error(`Version ${version} not found`)
+  }
+
+  // Update the document with restored content
+  return await updateDocument(
+    versionData.content,
+    restoredBy,
+    `Restored to version ${version} (${versionData.changeSummary})`
+  )
+}
+
+/**
  * Get document version history (last N versions)
- * For future implementation when we store version history
+ * Now actually implemented!
  */
 export async function getDocumentHistory(limit = 10) {
-  // Future: Store and retrieve version history
-  // For now, just return current version info
-  const doc = await getDocument()
-  if (!doc) return []
-
-  return [{
-    version: doc.version || 1,
-    lastEditor: doc.lastEditor || 'Unknown',
-    changeSummary: doc.changeSummary || 'No summary',
-    lastModified: doc.lastModified
-  }]
+  return await getVersions(limit)
 }
 
 export async function getMessages() {

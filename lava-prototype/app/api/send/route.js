@@ -1,12 +1,39 @@
 import { NextResponse } from 'next/server'
 import { kv } from '@vercel/kv'
-import { addMessage, getDocument, updateDocument, getMessages } from '@/lib/kv'
+import {
+  addMessage,
+  getDocument,
+  updateDocument,
+  getMessages,
+  getVersions,
+  getVersion,
+  restoreVersion
+} from '@/lib/kv'
 import { DocumentEngine } from '@/lib/documentEngine'
+import * as Diff from 'diff'
 import {
   countMessageTokens,
   calculateContextBudget,
   truncateMessagesToFit
 } from '@/lib/tokenCounter'
+
+/**
+ * Helper function to get human-readable time ago
+ */
+function getTimeAgo(timestamp) {
+  const seconds = Math.floor((Date.now() - timestamp) / 1000)
+
+  if (seconds < 60) return 'just now'
+
+  const minutes = Math.floor(seconds / 60)
+  if (minutes < 60) return `${minutes} min${minutes === 1 ? '' : 's'} ago`
+
+  const hours = Math.floor(minutes / 60)
+  if (hours < 24) return `${hours} hour${hours === 1 ? '' : 's'} ago`
+
+  const days = Math.floor(hours / 24)
+  return `${days} day${days === 1 ? '' : 's'} ago`
+}
 
 /**
  * Determine how much context is needed based on command type
@@ -89,6 +116,148 @@ export async function POST(request) {
 
     const message = await addMessage(nickname, text)
 
+    // Check for history commands first (simpler than @lava)
+    const trimmedText = text.trim().toLowerCase()
+
+    // Handle @history command
+    if (trimmedText === '@history') {
+      const versions = await getVersions(10)
+      const currentDoc = await getDocument()
+
+      let historyText = '📚 Recent versions:\n'
+      historyText += `  v${currentDoc.version}: Current - ${currentDoc.changeSummary} (now)\n`
+
+      for (const v of versions) {
+        const timeAgo = getTimeAgo(v.lastModified)
+        historyText += `  v${v.version}: ${v.lastEditor} - ${v.changeSummary} (${timeAgo})\n`
+      }
+
+      await addMessage('System', historyText)
+      return NextResponse.json({ message })
+    }
+
+    // Handle @version or @v commands
+    const versionMatch = text.match(/^@(?:version|v)\s+(\d+)$/i)
+    if (versionMatch) {
+      const versionNum = parseInt(versionMatch[1], 10)
+      const versionData = await getVersion(versionNum)
+
+      if (!versionData) {
+        await addMessage('System', `❌ Version ${versionNum} not found`)
+      } else {
+        const preview = versionData.content.substring(0, 300)
+        await addMessage('System', `📄 Version ${versionNum}:\nEditor: ${versionData.lastEditor}\nChange: ${versionData.changeSummary}\n\nPreview:\n${preview}${versionData.content.length > 300 ? '...' : ''}`)
+      }
+
+      return NextResponse.json({ message })
+    }
+
+    // Handle @diff command
+    const diffMatch = text.match(/^@diff\s+(\d+)\s+(\d+)$/i)
+    if (diffMatch) {
+      const v1 = parseInt(diffMatch[1], 10)
+      const v2 = parseInt(diffMatch[2], 10)
+
+      const version1 = await getVersion(v1)
+      const version2 = await getVersion(v2)
+
+      if (!version1 || !version2) {
+        await addMessage('System', `❌ Version ${!version1 ? v1 : v2} not found`)
+      } else {
+        const diffs = Diff.diffLines(version1.content, version2.content)
+        let diffText = `📊 Changes from v${v1} to v${v2}:\n`
+
+        let additions = 0
+        let deletions = 0
+
+        for (const part of diffs) {
+          if (part.added) {
+            additions += part.count || 1
+          } else if (part.removed) {
+            deletions += part.count || 1
+          }
+        }
+
+        diffText += `  + ${additions} lines added\n`
+        diffText += `  - ${deletions} lines removed\n`
+
+        await addMessage('System', diffText)
+      }
+
+      return NextResponse.json({ message })
+    }
+
+    // Handle @restore command (needs confirmation)
+    const restoreMatch = text.match(/^@restore\s+(\d+)$/i)
+    if (restoreMatch) {
+      const versionNum = parseInt(restoreMatch[1], 10)
+      const versionData = await getVersion(versionNum)
+
+      if (!versionData) {
+        await addMessage('System', `❌ Version ${versionNum} not found`)
+      } else {
+        // Store pending restore in KV for confirmation
+        await kv.set('pending-restore', {
+          version: versionNum,
+          requestedBy: nickname,
+          timestamp: Date.now()
+        }, { ex: 60 }) // Expire after 60 seconds
+
+        await addMessage('System', `⚠️ This will restore to v${versionNum} (${versionData.lastEditor}'s version from ${getTimeAgo(versionData.lastModified)}).\nType '@confirm' to proceed or wait 60 seconds to cancel.`)
+      }
+
+      return NextResponse.json({ message })
+    }
+
+    // Handle @confirm command
+    if (trimmedText === '@confirm') {
+      const pendingRestore = await kv.get('pending-restore')
+
+      if (!pendingRestore) {
+        await addMessage('System', '❌ No pending restoration to confirm')
+      } else {
+        try {
+          const restoredDoc = await restoreVersion(pendingRestore.version, nickname)
+          await kv.del('pending-restore')
+          await addMessage('System', `✓ Restored to v${pendingRestore.version}. This created v${restoredDoc.version}.`)
+
+          return NextResponse.json({
+            message,
+            documentUpdated: true
+          })
+        } catch (error) {
+          await addMessage('System', `❌ Failed to restore: ${error.message}`)
+        }
+      }
+
+      return NextResponse.json({ message })
+    }
+
+    // Handle @undo command (quick restore to previous version)
+    if (trimmedText === '@undo') {
+      const currentDoc = await getDocument()
+      const previousVersion = currentDoc.version - 1
+
+      if (previousVersion < 1) {
+        await addMessage('System', '❌ No previous version to restore')
+      } else {
+        try {
+          const restoredDoc = await restoreVersion(previousVersion, nickname)
+          await addMessage('System', `✓ Undone! Restored to v${previousVersion}. This created v${restoredDoc.version}.`)
+
+          return NextResponse.json({
+            message,
+            documentUpdated: true
+          })
+        } catch (error) {
+          await addMessage('System', `❌ Failed to undo: ${error.message}`)
+        }
+      }
+
+      return NextResponse.json({ message })
+    }
+
+    // Original @lava command handling
     const lavaMatch = text.match(/@lava\s+([\s\S]+)/i)
     if (lavaMatch) {
       const instruction = lavaMatch[1]

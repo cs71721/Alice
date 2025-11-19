@@ -9,6 +9,7 @@ export default function Home() {
   const [activeTab, setActiveTab] = useState('chat')
   const [hasUnseenDocChanges, setHasUnseenDocChanges] = useState(false)
   const [hasUnseenChatActivity, setHasUnseenChatActivity] = useState(false)
+  const [sectionReference, setSectionReference] = useState(null)
 
   const handleDocumentChange = () => {
     if (activeTab === 'chat') {
@@ -20,6 +21,12 @@ export default function Home() {
     if (activeTab === 'document') {
       setHasUnseenChatActivity(true)
     }
+  }
+
+  const handleSectionReference = (reference) => {
+    // Switch to chat tab and pass the reference
+    setSectionReference(reference)
+    switchToTab('chat')
   }
 
   const switchToTab = (tab) => {
@@ -75,11 +82,17 @@ export default function Home() {
             onNicknameChange={setNickname}
             onDocumentUpdate={handleDocumentChange}
             onChatActivity={handleChatActivity}
+            sectionReference={sectionReference}
+            onSectionReferenceConsumed={() => setSectionReference(null)}
           />
         </div>
 
         <div className={(activeTab === 'document' ? 'flex' : 'hidden') + ' md:flex md:w-[60%] w-full flex-col'}>
-          <Document onDocumentChange={handleDocumentChange} nickname={nickname} />
+          <Document
+            onDocumentChange={handleDocumentChange}
+            nickname={nickname}
+            onSectionReference={handleSectionReference}
+          />
         </div>
       </div>
     </main>

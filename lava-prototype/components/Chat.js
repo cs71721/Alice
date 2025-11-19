@@ -1,8 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { useAdaptivePolling } from '@/hooks/useAdaptivePolling'
 
-export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onChatActivity }) {
+export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onChatActivity, sectionReference, onSectionReferenceConsumed }) {
   const [messages, setMessages] = useState([])
   const [inputText, setInputText] = useState('')
   const [isNicknameSet, setIsNicknameSet] = useState(false)
@@ -36,6 +37,38 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
         }
       }
       return url
+    })
+  }
+
+  // Parse message text to make version numbers clickable
+  const renderMessageText = (text) => {
+    if (!text) return text
+
+    // First truncate URLs
+    const truncated = truncateUrl(text)
+
+    // Split by version pattern (v followed by digits)
+    const parts = truncated.split(/(v\d+)/gi)
+
+    return parts.map((part, index) => {
+      const versionMatch = part.match(/^v(\d+)$/i)
+      if (versionMatch) {
+        const versionNum = versionMatch[1]
+        return (
+          <span
+            key={index}
+            className="cursor-pointer text-blue-600 hover:text-blue-800 hover:underline"
+            onClick={() => {
+              // Add @v command to input
+              setInputText(`@v${versionNum}`)
+            }}
+            title={`Click to view version ${versionNum}`}
+          >
+            {part}
+          </span>
+        )
+      }
+      return part
     })
   }
 
@@ -98,6 +131,21 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   useEffect(() => {
     adjustTextareaHeight()
   }, [inputText])
+
+  // Handle incoming section references
+  useEffect(() => {
+    if (sectionReference && isNicknameSet) {
+      // Add the reference to the input text
+      const prefix = inputText.trim() ? inputText + ' ' : ''
+      setInputText(prefix + `@lava regarding ${sectionReference}: `)
+
+      // Focus the textarea
+      setTimeout(() => textareaRef.current?.focus(), 100)
+
+      // Mark reference as consumed
+      onSectionReferenceConsumed?.()
+    }
+  }, [sectionReference, isNicknameSet, onSectionReferenceConsumed])
 
   // Initial mount - NUCLEAR SCROLL
   useEffect(() => {
@@ -165,59 +213,71 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     }
   }, [messages])
 
-  useEffect(() => {
+  // Create fetchMessages function for adaptive polling
+  const fetchMessages = useCallback(async () => {
     if (!isNicknameSet) return
 
-    const fetchMessages = async () => {
-      try {
-        const response = await fetch('/api/messages')
-        const data = await response.json()
+    try {
+      const response = await fetch('/api/messages')
+      const data = await response.json()
 
-        const wasNearBottom = isNearBottom()
-        setMessages(data.messages)
+      const wasNearBottom = isNearBottom()
+      setMessages(data.messages)
 
-        if (data.messages.length > lastMessageCount && lastMessageCount > 0) {
-          const newMessages = data.messages.slice(lastMessageCount)
-          const hasLavaCommand = newMessages.some(msg => msg.text.includes('@lava'))
-          const hasMention = newMessages.some(msg => msg.text.includes('@' + nickname) && msg.nickname !== nickname)
-          const isLavaResponse = newMessages.some(msg => msg.nickname === 'Lava')
-          const isMyMessage = newMessages.some(msg => msg.nickname === nickname)
+      if (data.messages.length > lastMessageCount && lastMessageCount > 0) {
+        const newMessages = data.messages.slice(lastMessageCount)
+        const hasLavaCommand = newMessages.some(msg => msg.text.includes('@lava'))
+        const hasMention = newMessages.some(msg => msg.text.includes('@' + nickname) && msg.nickname !== nickname)
+        const isLavaResponse = newMessages.some(msg => msg.nickname === 'Lava')
+        const isMyMessage = newMessages.some(msg => msg.nickname === nickname)
 
-          if (hasLavaCommand || hasMention) {
-            onChatActivity?.()
-          }
-
-          // Auto-scroll if: user sent message, Lava responded, or user was already near bottom
-          if (isMyMessage || isLavaResponse || wasNearBottom) {
-            userScrolled.current = false
-            setTimeout(() => scrollToBottom(true), 100)
-          } else if (!wasNearBottom && !isFirstLoad.current) {
-            const newCount = data.messages.length - lastMessageCount
-            setUnreadCount(prev => prev + newCount)
-            setShowNewMessages(true)
-          }
+        if (hasLavaCommand || hasMention) {
+          onChatActivity?.()
         }
 
-        setLastMessageCount(data.messages.length)
-
-        if (isFirstLoad.current) {
-          // NUCLEAR scroll on first data load
-          ensureScrolledToBottom()
-          isFirstLoad.current = false
+        // Auto-scroll if: user sent message, Lava responded, or user was already near bottom
+        if (isMyMessage || isLavaResponse || wasNearBottom) {
+          userScrolled.current = false
+          setTimeout(() => scrollToBottom(true), 100)
+        } else if (!wasNearBottom && !isFirstLoad.current) {
+          const newCount = data.messages.length - lastMessageCount
+          setUnreadCount(prev => prev + newCount)
+          setShowNewMessages(true)
         }
-      } catch (error) {
-        console.error('Error fetching messages:', error)
       }
-    }
 
-    fetchMessages()
-    const interval = setInterval(fetchMessages, 1000)
-    return () => clearInterval(interval)
+      setLastMessageCount(data.messages.length)
+
+      if (isFirstLoad.current) {
+        // NUCLEAR scroll on first data load
+        ensureScrolledToBottom()
+        isFirstLoad.current = false
+      }
+    } catch (error) {
+      console.error('Error fetching messages:', error)
+    }
   }, [isNicknameSet, lastMessageCount, nickname, onChatActivity])
+
+  // Use adaptive polling hook
+  const {
+    recordActivity,
+    forceRefresh,
+    currentInterval
+  } = useAdaptivePolling(fetchMessages, {
+    minInterval: 1000,      // 1 second when active
+    maxInterval: 10000,     // 10 seconds when very idle
+    idleThreshold: 30000,   // 30 seconds before considered idle
+    veryIdleThreshold: 120000, // 2 minutes before very idle
+  })
+
+  // Track user activity - typing
+  useEffect(() => {
+    recordActivity()
+  }, [inputText, recordActivity])
 
   const handleScroll = () => {
     if (!scrollContainerRef.current) return
-    
+
     const nearBottom = isNearBottom()
     userScrolled.current = !nearBottom
 
@@ -225,6 +285,9 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       setShowNewMessages(false)
       setUnreadCount(0)
     }
+
+    // Record scrolling as activity
+    recordActivity()
   }
 
   const handleNicknameSubmit = (e) => {
@@ -285,6 +348,9 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
       setTimeout(() => {
         setMessages(prev => prev.filter(msg => !msg.optimistic || msg.text !== messageText))
       }, 1000)
+
+      // Force immediate refresh to get the server's response
+      forceRefresh()
     } catch (error) {
       console.error('Error sending message:', error)
       // On error, remove optimistic message and show error
@@ -369,7 +435,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
                       overflowWrap: 'break-word'
                     }}
                   >
-                    {truncateUrl(msg.text)}
+                    {renderMessageText(msg.text)}
                   </div>
                 </>
               )}

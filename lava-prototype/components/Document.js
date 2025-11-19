@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import ReactMarkdown from 'react-markdown'
+import { useAdaptivePolling } from '@/hooks/useAdaptivePolling'
 
-export default function Document({ onDocumentChange, nickname }) {
+export default function Document({ onDocumentChange, nickname, onSectionReference }) {
   const [doc, setDoc] = useState(null)
   const [prevContent, setPrevContent] = useState('')
   const [isHighlighted, setIsHighlighted] = useState(false)
@@ -11,40 +12,61 @@ export default function Document({ onDocumentChange, nickname }) {
   const [editContent, setEditContent] = useState('')
   const [isSaving, setIsSaving] = useState(false)
   const [showDownloadMenu, setShowDownloadMenu] = useState(false)
+  const [selectedText, setSelectedText] = useState(null)
+  const [selectionPosition, setSelectionPosition] = useState(null)
   const textareaRef = useRef(null)
   const downloadRef = useRef(null)
+  const documentRef = useRef(null)
 
-  useEffect(() => {
-    const fetchDocument = async () => {
-      try {
-        const response = await fetch('/api/document')
-        const data = await response.json()
+  // Create fetchDocument function for adaptive polling
+  const fetchDocument = useCallback(async () => {
+    try {
+      const response = await fetch('/api/document')
+      const data = await response.json()
 
-        if (data.document) {
-          if (data.document.content !== prevContent && prevContent !== '') {
-            setIsHighlighted(true)
-            setTimeout(() => setIsHighlighted(false), 3000)
+      if (data.document) {
+        if (data.document.content !== prevContent && prevContent !== '') {
+          setIsHighlighted(true)
+          setTimeout(() => setIsHighlighted(false), 3000)
 
-            onDocumentChange?.()
-          }
-
-          setPrevContent(data.document.content)
-          setDoc(data.document)
-
-          // Update edit content if not currently editing
-          if (!isEditing) {
-            setEditContent(data.document.content)
-          }
+          onDocumentChange?.()
         }
-      } catch (error) {
-        console.error('Error fetching document:', error)
-      }
-    }
 
-    fetchDocument()
-    const interval = setInterval(fetchDocument, 1000)
-    return () => clearInterval(interval)
+        setPrevContent(data.document.content)
+        setDoc(data.document)
+
+        // Update edit content if not currently editing
+        if (!isEditing) {
+          setEditContent(data.document.content)
+        }
+      }
+    } catch (error) {
+      console.error('Error fetching document:', error)
+    }
   }, [prevContent, onDocumentChange, isEditing])
+
+  // Use adaptive polling hook
+  const {
+    recordActivity,
+    forceRefresh,
+    pause,
+    resume,
+    currentInterval
+  } = useAdaptivePolling(fetchDocument, {
+    minInterval: 1000,      // 1 second when active
+    maxInterval: 15000,     // 15 seconds when very idle
+    idleThreshold: 60000,   // 1 minute before considered idle
+    veryIdleThreshold: 180000, // 3 minutes before very idle
+  })
+
+  // Pause polling during editing, resume after save
+  useEffect(() => {
+    if (isEditing) {
+      pause()
+    } else {
+      resume()
+    }
+  }, [isEditing, pause, resume])
 
   // Close download menu when clicking outside
   useEffect(() => {
@@ -61,6 +83,101 @@ export default function Document({ onDocumentChange, nickname }) {
       }
     }
   }, [showDownloadMenu])
+
+  // Generate ID from header text (slugify)
+  const generateHeaderId = (text) => {
+    return text
+      .toLowerCase()
+      .trim()
+      .replace(/[^a-z0-9\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-')
+      .slice(0, 50)
+  }
+
+  // Track activity when editing content changes
+  useEffect(() => {
+    if (isEditing) {
+      recordActivity()
+    }
+  }, [editContent, isEditing, recordActivity])
+
+  // Handle text selection
+  useEffect(() => {
+    const handleSelection = () => {
+      if (isEditing) return // Don't handle selection in edit mode
+
+      const selection = window.getSelection()
+      const text = selection.toString().trim()
+
+      if (text && documentRef.current?.contains(selection.anchorNode)) {
+        // Record selection as activity
+        recordActivity()
+        // Find which section contains the selection
+        const range = selection.getRangeAt(0)
+        const rect = range.getBoundingClientRect()
+
+        // Look for the nearest header above the selection
+        let nearestHeader = null
+        let currentNode = selection.anchorNode
+
+        while (currentNode && currentNode !== documentRef.current) {
+          if (currentNode.nodeType === Node.ELEMENT_NODE) {
+            const element = currentNode
+            // Check if it's a header or contains a header
+            const header = element.querySelector?.('h1, h2, h3, h4, h5, h6') ||
+                          (element.tagName?.match(/^H[1-6]$/) ? element : null)
+            if (header && header.id) {
+              nearestHeader = header
+              break
+            }
+          }
+          currentNode = currentNode.parentNode
+        }
+
+        setSelectedText(text)
+        setSelectionPosition({
+          x: rect.left + rect.width / 2,
+          y: rect.top - 10,
+          sectionId: nearestHeader?.id || null,
+          sectionText: nearestHeader?.textContent || null
+        })
+      } else {
+        setSelectedText(null)
+        setSelectionPosition(null)
+      }
+    }
+
+    // Debounce selection handler
+    let timeout
+    const debouncedHandler = () => {
+      clearTimeout(timeout)
+      timeout = setTimeout(handleSelection, 200)
+    }
+
+    document.addEventListener('selectionchange', debouncedHandler)
+    return () => {
+      document.removeEventListener('selectionchange', debouncedHandler)
+      clearTimeout(timeout)
+    }
+  }, [isEditing])
+
+  // Handle reference button click
+  const handleCopyReference = () => {
+    if (selectedText && selectionPosition) {
+      const reference = selectionPosition.sectionId
+        ? `#${selectionPosition.sectionId}: "${selectedText}"`
+        : `"${selectedText}"`
+
+      // Call parent callback if provided
+      onSectionReference?.(reference)
+
+      // Clear selection
+      setSelectedText(null)
+      setSelectionPosition(null)
+      window.getSelection().removeAllRanges()
+    }
+  }
 
   const handleEditToggle = () => {
     if (!isEditing) {
@@ -122,13 +239,8 @@ export default function Document({ onDocumentChange, nickname }) {
       } else if (response.ok) {
         // Successfully saved - let the polling update the document
         setIsEditing(false)
-        // Force immediate refresh
-        const docResponse = await fetch('/api/document')
-        const data = await docResponse.json()
-        if (data.document) {
-          setDoc(data.document)
-          setPrevContent(data.document.content)
-        }
+        // Force immediate refresh using adaptive polling
+        forceRefresh()
       } else {
         console.error('Failed to save document')
         alert('Failed to save changes. Please try again.')
@@ -493,27 +605,89 @@ export default function Document({ onDocumentChange, nickname }) {
             />
           </div>
         ) : (
-          <div
-            className={'max-w-4xl mx-auto prose prose-sm md:prose-base transition-all duration-500 ' + (isHighlighted ? 'bg-yellow-100 p-4 rounded' : '')}
-            style={{ fontSize: '16px', lineHeight: '1.6', cursor: 'text' }}
-            onDoubleClick={() => handleEditToggle()}
-            title="Double-click to edit"
-          >
-            <ReactMarkdown
-              components={{
-                a: ({node, ...props}) => (
-                  <a
-                    {...props}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="text-blue-600 underline hover:text-blue-800"
-                  />
-                )
-              }}
+          <>
+            <div
+              ref={documentRef}
+              className={'max-w-4xl mx-auto prose prose-sm md:prose-base transition-all duration-500 ' + (isHighlighted ? 'bg-yellow-100 p-4 rounded' : '')}
+              style={{ fontSize: '16px', lineHeight: '1.6', cursor: 'text' }}
+              onDoubleClick={() => handleEditToggle()}
+              title="Double-click to edit"
             >
-              {doc.content}
-            </ReactMarkdown>
-          </div>
+              <ReactMarkdown
+                components={{
+                  a: ({node, ...props}) => (
+                    <a
+                      {...props}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="text-blue-600 underline hover:text-blue-800"
+                    />
+                  ),
+                  h1: ({children}) => {
+                    const id = generateHeaderId(String(children))
+                    return <h1 id={id} className="group relative">
+                      {children}
+                      <span className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 text-gray-400">#</span>
+                    </h1>
+                  },
+                  h2: ({children}) => {
+                    const id = generateHeaderId(String(children))
+                    return <h2 id={id} className="group relative">
+                      {children}
+                      <span className="absolute -left-6 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 text-gray-400">#</span>
+                    </h2>
+                  },
+                  h3: ({children}) => {
+                    const id = generateHeaderId(String(children))
+                    return <h3 id={id} className="group relative">
+                      {children}
+                      <span className="absolute -left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 text-gray-400 text-sm">#</span>
+                    </h3>
+                  },
+                  h4: ({children}) => {
+                    const id = generateHeaderId(String(children))
+                    return <h4 id={id} className="group relative">
+                      {children}
+                      <span className="absolute -left-5 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 text-gray-400 text-sm">#</span>
+                    </h4>
+                  },
+                  h5: ({children}) => {
+                    const id = generateHeaderId(String(children))
+                    return <h5 id={id} className="group relative">
+                      {children}
+                      <span className="absolute -left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 text-gray-400 text-xs">#</span>
+                    </h5>
+                  },
+                  h6: ({children}) => {
+                    const id = generateHeaderId(String(children))
+                    return <h6 id={id} className="group relative">
+                      {children}
+                      <span className="absolute -left-4 top-1/2 -translate-y-1/2 opacity-0 group-hover:opacity-50 text-gray-400 text-xs">#</span>
+                    </h6>
+                  }
+                }}
+              >
+                {doc.content}
+              </ReactMarkdown>
+            </div>
+
+            {/* Floating reference button */}
+            {selectedText && selectionPosition && (
+              <button
+                onClick={handleCopyReference}
+                className="fixed z-50 bg-blue-600 text-white px-3 py-1 rounded-full text-sm shadow-lg hover:bg-blue-700 transition-all flex items-center gap-1"
+                style={{
+                  left: `${Math.min(Math.max(selectionPosition.x - 50, 10), window.innerWidth - 110)}px`,
+                  top: `${Math.max(selectionPosition.y, 10)}px`,
+                }}
+              >
+                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 5H6a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2v-1M8 5a2 2 0 002 2h2a2 2 0 002-2M8 5a2 2 0 012-2h2a2 2 0 012 2m0 0h2a2 2 0 012 2v3m2 4H10m0 0l3-3m-3 3l3 3" />
+                </svg>
+                Reference
+              </button>
+            )}
+          </>
         )}
       </div>
     </div>

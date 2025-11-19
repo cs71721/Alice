@@ -29,9 +29,77 @@ export class DocumentEngine {
   }
 
   /**
+   * Extract section references from command (e.g., #section-id: "quoted text")
+   */
+  extractSectionContext(command, document) {
+    const referencePattern = /#([a-z0-9-]+):\s*"([^"]+)"/gi;
+    const matches = [...command.matchAll(referencePattern)];
+
+    if (matches.length === 0) return null;
+
+    let sectionContext = [];
+
+    for (const match of matches) {
+      const [fullMatch, sectionId, quotedText] = match;
+
+      // Find the section in the document by looking for headers with this ID pattern
+      // Headers are formatted as: # Header Text
+      // We need to find the section that would generate this ID
+      const lines = document.split('\n');
+      let sectionStart = -1;
+      let sectionEnd = lines.length;
+      let headerLevel = 0;
+
+      // Look for the header that matches this ID
+      for (let i = 0; i < lines.length; i++) {
+        const headerMatch = lines[i].match(/^(#{1,6})\s+(.+)/);
+        if (headerMatch) {
+          const [, hashes, headerText] = headerMatch;
+          const headerId = headerText
+            .toLowerCase()
+            .trim()
+            .replace(/[^a-z0-9\s-]/g, '')
+            .replace(/\s+/g, '-')
+            .replace(/-+/g, '-')
+            .slice(0, 50);
+
+          if (headerId === sectionId) {
+            sectionStart = i;
+            headerLevel = hashes.length;
+            break;
+          }
+        }
+      }
+
+      if (sectionStart >= 0) {
+        // Find the end of this section (next header of same or higher level)
+        for (let i = sectionStart + 1; i < lines.length; i++) {
+          const headerMatch = lines[i].match(/^(#{1,6})\s+/);
+          if (headerMatch && headerMatch[1].length <= headerLevel) {
+            sectionEnd = i;
+            break;
+          }
+        }
+
+        const sectionContent = lines.slice(sectionStart, sectionEnd).join('\n');
+        sectionContext.push({
+          sectionId,
+          quotedText,
+          content: sectionContent
+        });
+      }
+    }
+
+    return sectionContext.length > 0 ? sectionContext : null;
+  }
+
+  /**
    * Main entry point - detects intent and routes to appropriate handler
    */
   async processCommand(userCommand, chatHistory = []) {
+    // Extract any section references from the command
+    const sectionContext = this.extractSectionContext(userCommand, this.document);
+
     // First detect what role is needed
     const intent = await this.detectIntent(userCommand, chatHistory);
 
@@ -42,14 +110,14 @@ export class DocumentEngine {
     switch(intent.role) {
       case 'EDIT':
         // Edits need less context (last 10-20 messages for references)
-        return await this.handleEdit(userCommand, intent, chatHistory.slice(-20));
+        return await this.handleEdit(userCommand, intent, chatHistory.slice(-20), sectionContext);
       case 'CREATE':
         // Creation needs medium context (last 30-50 messages for style/tone)
-        return await this.handleCreate(userCommand, intent, chatHistory.slice(-50));
+        return await this.handleCreate(userCommand, intent, chatHistory.slice(-50), sectionContext);
       case 'CHAT':
         // Chat might need full context for "summarize everything" type requests
         // But cap at 100 for cost/privacy
-        return await this.handleChat(userCommand, intent, chatHistory.slice(-100));
+        return await this.handleChat(userCommand, intent, chatHistory.slice(-100), sectionContext);
       default:
         return await this.handleUnclear(userCommand);
     }
@@ -104,10 +172,17 @@ Respond with JSON only:
   /**
    * EDIT: Precise mechanical changes
    */
-  async handleEdit(command, intent, chatHistory = []) {
+  async handleEdit(command, intent, chatHistory = [], sectionContext = null) {
     // Format recent chat for context (might reference "that", "the above", etc.)
     const chatContext = chatHistory.length > 0
       ? `\n\nRecent conversation for context:\n${chatHistory.map(m => `${m.nickname}: ${m.text}`).join('\n')}\n`
+      : '';
+
+    // Add section context if provided
+    const sectionInfo = sectionContext
+      ? `\n\nReferenced sections (pay special attention to these):\n${sectionContext.map(s =>
+          `Section "${s.sectionId}" (user highlighted: "${s.quotedText}"):\n${s.content}`
+        ).join('\n\n')}\n`
       : '';
 
     const response = await callGPT4({
@@ -122,13 +197,14 @@ Your job: Execute the EXACT edit requested. Nothing more, nothing less.
 - Do not add creative flourishes
 - Do not explain your changes
 - Use chat context to understand references like "that text" or "the paragraph we discussed"
+- Pay special attention to any referenced sections the user has highlighted
 - Return ONLY the edited document`
         },
         {
           role: 'user',
           content: `Document to edit:
 ${this.document}
-${chatContext}
+${chatContext}${sectionInfo}
 Command: ${command}
 
 Execute this edit precisely and return the complete edited document.`
@@ -152,10 +228,17 @@ Execute this edit precisely and return the complete edited document.`
   /**
    * CREATE: Generate new content
    */
-  async handleCreate(command, intent, chatHistory = []) {
+  async handleCreate(command, intent, chatHistory = [], sectionContext = null) {
     // Format chat history - important for understanding what to write about
     const chatContext = chatHistory.length > 0
       ? `\n\nConversation context (to understand what has been discussed):\n${chatHistory.map(m => `${m.nickname}: ${m.text}`).join('\n')}\n`
+      : '';
+
+    // Add section context if provided
+    const sectionInfo = sectionContext
+      ? `\n\nReferenced sections (focus your additions around these areas):\n${sectionContext.map(s =>
+          `Section "${s.sectionId}" (user highlighted: "${s.quotedText}"):\n${s.content}`
+        ).join('\n\n')}\n`
       : '';
 
     const response = await callGPT4({
@@ -169,13 +252,14 @@ Your job: Generate high-quality new content based on the request.
 - Match the tone and style of the existing document
 - Be creative but relevant
 - Use the conversation context to understand what topics have been discussed
+- If sections are referenced, focus your additions on or around those areas
 - Add the new content to the document appropriately`
         },
         {
           role: 'user',
           content: `Current document:
 ${this.document}
-${chatContext}
+${chatContext}${sectionInfo}
 Request: ${command}
 
 Generate the requested content and return the complete document with your additions.`
@@ -199,9 +283,16 @@ Generate the requested content and return the complete document with your additi
   /**
    * CHAT: Conversational responses
    */
-  async handleChat(command, intent, chatHistory = []) {
+  async handleChat(command, intent, chatHistory = [], sectionContext = null) {
     // Use actual chatHistory instead of broken this.chatContext
     const conversationContext = chatHistory.map(m => `${m.nickname}: ${m.text}`).join('\n');
+
+    // Add section context if provided - for chat, include full referenced sections
+    const sectionInfo = sectionContext
+      ? `\n\nUser is specifically asking about these sections:\n${sectionContext.map(s =>
+          `Section "${s.sectionId}" (user highlighted: "${s.quotedText}"):\n${s.content}`
+        ).join('\n\n')}\n`
+      : '';
 
     const response = await callGPT4({
       messages: [
@@ -215,13 +306,14 @@ Your job: Have a natural, helpful conversation.
 - Engage naturally, not mechanically
 - Reference the document context when relevant
 - Use the full conversation history to maintain context
+- If user references specific sections, focus your response on those areas
 - Do NOT edit the document unless explicitly asked`
         },
         {
           role: 'user',
           content: `Document context:
 ${this.document.substring(0, 1000)}...
-
+${sectionInfo}
 Conversation history:
 ${conversationContext}
 
