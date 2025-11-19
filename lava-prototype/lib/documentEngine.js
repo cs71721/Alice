@@ -62,7 +62,7 @@ export class DocumentEngine {
         replacement: 'make "$1" bold'
       },
       {
-        pattern: /change\s+the\s+font\s+to\s+italic\s+for\s+["']?(.+?)["']?\s*\??$/i,
+        pattern: /change\s+the\s+font\s+to\s+italics?\s+for\s+["']?(.+?)["']?\s*\??$/i,  // Handle both "italic" and "italics"
         replacement: 'make "$1" italic'
       },
       {

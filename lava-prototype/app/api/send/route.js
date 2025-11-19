@@ -111,20 +111,26 @@ function isEditingCommand(instruction) {
 
   const questionKeywords = [
     'what', 'how', 'why', 'when', 'where', 'who',
-    'explain', 'tell me', 'show me', 'can you',
-    'is there', 'are there', '?'
+    'explain', 'tell me', 'show me',
+    'is there', 'are there'
   ]
 
   const lowerInstruction = instruction.toLowerCase()
 
-  // Check for question indicators first
+  // Check for editing indicators FIRST (including generation)
+  // This takes priority because "can you change" is still an edit command
+  if (editingKeywords.some(keyword => lowerInstruction.includes(keyword))) {
+    return true
+  }
+
+  // Then check for pure questions
   if (questionKeywords.some(keyword => lowerInstruction.includes(keyword))) {
     return false
   }
 
-  // Check for editing indicators (including generation)
-  if (editingKeywords.some(keyword => lowerInstruction.includes(keyword))) {
-    return true
+  // Check if it's just a question mark without edit keywords
+  if (lowerInstruction.includes('?') && !editingKeywords.some(keyword => lowerInstruction.includes(keyword))) {
+    return false
   }
 
   // Default to editing if unclear
