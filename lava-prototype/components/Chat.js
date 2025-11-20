@@ -19,6 +19,7 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   const textareaRef = useRef(null)
   const isFirstLoad = useRef(true)
   const userScrolled = useRef(false)
+  const prevMessageCount = useRef(0) // Track actual message count changes
 
 
   const truncateUrl = (text) => {
@@ -171,13 +172,19 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
     }
   }, [])
 
-  // Auto-scroll when messages change
+  // Auto-scroll ONLY when message count increases (not on every state update)
   useEffect(() => {
-    if (messages.length > 0 && !userScrolled.current) {
+    // Only auto-scroll if:
+    // 1. Message count actually increased (not just re-fetched same data)
+    // 2. User hasn't manually scrolled up
+    if (messages.length > prevMessageCount.current && !userScrolled.current) {
       requestAnimationFrame(() => scrollToBottom())
       // Backup scroll after delay for async content
       setTimeout(() => scrollToBottom(), 100)
     }
+
+    // Update the ref to track current count
+    prevMessageCount.current = messages.length
   }, [messages])
 
   // Create fetchMessages function for adaptive polling
@@ -209,11 +216,14 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
           onChatActivity?.()
         }
 
-        // Auto-scroll if: user sent message, Lava responded, or user was already near bottom
-        if (isMyMessage || isLavaResponse || wasNearBottom) {
+        // Auto-scroll ONLY if: user sent message OR user was already near bottom
+        // DON'T auto-scroll if user manually scrolled up (even for Lava responses)
+        if (isMyMessage || wasNearBottom) {
+          // User sent message or was near bottom - safe to auto-scroll
           userScrolled.current = false
           setTimeout(() => scrollToBottom(true), 100)
         } else if (!wasNearBottom && !isFirstLoad.current) {
+          // User scrolled up - show "new messages" indicator instead of forcing scroll
           const newCount = data.messages.length - lastMessageCount
           setUnreadCount(prev => prev + newCount)
           setShowNewMessages(true)
