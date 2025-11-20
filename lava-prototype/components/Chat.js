@@ -20,6 +20,9 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   const isFirstLoad = useRef(true)
   const userScrolled = useRef(false)
   const prevMessageCount = useRef(0) // Track actual message count changes
+  const scrollDebounceTimer = useRef(null) // Debounce scroll events
+  const lastScrollTop = useRef(0) // Track last scroll position
+  const scrollDirection = useRef('down') // Track scroll direction
 
 
   const truncateUrl = (text) => {
@@ -392,16 +395,44 @@ export default function Chat({ nickname, onNicknameChange, onDocumentUpdate, onC
   const handleScroll = () => {
     if (!scrollContainerRef.current) return
 
-    const nearBottom = isNearBottom()
-    userScrolled.current = !nearBottom
+    const container = scrollContainerRef.current
+    const currentScrollTop = container.scrollTop
 
-    if (nearBottom) {
-      setShowNewMessages(false)
-      setUnreadCount(0)
+    // Detect scroll direction (up or down)
+    if (currentScrollTop < lastScrollTop.current) {
+      scrollDirection.current = 'up'
+    } else if (currentScrollTop > lastScrollTop.current) {
+      scrollDirection.current = 'down'
+    }
+    lastScrollTop.current = currentScrollTop
+
+    // Clear existing debounce timer
+    if (scrollDebounceTimer.current) {
+      clearTimeout(scrollDebounceTimer.current)
     }
 
-    // Record scrolling as activity
-    recordActivity()
+    // Debounce the scroll handling (wait for scroll to stop)
+    scrollDebounceTimer.current = setTimeout(() => {
+      const nearBottom = isNearBottom()
+
+      // Only mark as "user scrolled" if they scrolled UP significantly
+      // Small scrolls (< 100px from bottom) don't count as "user scrolled up"
+      const { scrollTop, scrollHeight, clientHeight } = container
+      const distanceFromBottom = scrollHeight - scrollTop - clientHeight
+
+      if (distanceFromBottom > 100 && scrollDirection.current === 'up') {
+        // User intentionally scrolled up - set the flag
+        userScrolled.current = true
+      } else if (nearBottom) {
+        // User scrolled back to bottom - clear the flag
+        userScrolled.current = false
+        setShowNewMessages(false)
+        setUnreadCount(0)
+      }
+
+      // Record scrolling as activity
+      recordActivity()
+    }, 150) // 150ms debounce - waits for scroll to stop
   }
 
   const handleNicknameSubmit = (e) => {
