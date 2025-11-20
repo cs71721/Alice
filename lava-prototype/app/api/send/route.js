@@ -114,9 +114,9 @@ export async function POST(request) {
       )
     }
 
-    // Clean hidden metadata from message before storing in chat
-    // (metadata is used by backend but shouldn't be visible to users)
-    const cleanText = text.replace(/<!--FULLCONTEXT:.+?-->/s, '').replace(/<!--FULLTEXT:.+?-->/s, '').trim()
+    // Clean FULLCONTEXT metadata (backend-only) but keep FULLTEXT (needed for UI expand/collapse)
+    // FULLTEXT is hidden in chat display but needed for "see more" functionality
+    const cleanText = text.replace(/<!--FULLCONTEXT:.+?-->/s, '').trim()
 
     const message = await addMessage(nickname, cleanText)
 
