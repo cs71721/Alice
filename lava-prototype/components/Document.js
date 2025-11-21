@@ -20,6 +20,7 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
   const downloadRef = useRef(null)
   const documentRef = useRef(null)
   const referenceInputRef = useRef(null)
+  const isSelectingRef = useRef(false) // Track if user is actively selecting text
 
   // Create fetchDocument function for adaptive polling
   const fetchDocument = useCallback(async () => {
@@ -107,10 +108,37 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     }
   }, [editContent, isEditing, recordActivity])
 
+  // PRIORITY 1: Track when user is actively selecting text (mousedown → mouseup)
+  useEffect(() => {
+    const handleMouseDown = (e) => {
+      // Only track if mousedown is on the document content
+      if (documentRef.current?.contains(e.target)) {
+        isSelectingRef.current = true
+      }
+    }
+
+    const handleMouseUp = () => {
+      isSelectingRef.current = false
+    }
+
+    document.addEventListener('mousedown', handleMouseDown)
+    document.addEventListener('mouseup', handleMouseUp)
+
+    return () => {
+      document.removeEventListener('mousedown', handleMouseDown)
+      document.removeEventListener('mouseup', handleMouseUp)
+    }
+  }, [])
+
   // Handle text selection
   useEffect(() => {
     const handleSelection = () => {
       if (isEditing) return // Don't handle selection in edit mode
+
+      // PRIORITY 3: Don't process selection changes during active drag
+      if (isSelectingRef.current) {
+        return
+      }
 
       const selection = window.getSelection()
       const text = selection.toString().trim()
@@ -176,6 +204,11 @@ export default function Document({ onDocumentChange, nickname, onSectionReferenc
     if (savedRange && selectedText) {
       // Restore selection once when box appears
       const restoreSelection = () => {
+        // PRIORITY 1: Don't restore if user is actively selecting new text
+        if (isSelectingRef.current) {
+          return
+        }
+
         try {
           const selection = window.getSelection()
           // Only restore if selection was cleared

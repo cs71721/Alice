@@ -179,6 +179,19 @@ html, body {
   margin: 0;
   /* Ensure text can be selected precisely */
   position: relative;
+  /* PRIORITY 2: Prevent selection jumping at boundaries */
+  pointer-events: auto;
+  /* Ensure consistent selection behavior */
+  -webkit-user-drag: none;
+  -webkit-touch-callout: none;
+}
+
+/* Additional fix: Prevent selection issues in prose container */
+.prose {
+  user-select: text;
+  -webkit-user-select: text;
+  -moz-user-select: text;
+  -ms-user-select: text;
 }
 
 /* Mobile optimizations */
